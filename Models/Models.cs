@@ -31,7 +31,7 @@ public class Account {
 	/// <summary>
 	/// 账户操作密钥（以 AES IV 作为前缀）
 	/// </summary>
-	public required byte[] SecretKeyWithIV { get; set; }
+	public required byte[] SecretKeyWithIV { get; set; }  // skipcq: CS-W1096 此处 byte[] 与 SQLite 的 BLOB 类型对应，且用于存储加密后的数据，故直接保留数组
 
 	/// <summary>
 	/// 账户角色
@@ -59,7 +59,7 @@ public class Device {
 	/// <summary>
 	/// 设备操作密钥（以 AES IV 作为前缀）
 	/// </summary>
-	public required byte[] SecretKeyWithIV { get; set; }
+	public required byte[] SecretKeyWithIV { get; set; }  // skipcq: CS-W1096 此处 byte[] 与 SQLite 的 BLOB 类型对应，且用于存储加密后的数据，故直接保留数组
 
 	/// <summary>
 	/// 设备显示名称（可选）
@@ -75,7 +75,7 @@ public class Device {
 	/// <summary>
 	/// 该设备最新上线日志中报告的地址列表
 	/// </summary>
-	public IPAddress[] LatestReportedAddresses { get; set; } = [];
+	public List<IPAddress> LatestReportedAddresses { get; set; } = [];
 
 	/// <summary>
 	/// 该设备最新上线日志中上报者的远程地址
@@ -114,7 +114,7 @@ public class OnlineLog {
 	/// <summary>
 	/// 该条日志中设备报告的地址列表
 	/// </summary>
-	public required IPAddress[] ReportedAddresses { get; set; }
+	public required List<IPAddress> ReportedAddresses { get; set; }
 
 	/// <summary>
 	/// 该条日志中上报者的远程地址
