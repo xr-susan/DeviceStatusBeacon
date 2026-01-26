@@ -19,6 +19,7 @@
 	<ItemGroup>
 		<Using Include="DeviceStatusBeacon" />
 		<Using Include="DeviceStatusBeacon.Models" />
+		<Using Include="DeviceStatusBeacon.Services" />
 		<Using Include="System.Net" />
 		<Using Include="Microsoft.Data.Sqlite" />
 		<Using Include="Microsoft.EntityFrameworkCore" />
