@@ -35,16 +35,18 @@ public class DeviceStatusBeaconContext : DbContext {
 	/// <param name="configuration">传入的配置</param>
 	/// <returns>连接字符串和数据库目录信息组成的元组</returns>
 	public static (string, DirectoryInfo?) GetOrBuildConnectionStringFromConfiguration(IConfiguration configuration) {
+		var dbSection = configuration.GetSection("Database");
+
 		// 尝试直接获取自定义连接字符串
-		var dbConnectionString = configuration["Database:CustomConnectionString"];
+		var dbConnectionString = dbSection["CustomConnectionString"];
 		DirectoryInfo? dbDirectoryInfo = null;
 
 		if (string.IsNullOrWhiteSpace(dbConnectionString)) {
 			// 尝试从配置中获取数据库目录
-			var dbDirectory = configuration["Database:Directory"];
+			var dbDirectory = dbSection["Directory"];
 			if (string.IsNullOrWhiteSpace(dbDirectory)) {
 				// 根据配置决定直接使用应用程序基目录下的 data 目录还是按三项规则逐个尝试
-				if (configuration.GetValue("Database:UsingSubDirectory", false)) {
+				if (dbSection.GetValue("DisableDiscovery", false)) {
 					dbDirectory = Path.Join(AppContext.BaseDirectory, "data");
 				} else {
 					// 尝试使用 LocalApplicationData/DeviceStatusBeacon 目录
@@ -67,7 +69,7 @@ public class DeviceStatusBeaconContext : DbContext {
 			dbDirectoryInfo = new DirectoryInfo(dbDirectory);
 
 			dbConnectionString = new SqliteConnectionStringBuilder {
-				DataSource = Path.Join(dbDirectoryInfo.FullName, configuration["Database:FileName"] ?? "beacon.db")
+				DataSource = Path.Join(dbDirectoryInfo.FullName, dbSection["FileName"] ?? "beacon.db")
 			}.ToString();
 		}
 

@@ -29,9 +29,9 @@ public class Account {
 	public required string Username { get; set; }
 
 	/// <summary>
-	/// 账户操作密钥（以 AES IV 作为前缀）
+	/// 经 ASP.NET Core 数据保护 API 保护后的账户操作密钥
 	/// </summary>
-	public required byte[] SecretKeyWithIV { get; set; }  // skipcq: CS-W1096 此处 byte[] 与 SQLite 的 BLOB 类型对应，且用于存储加密后的数据，故直接保留数组
+	public required byte[] ProtectedSecretKey { get; set; }  // skipcq: CS-W1096 此处 byte[] 与 SQLite 的 BLOB 类型对应，且用于存储加密后的数据，故直接保留数组
 
 	/// <summary>
 	/// 账户角色
@@ -57,9 +57,9 @@ public class Device {
 	public required string DeviceName { get; set; }
 
 	/// <summary>
-	/// 设备操作密钥（以 AES IV 作为前缀）
+	/// 经 ASP.NET Core 数据保护 API 保护后的设备操作密钥
 	/// </summary>
-	public required byte[] SecretKeyWithIV { get; set; }  // skipcq: CS-W1096 此处 byte[] 与 SQLite 的 BLOB 类型对应，且用于存储加密后的数据，故直接保留数组
+	public required byte[] ProtectedSecretKey { get; set; }  // skipcq: CS-W1096 此处 byte[] 与 SQLite 的 BLOB 类型对应，且用于存储加密后的数据，故直接保留数组
 
 	/// <summary>
 	/// 设备显示名称（可选）
