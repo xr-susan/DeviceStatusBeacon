@@ -1,5 +1,13 @@
 ﻿namespace DeviceStatusBeacon.Models;
 
+public interface IHasProtectedSecretKey {
+	/// <summary>
+	/// 经 ASP.NET Core 数据保护 API 保护后的操作密钥
+	/// </summary>
+	byte[] ProtectedSecretKey { get; }  // skipcq: CS-W1096 此处 byte[] 与 SQLite 的 BLOB 类型对应，且用于存储加密后的数据，故直接保留数组
+}
+
+
 public enum AccountRole {
 	/// <summary>
 	/// 管理员账户，拥有所有权限
@@ -17,7 +25,8 @@ public enum AccountRole {
 	LimitedQuery
 }
 
-public class Account {
+
+public class Account : IHasProtectedSecretKey {
 	/// <summary>
 	/// 账户唯一标识符
 	/// </summary>
@@ -45,7 +54,7 @@ public class Account {
 }
 
 
-public class Device {
+public class Device : IHasProtectedSecretKey {
 	/// <summary>
 	/// 设备唯一标识符
 	/// </summary>
@@ -99,6 +108,7 @@ public class Device {
 	/// </summary>
 	public ICollection<Account> AuthorizedAccounts { get; } = [];
 }
+
 
 public class OnlineLog {
 	/// <summary>

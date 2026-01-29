@@ -9,13 +9,15 @@ var (dbConnectionString, dbDirectoryInfo) = DeviceStatusBeaconContext.GetOrBuild
 try {
 	dbDirectoryInfo?.Create();
 } catch (Exception e) {
-	Console.WriteLine($"Failed to create database directory '{dbDirectoryInfo?.FullName}': {e.Message}");
+	Console.Error.WriteLine($"Failed to create database directory '{dbDirectoryInfo?.FullName}': {e.Message}");
 	return -1;
 }
 builder.Services.AddDbContext<DeviceStatusBeaconContext>(options => options.UseSqlite(dbConnectionString));
 
 // 配置数据保护 API
-var dpBuilder = builder.Services.AddDataProtection();
+var dpBuilder = builder.Services.AddDataProtection()
+	.SetApplicationName("DeviceStatusBeacon");
+
 if (builder.Configuration.GetValue("DataProtection:OverrideDiscovery", true)) {
 	var dpKeysDirectoryParent = builder.Configuration["DataProtection:KeysDirectoryParent"];
 	var dpKeysDirectoryParentInfo = string.IsNullOrWhiteSpace(dpKeysDirectoryParent) ? dbDirectoryInfo : new DirectoryInfo(dpKeysDirectoryParent);
@@ -34,6 +36,9 @@ if (builder.Configuration.GetValue("DataProtection:OverrideDiscovery", true)) {
 		return -1;
 	}
 }
+
+// 注册自定义服务
+builder.Services.AddCustomServices();
 
 var app = builder.Build();
 
