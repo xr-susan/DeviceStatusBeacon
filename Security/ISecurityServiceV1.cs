@@ -10,6 +10,16 @@ public interface ISecurityServiceV1 {
 	const long MaxAllowedTimestampDriftInSeconds = 300;
 
 	/// <summary>
+	/// 鉴权时传入的随机字符串的最大长度
+	/// </summary>
+	const int MaxNonceLength = 64;
+
+	/// <summary>
+	/// 鉴权时传入的随机字符串的最小长度
+	/// </summary>
+	const int MinNonceLength = 28;
+
+	/// <summary>
 	/// 安全的 UTF-8 编码器，遇到无效字节时会抛出异常，不带有 BOM
 	/// </summary>
 	static readonly UTF8Encoding SecureUtf8Encoding = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
@@ -20,7 +30,7 @@ public interface ISecurityServiceV1 {
 	/// <param name="entity">用于获取 SecretKey 的实体</param>
 	/// <param name="signatureBasis">用于计算签名的基础信息</param>
 	/// <returns>计算得到的签名</returns>
-	ReadOnlySpan<byte> ComputeSignature(IHasProtectedSecretKey entity, SignatureBasis signatureBasis);
+	ReadOnlySpan<byte> ComputeSignature(IHasProtectedSecretKey entity, SignatureBasisV1 signatureBasis);
 
 	/// <summary>
 	/// 基于给定实体的 SecretKey 和签名基础信息验证签名
@@ -29,7 +39,7 @@ public interface ISecurityServiceV1 {
 	/// <param name="signatureBasis">用于验证签名的基础信息</param>
 	/// <param name="signature">待验证的签名</param>
 	/// <returns>验证结果</returns>
-	bool VerifySignature(IHasProtectedSecretKey entity, SignatureBasis signatureBasis, ReadOnlySpan<byte> signature);
+	bool VerifySignature(IHasProtectedSecretKey entity, SignatureBasisV1 signatureBasis, ReadOnlySpan<byte> signature);
 
 	/// <summary>
 	/// 基于给定实体的 SecretKey 和签名基础信息验证签名
@@ -38,7 +48,7 @@ public interface ISecurityServiceV1 {
 	/// <param name="signatureBasis">用于验证签名的基础信息</param>
 	/// <param name="signatureBase64">待验证的签名的 Base64 字符串</param>
 	/// <returns>验证结果</returns>
-	bool VerifySignature(IHasProtectedSecretKey entity, SignatureBasis signatureBasis, string signatureBase64);
+	bool VerifySignature(IHasProtectedSecretKey entity, SignatureBasisV1 signatureBasis, string signatureBase64);
 
 	/// <summary>
 	/// 生成指定长度的随机字节序列
@@ -84,6 +94,6 @@ public interface ISecurityServiceV1 {
 			}
 		}
 
-		return length / 4 * 3 - padding;
+		return (length / 4 * 3) - padding;
 	}
 }

@@ -9,7 +9,7 @@ namespace DeviceStatusBeacon.Security;
 /// <param name="RequestPathAndQuery">用于计算签名的请求路径和查询字符串</param>
 /// <param name="Timestamp">用于计算签名的时间戳</param>
 /// <param name="Nonce">用于计算签名的随机字符串</param>
-public record SignatureBasis(string RequestMethod, string RequestPathAndQuery, long Timestamp, string Nonce) {
+public record SignatureBasisV1(string RequestMethod, string RequestPathAndQuery, long Timestamp, string Nonce) {
 	/// <summary>
 	/// 返回用于计算签名的字符串
 	/// </summary>
@@ -68,6 +68,6 @@ public record SignatureBasis(string RequestMethod, string RequestPathAndQuery, l
 	/// <param name="timestamp">用于计算签名的时间戳</param>
 	/// <param name="nonce">用于计算签名的随机字符串</param>
 	/// <returns>创建的签名基础信息</returns>
-	public static SignatureBasis FromHttpRequest(HttpRequest request, long timestamp, string nonce) =>
+	public static SignatureBasisV1 FromHttpRequest(HttpRequest request, long timestamp, string nonce) =>
 		new(request.Method, $"{request.Path}{request.QueryString}", timestamp, nonce);
 }
