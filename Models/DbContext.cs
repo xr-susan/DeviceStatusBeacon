@@ -1,6 +1,7 @@
 ﻿namespace DeviceStatusBeacon.Models;
 
-public class DeviceStatusBeaconContext : DbContext {
+/// <inheritdoc/>
+public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContext> options) : DbContext(options) {
 	/// <summary>
 	/// 存储在线日志 <seealso cref="OnlineLog"/> 的实体集合，由 EF Core 自动映射到数据库表
 	/// </summary>
