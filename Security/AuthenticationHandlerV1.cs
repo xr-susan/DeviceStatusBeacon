@@ -1,0 +1,80 @@
+﻿using System.Security.Claims;
+using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Options;
+
+namespace DeviceStatusBeacon.Security;
+
+public class AuthenticationHandlerV1(IOptionsMonitor<AuthenticationSchemeOptions> options,
+	ILoggerFactory logger,
+	UrlEncoder encoder,
+	ISecurityServiceV1 securityService,
+	DeviceStatusBeaconContext dbContext) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder) {
+
+	protected override async Task<AuthenticateResult> HandleAuthenticateAsync() {
+		// 尝试从请求头解析出鉴权信息
+		if (!AuthenticationHeaderV1.TryParse(authorizationHeaderValues: Request.Headers.Authorization, out var authHeader)) {
+			return AuthenticateResult.Fail("鉴权信息不存在或格式不正确，无法解析");
+		}
+
+		// 时间戳验证
+		if (!ISecurityServiceV1.IsTimestampWithinAllowedDrift(authHeader.Timestamp)) {
+			return AuthenticateResult.Fail("鉴权信息时间戳超出允许范围");
+		}
+
+		// 解析并查找鉴权实体
+		IHasProtectedSecretKey? entity = null;
+		List<Claim> claims = [
+			new(ClaimTypes.AuthenticationMethod, authHeader.Scheme.ToString()),
+			new(ClaimTypes.Name, authHeader.Identity)
+		];
+
+		if (authHeader.Scheme == AuthenticationSchemeV1.Device) {
+			// 查询到的设备将被缓存以供后续使用，按设备调用 API 大概率会修改其内容
+			var device = await dbContext.Devices
+				.FirstOrDefaultAsync(d => d.DeviceName == authHeader.Identity && d.Enabled);
+
+			if (device is null) {
+				return AuthenticateResult.Fail("无法找到指定名称的设备实体，或找到的设备实体已被禁用");
+			}
+
+			entity = device;
+			claims.AddRange([
+				new(ClaimTypes.NameIdentifier, device.DeviceId.ToString()),
+				new(ClaimTypes.Role, "Device")
+			]);
+		} else if (authHeader.Scheme == AuthenticationSchemeV1.Account) {
+			// 查询到的用户将被缓存，假设其本身不会被修改故不追踪以提高性能
+			var account = await dbContext.Accounts.AsNoTracking()
+				.FirstOrDefaultAsync(u => u.Username == authHeader.Identity);
+
+			if (account is null) {
+				return AuthenticateResult.Fail("无法找到指定名称的账户实体");
+			}
+
+			entity = account;
+			claims.AddRange([
+				new(ClaimTypes.NameIdentifier, account.AccountId.ToString()),
+				new(ClaimTypes.Role, account.Role.ToString())
+			]);
+		} else {
+			// 代码逻辑上不应到达此处
+			throw new InvalidOperationException("不支持的鉴权方案");
+		}
+
+		// 签名验证
+		var signatureBasis = SignatureBasisV1.FromHttpRequest(Request, authHeader.Timestamp, authHeader.Nonce);
+		if (!securityService.VerifySignature(entity, signatureBasis, authHeader.SignatureBase64)) {
+			return AuthenticateResult.Fail("鉴权签名验证失败");
+		}
+
+		// 缓存查询到的实体
+		Context.Items[$"{Scheme.Name}.AuthenticatedEntity"] = entity;
+
+		// 构建认证票据
+		var identity = new ClaimsIdentity(claims, Scheme.Name);
+		var principal = new ClaimsPrincipal(identity);
+		var ticket = new AuthenticationTicket(principal, Scheme.Name);
+		return AuthenticateResult.Success(ticket);
+	}
+}

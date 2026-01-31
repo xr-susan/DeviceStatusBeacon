@@ -1,4 +1,6 @@
-﻿namespace DeviceStatusBeacon;
+﻿using Microsoft.AspNetCore.Authorization;
+
+namespace DeviceStatusBeacon;
 
 /// <summary>
 /// 用于添加本项目的自定义服务和定制化的服务到 <see cref="IServiceCollection"/> 中的扩展方法组
@@ -11,7 +13,8 @@ public static class CustomServiceCollectionExtensions {
 		/// <param name="services">将要添加服务的 <see cref="IServiceCollection"/></param>
 		/// <returns>当前的 <see cref="IServiceCollection"/>，用于链式调用</returns>
 		public IServiceCollection AddCustomServices() =>
-			services.AddSingleton<IDataProtectorV1, DataProtectorV1>()
+			services.AddScoped<IAuthorizationHandler, AuthorizationHandlerV1>()
+				.AddSingleton<IDataProtectorV1, DataProtectorV1>()
 				.AddScoped<ISecurityServiceV1, SecurityServiceV1>();
 
 		/// <summary>
@@ -31,8 +34,8 @@ public static class CustomServiceCollectionExtensions {
 			// 确保数据库目录存在
 			dbDirectoryInfo?.Create();
 
-			// 注册 DbContext
-			services.AddDbContext<DeviceStatusBeaconContext>(options => options.UseSqlite(dbConnectionString));
+			// 注册 DbContext 池
+			services.AddDbContextPool<DeviceStatusBeaconContext>(options => options.UseSqlite(dbConnectionString));
 
 			return services;
 		}

@@ -30,7 +30,7 @@ public enum AuthenticationSchemeV1 {
 /// 从 HTTP Authorization 头解析出的鉴权信息
 /// </summary>
 /// <param name="Scheme">鉴权方案</param>
-/// <param name="Identity">用户身份</param>
+/// <param name="Identity">用户身份（名称）</param>
 /// <param name="Timestamp">时间戳</param>
 /// <param name="Nonce">随机字符串</param>
 /// <param name="SignatureBase64">签名的 Base64 字符串</param>
@@ -52,46 +52,46 @@ public sealed record AuthenticationHeaderV1(AuthenticationSchemeV1 Scheme, strin
 	/// <summary>
 	/// 尝试从 HTTP Authorization 头解析出 AuthenticationHeaderV1 实例
 	/// </summary>
-	/// <param name="authorizationHeaderValue">Authorization 请求头的值</param>
+	/// <param name="authorizationHeaderValueString">Authorization 请求头的值</param>
 	/// <param name="result">解析结果（若解析成功，则为 AuthenticationHeaderV1 实例；否则为 null）</param>
 	/// <returns>是否解析成功</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool TryParse(string? authorizationHeaderValue, [NotNullWhen(true)] out AuthenticationHeaderV1? result)
-		=> TryParse(authorizationHeaderValue.AsSpan(), out result); // 利用 string? 的 AsSpan() 方法处理 null 情况
+	public static bool TryParse(string? authorizationHeaderValueString, [NotNullWhen(true)] out AuthenticationHeaderV1? result)
+		=> TryParse(authorizationHeaderValueString.AsSpan(), out result); // 利用 string? 的 AsSpan() 方法处理 null 情况
 
 	/// <summary>
 	/// 尝试从 HTTP Authorization 头解析出 AuthenticationHeaderV1 实例
 	/// </summary>
-	/// <param name="authorizationHeaderValue">Authorization 请求头的值</param>
+	/// <param name="authorizationHeaderValueSpan">Authorization 请求头的值</param>
 	/// <param name="result">解析结果（若解析成功，则为 AuthenticationHeaderV1 实例；否则为 null）</param>
 	/// <returns>是否解析成功</returns>
-	public static bool TryParse(ReadOnlySpan<char> authorizationHeaderValue, [NotNullWhen(true)] out AuthenticationHeaderV1? result) {
+	public static bool TryParse(ReadOnlySpan<char> authorizationHeaderValueSpan, [NotNullWhen(true)] out AuthenticationHeaderV1? result) {
 		result = null;
 
 		// Authorization: <Scheme> <Identity>:<Timestamp>:<Nonce>:<Signature>
 
-		// 确保 authorizationHeaderValue 长度在允许范围内且非全空白
-		if (authorizationHeaderValue.Length is < ISecurityServiceV1.MinAuthorizationHeaderValueLength or > ISecurityServiceV1.MaxAuthorizationHeaderValueLength
-			|| authorizationHeaderValue.IsWhiteSpace()) {
+		// 确保 authorizationHeaderValueString 长度在允许范围内且非全空白
+		if (authorizationHeaderValueSpan.Length is < ISecurityServiceV1.MinAuthorizationHeaderValueLength or > ISecurityServiceV1.MaxAuthorizationHeaderValueLength
+			|| authorizationHeaderValueSpan.IsWhiteSpace()) {
 			return false;
 		}
 
-		// 切分 authorizationHeaderValue 为两部分，此处的 3 是有意为之
+		// 切分 authorizationHeaderValueString 为两部分，此处的 3 是有意为之
 		Span<Range> headerPartsRange = stackalloc Range[3];
 
-		// 确保 authorizationHeaderValue 中有且仅有一个空格
-		if (authorizationHeaderValue.Split(headerPartsRange, ' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+		// 确保 authorizationHeaderValueString 中有且仅有一个空格
+		if (authorizationHeaderValueSpan.Split(headerPartsRange, ' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
 			!= 2) {
 			return false;
 		}
 
 		// 解析 Scheme，确保是存在且有效的 Scheme
-		if (!Enum.TryParse(authorizationHeaderValue[headerPartsRange[0]], out AuthenticationSchemeV1 scheme) || scheme == AuthenticationSchemeV1.Unknown) {
+		if (!Enum.TryParse(authorizationHeaderValueSpan[headerPartsRange[0]], out AuthenticationSchemeV1 scheme) || scheme == AuthenticationSchemeV1.Unknown) {
 			return false;
 		}
 
 		// 切分 dataPart 为四部分，此处的 5 是有意为之
-		var dataPart = authorizationHeaderValue[headerPartsRange[1]];
+		var dataPart = authorizationHeaderValueSpan[headerPartsRange[1]];
 		Span<Range> dataPartsRange = stackalloc Range[5];
 
 		// 确保 dataPartsRange 中有且仅有三个冒号

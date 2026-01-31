@@ -48,8 +48,9 @@ public class Account : IHasProtectedSecretKey {
 	public AccountRole Role { get; set; }
 
 	/// <summary>
-	/// 该账户有权限查询的设备列表，仅适用于 <see cref="Role"/> 为 <see cref="AccountRole.LimitedQuery"/> 的账户（由 EF Core 管理）
+	/// 该账户有权限查询的设备列表，仅适用于 <see cref="Role"/> 为 <see cref="AccountRole.LimitedQuery"/> 的账户
 	/// </summary>
+	/// <remarks>此集合由 EF Core 管理</remarks>
 	public ICollection<Device> QueryableDevices { get; } = [];
 }
 
@@ -84,11 +85,13 @@ public class Device : IHasProtectedSecretKey {
 	/// <summary>
 	/// 该设备最新上线日志中报告的地址列表
 	/// </summary>
+	/// <remarks>EF Core 会自动处理 <see cref="List{IPAddress}"/> 的值转换</remarks>
 	public List<IPAddress> LatestReportedAddresses { get; set; } = [];
 
 	/// <summary>
 	/// 该设备最新上线日志中上报者的远程地址
 	/// </summary>
+	/// <remarks>EF Core 会自动处理 <see cref="IPAddress"/> 的值转换</remarks>
 	public IPAddress? LatestReporterRemoteAddress { get; set; }
 
 
@@ -99,13 +102,15 @@ public class Device : IHasProtectedSecretKey {
 
 
 	/// <summary>
-	/// 关联的上线日志列表（由 EF Core 管理）
+	/// 关联的上线日志列表
 	/// </summary>
+	/// <remarks>此集合由 EF Core 管理</remarks>
 	public ICollection<OnlineLog> OnlineLogs { get; } = [];
 
 	/// <summary>
-	/// 有权限查询该设备数据的账号列表，仅适用于 <see cref="Role"/> 为 <see cref="AccountRole.LimitedQuery"/> 的账户（由 EF Core 管理）
+	/// 有权限查询该设备数据的账号列表，仅适用于 <see cref="Role"/> 为 <see cref="AccountRole.LimitedQuery"/> 的账户
 	/// </summary>
+	/// <remarks>此集合由 EF Core 管理</remarks>
 	public ICollection<Account> AuthorizedAccounts { get; } = [];
 }
 
@@ -124,11 +129,13 @@ public class OnlineLog {
 	/// <summary>
 	/// 该条日志中设备报告的地址列表
 	/// </summary>
+	/// <remarks>EF Core 会自动处理 <see cref="List{IPAddress}"/> 的值转换</remarks>
 	public required List<IPAddress> ReportedAddresses { get; set; }
 
 	/// <summary>
 	/// 该条日志中上报者的远程地址
 	/// </summary>
+	/// <remarks>EF Core 会自动处理 <see cref="IPAddress"/> 的值转换</remarks>
 	public IPAddress? ReporterRemoteAddress { get; set; }
 
 	/// <summary>
@@ -143,7 +150,8 @@ public class OnlineLog {
 	public Guid DeviceId { get; set; }
 
 	/// <summary>
-	/// 该条日志关联的设备实体（由 EF Core 管理）
+	/// 该条日志关联的设备实体
 	/// </summary>
+	/// <remarks>此实体由 EF Core 管理</remarks>
 	public Device Device { get; set; } = null!;
 }
