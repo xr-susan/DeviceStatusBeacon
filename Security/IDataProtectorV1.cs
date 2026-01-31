@@ -1,4 +1,6 @@
-﻿namespace DeviceStatusBeacon.Security;
+﻿using System.Runtime.CompilerServices;
+
+namespace DeviceStatusBeacon.Security;
 
 public interface IDataProtectorV1 {
 	/// <summary>
@@ -25,6 +27,7 @@ public interface IDataProtectorV1 {
 	/// </summary>
 	/// <param name="entity">对应的实体</param>
 	/// <returns>实体的原始密钥</returns>
-	ReadOnlySpan<byte> UnprotectKeyFromEntity(IHasProtectedSecretKey entity) =>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	sealed ReadOnlySpan<byte> UnprotectKeyFromEntity(IHasProtectedSecretKey entity) =>
 		UnprotectKey(entity.ProtectedSecretKey);
 }

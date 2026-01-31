@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace DeviceStatusBeacon.Security;
@@ -77,14 +78,16 @@ public interface ISecurityServiceV1 {
 	/// </summary>
 	/// <param name="keySizeInBytes">字节序列的长度（单位为字节）</param>
 	/// <returns>生成的随机字节序列</returns>
-	static Span<byte> GenerateRandomBytes(int keySizeInBytes = HMACSHA256.HashSizeInBytes) => RandomNumberGenerator.GetBytes(keySizeInBytes);
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	static sealed Span<byte> GenerateRandomBytes(int keySizeInBytes = HMACSHA256.HashSizeInBytes) => RandomNumberGenerator.GetBytes(keySizeInBytes);
 
 	/// <summary>
 	/// 检查时间戳是否在允许的偏差范围内
 	/// </summary>
 	/// <param name="timestamp">客户端传入的时间戳</param>
 	/// <returns>若时间戳在允许的偏差范围内则返回 true，否则返回 false</returns>
-	static bool IsTimestampWithinAllowedDrift(long timestamp) {
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	static sealed bool IsTimestampWithinAllowedDrift(long timestamp) {
 		var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 		return Math.Abs(now - timestamp) <= MaxAllowedTimestampDriftInSeconds;
 	}

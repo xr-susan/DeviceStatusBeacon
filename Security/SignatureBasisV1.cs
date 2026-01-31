@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 
 namespace DeviceStatusBeacon.Security;
 
@@ -9,7 +10,7 @@ namespace DeviceStatusBeacon.Security;
 /// <param name="RequestPathAndQuery">用于计算签名的请求路径和查询字符串</param>
 /// <param name="Timestamp">用于计算签名的时间戳</param>
 /// <param name="Nonce">用于计算签名的随机字符串</param>
-public record SignatureBasisV1(string RequestMethod, string RequestPathAndQuery, long Timestamp, string Nonce) {
+public sealed record SignatureBasisV1(string RequestMethod, string RequestPathAndQuery, long Timestamp, string Nonce) {
 	/// <summary>
 	/// 返回用于计算签名的字符串
 	/// </summary>
@@ -27,6 +28,7 @@ public record SignatureBasisV1(string RequestMethod, string RequestPathAndQuery,
 	/// </summary>
 	/// <param name="secretKey">用于计算签名的 SecretKey</param>
 	/// <returns>计算得到的签名</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public ReadOnlySpan<byte> ComputeSignature(ReadOnlySpan<byte> secretKey) =>
 		HMACSHA256.HashData(secretKey, GetUtf8Bytes());
 
@@ -36,6 +38,7 @@ public record SignatureBasisV1(string RequestMethod, string RequestPathAndQuery,
 	/// <param name="secretKey">用于计算签名的 SecretKey</param>
 	/// <param name="signature">待验证的签名</param>
 	/// <returns>验证结果</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool VerifySignature(ReadOnlySpan<byte> secretKey, ReadOnlySpan<byte> signature) {
 		// 计算预期的签名并进行固定时间比较
 		var expectedSignature = ComputeSignature(secretKey);

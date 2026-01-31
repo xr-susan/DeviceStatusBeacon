@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Primitives;
 
@@ -33,13 +34,14 @@ public enum AuthenticationSchemeV1 {
 /// <param name="Timestamp">时间戳</param>
 /// <param name="Nonce">随机字符串</param>
 /// <param name="SignatureBase64">签名的 Base64 字符串</param>
-public record AuthenticationHeaderV1(AuthenticationSchemeV1 Scheme, string Identity, long Timestamp, string Nonce, string SignatureBase64) {
+public sealed record AuthenticationHeaderV1(AuthenticationSchemeV1 Scheme, string Identity, long Timestamp, string Nonce, string SignatureBase64) {
 	/// <summary>
 	/// 尝试从 HTTP Authorization 头解析出 AuthenticationHeaderV1 实例
 	/// </summary>
 	/// <param name="authorizationHeaderValues">Authorization 请求头的值</param>
 	/// <param name="result">解析结果（若解析成功，则为 AuthenticationHeaderV1 实例；否则为 null）</param>
 	/// <returns>是否解析成功</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool TryParse(StringValues? authorizationHeaderValues, [NotNullWhen(true)] out AuthenticationHeaderV1? result) {
 		result = null;
 
@@ -53,6 +55,7 @@ public record AuthenticationHeaderV1(AuthenticationSchemeV1 Scheme, string Ident
 	/// <param name="authorizationHeaderValue">Authorization 请求头的值</param>
 	/// <param name="result">解析结果（若解析成功，则为 AuthenticationHeaderV1 实例；否则为 null）</param>
 	/// <returns>是否解析成功</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool TryParse(string? authorizationHeaderValue, [NotNullWhen(true)] out AuthenticationHeaderV1? result)
 		=> TryParse(authorizationHeaderValue.AsSpan(), out result); // 利用 string? 的 AsSpan() 方法处理 null 情况
 
