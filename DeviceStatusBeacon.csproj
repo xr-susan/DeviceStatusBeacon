@@ -20,7 +20,6 @@
 		<Using Include="DeviceStatusBeacon" />
 		<Using Include="DeviceStatusBeacon.Models" />
 		<Using Include="DeviceStatusBeacon.Security" />
-		<Using Include="DeviceStatusBeacon.Services" />
 		<Using Include="System.Net" />
 		<Using Include="Microsoft.AspNetCore.DataProtection" />
 		<Using Include="Microsoft.Data.Sqlite" />
