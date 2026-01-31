@@ -25,54 +25,66 @@ public record AuthenticationHeaderV1(AuthenticationSchemeV1 Scheme, string Ident
 	public static bool TryParse(StringValues? authorizationHeaderValues, out AuthenticationHeaderV1? result) {
 		result = null;
 
-		// 确保 authorizationHeaderValues 有且仅有一个值
-		return authorizationHeaderValues is { Count: 1 } && TryParse(authorizationHeaderValues?[0], out result);
+		// 确保 authorizationHeaderValues 有且仅有一个值且非 null
+		return authorizationHeaderValues is [var input] && input is not null && TryParse(input.AsSpan(), out result);
 	}
 
 	public static bool TryParse(string? authorizationHeaderValue, out AuthenticationHeaderV1? result) {
 		result = null;
 
+		// 确保 authorizationHeaderValue 非 null
+		return authorizationHeaderValue is not null && TryParse(authorizationHeaderValue.AsSpan(), out result);
+	}
+
+	public static bool TryParse(ReadOnlySpan<char> authorizationHeaderValue, out AuthenticationHeaderV1? result) {
+		result = null;
+
 		// Authorization: <Scheme> <Identity>:<Timestamp>:<Nonce>:<Signature>
 
+		// 确保 authorizationHeaderValue 非0长度或全空白
+		if (authorizationHeaderValue.IsWhiteSpace()) {
+			return false;
+		}
+
+		// 切分 authorizationHeaderValue 为两部分，此处的 3 是有意为之
+		Span<Range> headerPartsRange = stackalloc Range[3];
+
 		// 确保 authorizationHeaderValue 中有且仅有一个空格
-		var headerParts = authorizationHeaderValue?.Split(' ', 3, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries); // 此处的 3 是有意为之
-		if (headerParts is not { Length: 2 }) {
+		if (authorizationHeaderValue.Split(headerPartsRange, ' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+			!= 2) {
 			return false;
 		}
 
 		// 解析 Scheme，确保是存在且有效的 Scheme
-		if (!Enum.TryParse(headerParts[0], out AuthenticationSchemeV1 scheme) || scheme == AuthenticationSchemeV1.Unknown) {
+		if (!Enum.TryParse(authorizationHeaderValue[headerPartsRange[0]], out AuthenticationSchemeV1 scheme) || scheme == AuthenticationSchemeV1.Unknown) {
 			return false;
 		}
 
-		// 确保 valueParts 中有且仅有三个冒号
-		var valueParts = headerParts[1].Split(':', 5, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries); // 此处的 5 是有意为之
-		if (valueParts is not { Length: 4 }) {
+		// 切分 dataPart 为四部分，此处的 5 是有意为之
+		var dataPart = authorizationHeaderValue[headerPartsRange[1]];
+		Span<Range> dataPartsRange = stackalloc Range[5];
+
+		// 确保 dataPartsRange 中有且仅有三个冒号
+		if (dataPart.Split(dataPartsRange, ':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+			!= 4) {
 			return false;
 		}
 
-		// 确保 timestamp 可解析为 long
-		if (!long.TryParse(valueParts[1], out var timestamp)) {
-			return false;
-		}
+		var identitySpan = dataPart[dataPartsRange[0]];
+		var timestampSpan = dataPart[dataPartsRange[1]];
+		var nonceSpan = dataPart[dataPartsRange[2]];
+		var signatureBase64Span = dataPart[dataPartsRange[3]];
 
 		// 确保 nonce 长度在允许范围内
-		if (valueParts[2].Length is < ISecurityServiceV1.MinNonceLength or > ISecurityServiceV1.MaxNonceLength) {
-			return false;
-		}
-
+		// 确保 timestamp 可解析为 long
 		// 确保 signatureBase64 解码后的长度合法
-		if (ISecurityServiceV1.GetBase64DecodedLength(valueParts[3]) != HMACSHA256.HashSizeInBytes) {
+		if (nonceSpan.Length is < ISecurityServiceV1.MinNonceLength or > ISecurityServiceV1.MaxNonceLength
+			|| !long.TryParse(timestampSpan, out var timestamp)
+			|| ISecurityServiceV1.GetBase64DecodedLength(signatureBase64Span) != HMACSHA256.HashSizeInBytes) {
 			return false;
 		}
 
-		result = new(
-			scheme,
-			valueParts[0],
-			timestamp,
-			valueParts[2],
-			valueParts[3]
-		);
+		result = new(scheme, identitySpan.ToString(), timestamp, nonceSpan.ToString(), signatureBase64Span.ToString());
 		return true;
 	}
 }

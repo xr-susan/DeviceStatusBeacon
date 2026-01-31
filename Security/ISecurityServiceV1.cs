@@ -80,19 +80,18 @@ public interface ISecurityServiceV1 {
 
 		var length = base64String.Length;
 
+		// Base64 字符串长度必须是 4 的倍数
 		if (length % 4 != 0) {
 			return -1;
 		}
 
-		var padding = 0;
-
-		// 检查末尾是否有填充符 '='
-		if (length > 0 && base64String[length - 1] == '=') {
-			padding++;
-			if (length > 1 && base64String[length - 2] == '=') {
-				padding++;
-			}
-		}
+		// 计算填充字符的数量
+		// 前面的逻辑已经确保 length >= 4，无需担心索引越界
+		var padding = base64String[^2..] switch {
+			"==" => 2,
+			[.., '='] => 1,
+			_ => 0,
+		};
 
 		return (length / 4 * 3) - padding;
 	}

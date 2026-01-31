@@ -50,7 +50,7 @@ public record SignatureBasisV1(string RequestMethod, string RequestPathAndQuery,
 	/// <returns>验证结果</returns>
 	public bool VerifySignature(ReadOnlySpan<byte> secretKey, string signatureBase64) {
 		// 检查签名长度是否正确
-		if (ISecurityServiceV1.GetBase64DecodedLength(signatureBase64) is not HMACSHA256.HashSizeInBytes) {
+		if (ISecurityServiceV1.GetBase64DecodedLength(signatureBase64) != HMACSHA256.HashSizeInBytes) {
 			return false;
 		}
 
