@@ -43,8 +43,8 @@ public record AuthenticationHeaderV1(AuthenticationSchemeV1 Scheme, string Ident
 	public static bool TryParse(StringValues? authorizationHeaderValues, [NotNullWhen(true)] out AuthenticationHeaderV1? result) {
 		result = null;
 
-		// 确保 authorizationHeaderValues 有且仅有一个值且非 null
-		return authorizationHeaderValues is [var input] && input is not null && TryParse(input.AsSpan(), out result);
+		// 确保 authorizationHeaderValues 非 null 且有且仅有一个值
+		return authorizationHeaderValues is [var input] && TryParse(input.AsSpan(), out result);
 	}
 
 	/// <summary>
@@ -53,12 +53,8 @@ public record AuthenticationHeaderV1(AuthenticationSchemeV1 Scheme, string Ident
 	/// <param name="authorizationHeaderValue">Authorization 请求头的值</param>
 	/// <param name="result">解析结果（若解析成功，则为 AuthenticationHeaderV1 实例；否则为 null）</param>
 	/// <returns>是否解析成功</returns>
-	public static bool TryParse(string? authorizationHeaderValue, [NotNullWhen(true)] out AuthenticationHeaderV1? result) {
-		result = null;
-
-		// 确保 authorizationHeaderValue 非 null
-		return authorizationHeaderValue is not null && TryParse(authorizationHeaderValue.AsSpan(), out result);
-	}
+	public static bool TryParse(string? authorizationHeaderValue, [NotNullWhen(true)] out AuthenticationHeaderV1? result)
+		=> TryParse(authorizationHeaderValue.AsSpan(), out result); // 利用 string? 的 AsSpan() 方法处理 null 情况
 
 	/// <summary>
 	/// 尝试从 HTTP Authorization 头解析出 AuthenticationHeaderV1 实例
@@ -71,8 +67,9 @@ public record AuthenticationHeaderV1(AuthenticationSchemeV1 Scheme, string Ident
 
 		// Authorization: <Scheme> <Identity>:<Timestamp>:<Nonce>:<Signature>
 
-		// 确保 authorizationHeaderValue 非0长度或全空白
-		if (authorizationHeaderValue.IsWhiteSpace()) {
+		// 确保 authorizationHeaderValue 长度在允许范围内且非全空白
+		if (authorizationHeaderValue.Length is < ISecurityServiceV1.MinAuthorizationHeaderValueLength or > ISecurityServiceV1.MaxAuthorizationHeaderValueLength
+			|| authorizationHeaderValue.IsWhiteSpace()) {
 			return false;
 		}
 
