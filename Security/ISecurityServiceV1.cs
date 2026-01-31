@@ -10,6 +10,11 @@ public interface ISecurityServiceV1 {
 	const long MaxAllowedTimestampDriftInSeconds = 300;
 
 	/// <summary>
+	/// 鉴权时传入的身份标识的最大长度
+	/// </summary>
+	const int MaxIdentityLength = 64;
+
+	/// <summary>
 	/// 鉴权时传入的随机字符串的最大长度
 	/// </summary>
 	const int MaxNonceLength = 64;

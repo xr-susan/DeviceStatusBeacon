@@ -105,10 +105,12 @@ public record AuthenticationHeaderV1(AuthenticationSchemeV1 Scheme, string Ident
 		var nonceSpan = dataPart[dataPartsRange[2]];
 		var signatureBase64Span = dataPart[dataPartsRange[3]];
 
+		// 确保 identity 长度在允许范围内
 		// 确保 nonce 长度在允许范围内
 		// 确保 timestamp 可解析为 long
 		// 确保 signatureBase64 解码后的长度合法
-		if (nonceSpan.Length is < ISecurityServiceV1.MinNonceLength or > ISecurityServiceV1.MaxNonceLength
+		if (identitySpan.Length is 0 or > ISecurityServiceV1.MaxIdentityLength
+			|| nonceSpan.Length is < ISecurityServiceV1.MinNonceLength or > ISecurityServiceV1.MaxNonceLength
 			|| !long.TryParse(timestampSpan, out var timestamp)
 			|| ISecurityServiceV1.GetBase64DecodedLength(signatureBase64Span) != HMACSHA256.HashSizeInBytes) {
 			return false;
