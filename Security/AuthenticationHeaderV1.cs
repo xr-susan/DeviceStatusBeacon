@@ -1,8 +1,12 @@
-﻿using System.Security.Cryptography;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 using Microsoft.Extensions.Primitives;
 
 namespace DeviceStatusBeacon.Security;
 
+/// <summary>
+/// 鉴权方案枚举
+/// </summary>
 public enum AuthenticationSchemeV1 {
 	/// <summary>
 	/// 未知鉴权方案
@@ -21,22 +25,48 @@ public enum AuthenticationSchemeV1 {
 }
 
 
+/// <summary>
+/// 从 HTTP Authorization 头解析出的鉴权信息
+/// </summary>
+/// <param name="Scheme">鉴权方案</param>
+/// <param name="Identity">用户身份</param>
+/// <param name="Timestamp">时间戳</param>
+/// <param name="Nonce">随机字符串</param>
+/// <param name="SignatureBase64">签名的 Base64 字符串</param>
 public record AuthenticationHeaderV1(AuthenticationSchemeV1 Scheme, string Identity, long Timestamp, string Nonce, string SignatureBase64) {
-	public static bool TryParse(StringValues? authorizationHeaderValues, out AuthenticationHeaderV1? result) {
+	/// <summary>
+	/// 尝试从 HTTP Authorization 头解析出 AuthenticationHeaderV1 实例
+	/// </summary>
+	/// <param name="authorizationHeaderValues">Authorization 请求头的值</param>
+	/// <param name="result">解析结果（若解析成功，则为 AuthenticationHeaderV1 实例；否则为 null）</param>
+	/// <returns>是否解析成功</returns>
+	public static bool TryParse(StringValues? authorizationHeaderValues, [NotNullWhen(true)] out AuthenticationHeaderV1? result) {
 		result = null;
 
 		// 确保 authorizationHeaderValues 有且仅有一个值且非 null
 		return authorizationHeaderValues is [var input] && input is not null && TryParse(input.AsSpan(), out result);
 	}
 
-	public static bool TryParse(string? authorizationHeaderValue, out AuthenticationHeaderV1? result) {
+	/// <summary>
+	/// 尝试从 HTTP Authorization 头解析出 AuthenticationHeaderV1 实例
+	/// </summary>
+	/// <param name="authorizationHeaderValue">Authorization 请求头的值</param>
+	/// <param name="result">解析结果（若解析成功，则为 AuthenticationHeaderV1 实例；否则为 null）</param>
+	/// <returns>是否解析成功</returns>
+	public static bool TryParse(string? authorizationHeaderValue, [NotNullWhen(true)] out AuthenticationHeaderV1? result) {
 		result = null;
 
 		// 确保 authorizationHeaderValue 非 null
 		return authorizationHeaderValue is not null && TryParse(authorizationHeaderValue.AsSpan(), out result);
 	}
 
-	public static bool TryParse(ReadOnlySpan<char> authorizationHeaderValue, out AuthenticationHeaderV1? result) {
+	/// <summary>
+	/// 尝试从 HTTP Authorization 头解析出 AuthenticationHeaderV1 实例
+	/// </summary>
+	/// <param name="authorizationHeaderValue">Authorization 请求头的值</param>
+	/// <param name="result">解析结果（若解析成功，则为 AuthenticationHeaderV1 实例；否则为 null）</param>
+	/// <returns>是否解析成功</returns>
+	public static bool TryParse(ReadOnlySpan<char> authorizationHeaderValue, [NotNullWhen(true)] out AuthenticationHeaderV1? result) {
 		result = null;
 
 		// Authorization: <Scheme> <Identity>:<Timestamp>:<Nonce>:<Signature>
