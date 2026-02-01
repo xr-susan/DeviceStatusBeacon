@@ -25,6 +25,9 @@ public class AuthenticationHandlerV1(IOptionsMonitor<AuthenticationSchemeOptions
 		}
 
 		// 解析并查找鉴权实体
+		// 使用 AsNoTracking 提高查询性能
+		// 即使追踪实体也无法在后续逻辑中 SaveChanges
+		// 后续修改实体后调用 Update 方法即可
 		IHasProtectedSecretKey? entity = null;
 		List<Claim> claims = [
 			new(ClaimTypes.AuthenticationMethod, authHeader.Scheme.ToString()),
@@ -32,8 +35,8 @@ public class AuthenticationHandlerV1(IOptionsMonitor<AuthenticationSchemeOptions
 		];
 
 		if (authHeader.Scheme == AuthenticationSchemeV1.Device) {
-			// 查询到的设备将被缓存以供后续使用，按设备调用 API 大概率会修改其内容
-			var device = await dbContext.Devices
+			// 查询到的设备将被缓存
+			var device = await dbContext.Devices.AsNoTracking()
 				.FirstOrDefaultAsync(d => d.DeviceName == authHeader.Identity && d.Enabled);
 
 			if (device is null) {
@@ -46,7 +49,7 @@ public class AuthenticationHandlerV1(IOptionsMonitor<AuthenticationSchemeOptions
 				new(ClaimTypes.Role, "Device")
 			]);
 		} else if (authHeader.Scheme == AuthenticationSchemeV1.Account) {
-			// 查询到的用户将被缓存，假设其本身不会被修改故不追踪以提高性能
+			// 查询到的用户将被缓存
 			var account = await dbContext.Accounts.AsNoTracking()
 				.FirstOrDefaultAsync(u => u.Username == authHeader.Identity);
 
