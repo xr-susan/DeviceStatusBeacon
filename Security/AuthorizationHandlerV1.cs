@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace DeviceStatusBeacon.Security;
 
+/// <inheritdoc/>
 public class AuthorizationHandlerV1(DeviceStatusBeaconContext dbContext) : AuthorizationHandler<IAuthorizationRequirement, Guid> {
+	/// <inheritdoc/>
 	protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, IAuthorizationRequirement requirement, Guid deviceId) {
 		// 从用户声明中提取角色和标识符
 		var role = context.User.FindFirst(ClaimTypes.Role)?.Value;
@@ -32,8 +34,8 @@ public class AuthorizationHandlerV1(DeviceStatusBeaconContext dbContext) : Autho
 		// 限制查询角色只能访问其拥有的设备
 		if (role == nameof(AccountRole.LimitedQuery)) {
 			var hasPermission = await dbContext.Devices
-				.AnyAsync(d =>
-				d.DeviceId == deviceId && d.AuthorizedAccounts.Any(a => a.AccountId == requesterId));
+				.AnyAsync(d => d.DeviceId == deviceId
+					&& d.AuthorizedAccounts.Any(a => a.AccountId == requesterId));
 
 			if (hasPermission) {
 				context.Succeed(requirement);

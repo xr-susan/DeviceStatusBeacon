@@ -5,12 +5,14 @@ using Microsoft.Extensions.Options;
 
 namespace DeviceStatusBeacon.Security;
 
+/// <inheritdoc/>
 public class AuthenticationHandlerV1(IOptionsMonitor<AuthenticationSchemeOptions> options,
 	ILoggerFactory logger,
 	UrlEncoder encoder,
 	ISecurityServiceV1 securityService,
 	DeviceStatusBeaconContext dbContext) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder) {
 
+	/// <inheritdoc/>
 	protected override async Task<AuthenticateResult> HandleAuthenticateAsync() {
 		// 尝试从请求头解析出鉴权信息
 		if (!AuthenticationHeaderV1.TryParse(authorizationHeaderValues: Request.Headers.Authorization, out var authHeader)) {
