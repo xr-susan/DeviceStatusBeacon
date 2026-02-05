@@ -74,12 +74,19 @@ public interface ISecurityServiceV1 {
 	bool VerifySignature(IHasProtectedSecretKey entity, SignatureBasisV1 signatureBasis, string signatureBase64);
 
 	/// <summary>
-	/// 生成指定长度的随机字节序列
+	/// 生成指定长度的随机字节数组
 	/// </summary>
-	/// <param name="keySizeInBytes">字节序列的长度（单位为字节）</param>
-	/// <returns>生成的随机字节序列</returns>
+	/// <param name="keySizeInBytes">字节数组的长度（单位为字节）</param>
+	/// <returns>生成的随机字节数组</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	static sealed Span<byte> GenerateRandomBytes(int keySizeInBytes = HMACSHA256.HashSizeInBytes) => RandomNumberGenerator.GetBytes(keySizeInBytes);
+	static sealed byte[] GenerateRandomBytes(int keySizeInBytes = HMACSHA256.HashSizeInBytes) => RandomNumberGenerator.GetBytes(keySizeInBytes);
+
+	/// <summary>
+	/// 使用随机数生成器填充指定的字节缓冲区
+	/// </summary>
+	/// <param name="buffer">需要被填充的字节缓冲区</param>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	static sealed void FillRandomBytes(Span<byte> buffer) => RandomNumberGenerator.Fill(buffer);
 
 	/// <summary>
 	/// 检查时间戳是否在允许的偏差范围内

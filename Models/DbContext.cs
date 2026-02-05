@@ -25,6 +25,9 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 		// 为日志时间创建索引以优化查询性能并方便过期数据的删除
 		modelBuilder.Entity<OnlineLog>().HasIndex(e => e.LogTime);
 
+		// 为日志创建 (设备 ID, 日志时间) 复合索引以优化按设备查询日志的性能
+		modelBuilder.Entity<OnlineLog>().HasIndex(e => new { e.DeviceId, e.LogTime });
+
 		// 定义用户名为账户实体的唯一索引
 		modelBuilder.Entity<Account>().HasIndex(e => e.Username).IsUnique();
 	}

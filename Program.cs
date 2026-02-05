@@ -35,6 +35,16 @@ builder.Services.AddAuthorizationBuilder()
 
 var app = builder.Build();
 
+try {
+	var (shouldExit, exitCode) = await ConsoleDispatcher.DispatchAsync(args, app.Services);
+	if (shouldExit) {
+		return exitCode;
+	}
+} catch (Exception e) {
+	Console.Error.WriteLine("Failed to dispatch console command: " + e.Message);
+	return -1;
+}
+
 if (app.Environment.IsDevelopment()) {
 
 }
