@@ -1,4 +1,9 @@
 version = 1
 
+exclude_patterns = [
+  "Migrations/**",
+  "Models/CompiledModels/**"
+]
+
 [[analyzers]]
 name = "csharp"
