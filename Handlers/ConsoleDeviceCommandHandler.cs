@@ -59,7 +59,7 @@ public static partial class ConsoleDispatcher {
 				return 2;
 			}
 
-			Console.WriteLine($"设备信息：");
+			Console.WriteLine("设备信息：");
 			Console.WriteLine($"  设备 ID：{device.DeviceId}");
 			Console.WriteLine($"  设备名称：{device.DeviceName}");
 			Console.WriteLine($"  显示名称：{device.DisplayName}");
