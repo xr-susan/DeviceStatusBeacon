@@ -1,4 +1,4 @@
-﻿namespace DeviceStatusBeacon.Models;
+﻿namespace DeviceStatusBeacon.Database;
 
 public interface IHasProtectedSecretKey {
 	/// <summary>

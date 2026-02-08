@@ -1,4 +1,4 @@
-﻿namespace DeviceStatusBeacon.Models;
+﻿namespace DeviceStatusBeacon.Database;
 
 /// <inheritdoc/>
 public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContext> options) : DbContext(options) {
@@ -16,6 +16,11 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 	/// 存储账户 <seealso cref="Account"/> 的实体集合，由 EF Core 自动映射到数据库表
 	/// </summary>
 	public DbSet<Account> Accounts { get; set; }
+
+	/// <summary>
+	/// 存储设置 <seealso cref="SettingInDb"/> 的实体集合，由 EF Core 自动映射到数据库表
+	/// </summary>
+	public DbSet<SettingInDb> Settings { get; set; }
 
 	/// <inheritdoc/>
 	protected override void OnModelCreating(ModelBuilder modelBuilder) {

@@ -18,8 +18,8 @@
 
 	<ItemGroup>
 		<Using Include="DeviceStatusBeacon" />
+		<Using Include="DeviceStatusBeacon.Database" />
 		<Using Include="DeviceStatusBeacon.Handlers" />
-		<Using Include="DeviceStatusBeacon.Models" />
 		<Using Include="DeviceStatusBeacon.Security" />
 		<Using Include="System.Net" />
 		<Using Include="Microsoft.AspNetCore.DataProtection" />
