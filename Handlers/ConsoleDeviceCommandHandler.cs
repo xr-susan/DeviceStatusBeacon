@@ -74,7 +74,7 @@ public static partial class ConsoleDispatcher {
 		if (argsAfterVerb is ["history", var nameToGetHistory, var countStr]
 			&& int.TryParse(countStr, out var count)) {
 
-			if (count <= 0 || count > MaxListItems) {
+			if (count is <= 0 or > MaxListItems) {
 				Console.WriteLine($"日志数量必须在 1 到 {MaxListItems} 之间");
 				return 3;
 			}

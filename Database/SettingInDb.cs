@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace DeviceStatusBeacon.Database;
+﻿namespace DeviceStatusBeacon.Database;
 
 public enum SettingInDbKey {
 	/// <summary>
