@@ -12,7 +12,7 @@ public static partial class ConsoleDispatcher {
 	/// </summary>
 	/// <param name="args">应用程序的命令行参数</param>
 	/// <param name="services">服务提供者</param>
-	/// <returns>如果为 (true, exitCode)，应当停止应用程序；如果为 (false, 0)，应当继续启动 web server</returns>
+	/// <returns>一个表示异步操作的任务。任务结果如果为 (true, exitCode)，应当以 exitCode 退出应用程序；如果为 (false, 0)，应当继续启动 web server</returns>
 	public static async Task<(bool, int)> DispatchAsync(string[] args, IServiceProvider services) {
 		// 提取首个动词参数
 		var verb = args.FirstOrDefault(arg => arg.Length >= 2 && arg[0] is not ('-' or '/'))?.ToLowerInvariant();
@@ -40,6 +40,10 @@ public static partial class ConsoleDispatcher {
 		return (true, exitCode);
 	}
 
+	/// <summary>
+	/// 打印帮助信息
+	/// </summary>
+	/// <returns>应用程序的退出代码，恒为 0</returns>
 	private static int HandleHelpCommand() {
 		Console.WriteLine("支持的命令：");
 		Console.WriteLine("  account add <name> <role>                      添加新账户");
@@ -65,6 +69,18 @@ public static partial class ConsoleDispatcher {
 		return 0;
 	}
 
+	/// <summary>
+	/// 结合自定义标题打印列表内容，并根据情况打印空列表或溢出消息
+	/// </summary>
+	/// <remarks>当对应消息为 null 时，不会做相应的的检查，直接视为通过；当消息为 <see cref="string.Empty"/> 时，会静默检查，如果未通过检查也不会输出任何内容，但将返回相应的退出代码</remarks>
+	/// <typeparam name="T">列表项类型</typeparam>
+	/// <param name="list">要打印的列表</param>
+	/// <param name="emptyMessage">列表为空时显示的消息</param>
+	/// <param name="overflowMessage">列表溢出时显示的消息</param>
+	/// <param name="header">列表标题</param>
+	/// <param name="itemPrinter">列表项打印器</param>
+	/// <param name="maxDisplayCount">最大显示数量</param>
+	/// <returns>应用程序的退出代码</returns>
 	internal static int PrintListWithHeader<T>(List<T> list, string? emptyMessage, string? overflowMessage, string header, Action<T> itemPrinter, int maxDisplayCount = MaxDisplayCount) {
 		if (emptyMessage is not null && list.Count == 0) {
 			if (emptyMessage != string.Empty) {
@@ -88,9 +104,33 @@ public static partial class ConsoleDispatcher {
 		return 0;
 	}
 
+	/// <summary>
+	/// 结合自定义标题格式化委托打印列表内容，并根据情况打印空列表或溢出消息
+	/// </summary>
+	/// <remarks>当对应消息为 null 时，不会做相应的的检查，直接视为通过；当消息为 <see cref="string.Empty"/> 时，会静默检查，如果未通过检查也不会输出任何内容，但将返回相应的退出代码</remarks>
+	/// <typeparam name="T">列表项类型</typeparam>
+	/// <param name="list">要打印的列表</param>
+	/// <param name="emptyMessage">列表为空时显示的消息</param>
+	/// <param name="overflowMessage">列表溢出时显示的消息</param>
+	/// <param name="headerFormatter">列表标题格式化委托，传入参数为当前列表项数量</param>
+	/// <param name="itemPrinter">列表项打印器</param>
+	/// <param name="maxDisplayCount">最大显示数量</param>
+	/// <returns>应用程序的退出代码</returns>
 	internal static int PrintListWithHeader<T>(List<T> list, string? emptyMessage, string? overflowMessage, Func<int, string> headerFormatter, Action<T> itemPrinter, int maxDisplayCount = MaxDisplayCount) =>
 		PrintListWithHeader(list, emptyMessage, overflowMessage, headerFormatter(list.Count), itemPrinter, maxDisplayCount);
 
+	/// <summary>
+	/// 结合通用标题打印列表内容，并根据情况打印空列表或溢出消息
+	/// </summary>
+	/// <remarks>当对应消息为 null 时，不会做相应的的检查，直接视为通过；当消息为 <see cref="string.Empty"/> 时，会静默检查，如果未通过检查也不会输出任何内容，但将返回相应的退出代码</remarks>
+	/// <typeparam name="T">列表项类型</typeparam>
+	/// <param name="list">要打印的列表</param>
+	/// <param name="emptyMessage">列表为空时显示的消息</param>
+	/// <param name="overflowMessage">列表溢出时显示的消息</param>
+	/// <param name="itemTypeName">列表项类型名称（用于显示在标题中）</param>
+	/// <param name="itemPrinter">列表项打印器</param>
+	/// <param name="maxDisplayCount">最大显示数量</param>
+	/// <returns>应用程序的退出代码</returns>
 	internal static int PrintListWithSummary<T>(List<T> list, string? emptyMessage, string? overflowMessage, string itemTypeName, Action<T> itemPrinter, int maxDisplayCount = MaxDisplayCount) =>
 		PrintListWithHeader(list, emptyMessage, overflowMessage, $"{itemTypeName}列表（共 {list.Count} 个{itemTypeName}）：", itemPrinter, maxDisplayCount);
 

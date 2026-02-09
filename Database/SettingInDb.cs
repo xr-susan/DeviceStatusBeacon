@@ -31,7 +31,7 @@ public class SettingInDb {
 	/// </summary>
 	/// <param name="context">数据库上下文</param>
 	/// <param name="key">设置键</param>
-	/// <returns>获取到的设置值</returns>
+	/// <returns>一个表示异步操作的任务，任务结果为获取到的设置值</returns>
 	public static async Task<string?> GetValueAsync(DeviceStatusBeaconContext context, SettingInDbKey key) =>
 		(await context.Settings.FindAsync(key.ToString()))?.Value;
 
@@ -42,7 +42,7 @@ public class SettingInDb {
 	/// <param name="context">数据库上下文</param>
 	/// <param name="key">设置键</param>
 	/// <param name="parseFunc">解析函数</param>
-	/// <returns>获取到的设置值</returns>
+	/// <returns>一个表示异步操作的任务，任务结果为获取到的设置值</returns>
 	public static async Task<T?> GetValueAsync<T>(DeviceStatusBeaconContext context, SettingInDbKey key, Func<string, T> parseFunc) =>
 		await GetValueAsync(context, key) is string value ? parseFunc(value) : default;
 
@@ -81,7 +81,7 @@ public class SettingInDb {
 	/// 从数据库中获取 <see cref="SettingInDbKey.AppVersion"/> 设置值，如果设置不存在则返回 null
 	/// </summary>
 	/// <param name="context">数据库上下文</param>
-	/// <returns>获取到的 AppVersion 对象</returns>
+	/// <returns>一个表示异步操作的任务，任务结果为获取到的 AppVersion 对象</returns>
 	public static Task<Version?> GetAppVersionAsync(DeviceStatusBeaconContext context) =>
 		GetValueAsync(context, SettingInDbKey.AppVersion, Version.Parse);
 
@@ -100,7 +100,7 @@ public class SettingInDb {
 	/// </summary>
 	/// <param name="context">数据库上下文</param>
 	/// <param name="lastModifiedTime">要对比的时间戳字符串</param>
-	/// <returns>是否相等</returns>
+	/// <returns>一个表示异步操作的任务，任务结果指示两个值是否相等</returns>
 	public static async Task<bool> CompareEntityAuthInfoLastModifiedTimeAsync(DeviceStatusBeaconContext context, string lastModifiedTime) =>
 		await GetValueAsync(context, SettingInDbKey.EntityAuthInfoLastModifiedTime) == lastModifiedTime;
 
@@ -108,7 +108,7 @@ public class SettingInDb {
 	/// 更新数据库中 <see cref="SettingInDbKey.EntityAuthInfoLastModifiedTime"/> 设置值为当前时间的毫秒时间戳字符串表示，当该设置项不存在时，将会被创建并设置值
 	/// </summary>
 	/// <param name="context">数据库上下文</param>
-	/// <returns>更新后的时间戳字符串</returns>
+	/// <returns>一个表示异步操作的任务，任务结果为更新后的时间戳字符串</returns>
 	public static async Task<string> UpdateEntityAuthInfoLastModifiedTimeAsync(DeviceStatusBeaconContext context) {
 		var newLastModifiedTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
 		await SetValueAsync(context, SettingInDbKey.EntityAuthInfoLastModifiedTime, newLastModifiedTime);

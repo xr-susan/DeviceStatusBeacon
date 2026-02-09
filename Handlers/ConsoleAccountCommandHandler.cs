@@ -2,6 +2,12 @@
 
 /// <inheritdoc/>
 public static partial class ConsoleDispatcher {
+	/// <summary>
+	/// 处理 account 命令
+	/// </summary>
+	/// <param name="argsAfterVerb">动词之后的参数</param>
+	/// <param name="sp">负责依赖注入的服务提供者</param>
+	/// <returns>一个表示异步操作的任务，任务结果指示应用程序的退出代码</returns>
 	private static async Task<int> HandleAccountCommandAsync(string[] argsAfterVerb, IServiceProvider sp) {
 		// account list
 		if (argsAfterVerb is ["list"]) {
