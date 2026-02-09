@@ -11,13 +11,13 @@ public static partial class ConsoleDispatcher {
 				.AsNoTracking()
 				.OrderBy(d => d.DeviceName)
 				.Select(d => new { d.DeviceId, d.DeviceName, d.DisplayName })
-				.Take(MaxListItems + 1) // 多取1个以检测数量是否过多
+				.Take(MaxDisplayCount + 1) // 多取1个以检测数量是否过多
 				.ToListAsync();
 
-			return PrintList(
+			return PrintListWithSummary(
 				devices,
 				"没有找到任何设备",
-				$"设备数量过多（超过 {MaxListItems} 个），请使用 query 命令或数据库管理工具查询",
+				$"设备数量过多（超过 {MaxDisplayCount} 个），请使用 query 命令或数据库管理工具查询",
 				"设备",
 				device => Console.WriteLine($"  [{device.DeviceId}] {device.DeviceName} ({device.DisplayName})")
 			);
@@ -32,13 +32,13 @@ public static partial class ConsoleDispatcher {
 				.Where(d => d.DeviceName.Contains(partOfName))
 				.OrderBy(d => d.DeviceName)
 				.Select(d => new { d.DeviceId, d.DeviceName, d.DisplayName })
-				.Take(MaxListItems + 1) // 多取1个以检测数量是否过多
+				.Take(MaxDisplayCount + 1) // 多取1个以检测数量是否过多
 				.ToListAsync();
 
-			return PrintList(
+			return PrintListWithSummary(
 				devices,
 				"没有找到匹配的设备",
-				$"匹配的设备数量过多（超过 {MaxListItems} 个），请使用更精确的查询条件",
+				$"匹配的设备数量过多（超过 {MaxDisplayCount} 个），请使用更精确的查询条件",
 				"设备",
 				device => Console.WriteLine($"  [{device.DeviceId}] {device.DeviceName} ({device.DisplayName})")
 			);
@@ -71,11 +71,11 @@ public static partial class ConsoleDispatcher {
 		}
 
 		// device history <name> <count>
-		if (argsAfterVerb is ["history", var nameToGetHistory, var countStr]
-			&& int.TryParse(countStr, out var count)) {
+		if (argsAfterVerb is ["history", var nameToGetHistory, var countString]
+			&& int.TryParse(countString, out var count)) {
 
-			if (count is <= 0 or > MaxListItems) {
-				Console.WriteLine($"日志数量必须在 1 到 {MaxListItems} 之间");
+			if (count is <= 0 or > MaxDisplayCount) {
+				Console.WriteLine($"日志数量必须在 1 到 {MaxDisplayCount} 之间");
 				return 3;
 			}
 
@@ -89,19 +89,17 @@ public static partial class ConsoleDispatcher {
 				.Take(count)
 				.ToListAsync();
 
-			if (logs.Count == 0) {
-				Console.WriteLine("未找到指定的设备或该设备没有日志");
-				return 2;
-			}
-
-			Console.WriteLine($"设备 {nameToGetHistory} 的最新 {logs.Count} 条日志：");
-			foreach (var log in logs) {
-				Console.WriteLine($"  [{log.LogTime:u}] 附加消息：{log.Message}");
-				Console.WriteLine($"    上报地址列表：[{string.Join(", ", log.ReportedAddresses)}]");
-				Console.WriteLine($"    上报者远程地址：{log.ReporterRemoteAddress}");
-			}
-
-			return 0;
+			return PrintListWithHeader(
+				logs,
+				"未找到指定的设备或该设备没有日志",
+				null,
+				$"设备 {nameToGetHistory} 的最新 {logs.Count} 条日志：",
+				log => {
+					Console.WriteLine($"  [{log.LogTime:u}] 附加消息：{log.Message}");
+					Console.WriteLine($"    上报地址列表：[{string.Join(", ", log.ReportedAddresses)}]");
+					Console.WriteLine($"    上报者远程地址：{log.ReporterRemoteAddress}");
+				}
+			);
 		}
 
 		// device add <name> [display-name]
@@ -135,6 +133,8 @@ public static partial class ConsoleDispatcher {
 
 			Console.WriteLine($"设备 [{newDevice.DeviceId}] {newDevice.DeviceName} 添加成功");
 			Console.WriteLine($"操作密钥：{Convert.ToBase64String(unprotectedSecretKey)}");
+
+			await UpdateLastModifiedTimeInternalAsync(db);
 			return 0;
 		}
 
@@ -156,6 +156,8 @@ public static partial class ConsoleDispatcher {
 
 			Console.WriteLine($"设备 {nameToReset} 的操作密钥已重置");
 			Console.WriteLine($"新操作密钥：{Convert.ToBase64String(newUnprotectedSecretKey)}");
+
+			await UpdateLastModifiedTimeInternalAsync(db);
 			return 0;
 		}
 
@@ -183,15 +185,17 @@ public static partial class ConsoleDispatcher {
 			}
 
 			Console.WriteLine($"设备重命名成功：{oldName} -> {newName}");
+
+			await UpdateLastModifiedTimeInternalAsync(db);
 			return 0;
 		}
 
 		// device set-display-name <name> <display-name>
-		if (argsAfterVerb is ["set-display-name", var name, var displayName]) {
+		if (argsAfterVerb is ["set-display-name", var nameToSetDisplayName, var displayName]) {
 			await using var db = sp.GetRequiredService<DeviceStatusBeaconContext>();
 
 			var updatedCount = await db.Devices
-				.Where(d => d.DeviceName == name)
+				.Where(d => d.DeviceName == nameToSetDisplayName)
 				.ExecuteUpdateAsync(d => d.SetProperty(dev => dev.DisplayName, displayName));
 
 			if (updatedCount == 0) {
@@ -199,7 +203,9 @@ public static partial class ConsoleDispatcher {
 				return 2;
 			}
 
-			Console.WriteLine($"设备 {name} 的显示名称已更新为：{displayName}");
+			Console.WriteLine($"设备 {nameToSetDisplayName} 的显示名称已更新为：{displayName}");
+
+			await UpdateLastModifiedTimeInternalAsync(db);
 			return 0;
 		}
 
@@ -217,6 +223,8 @@ public static partial class ConsoleDispatcher {
 			}
 
 			Console.WriteLine($"设备 {nameToDelete} 已删除");
+
+			await UpdateLastModifiedTimeInternalAsync(db);
 			return 0;
 		}
 

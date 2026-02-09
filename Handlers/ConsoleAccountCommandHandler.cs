@@ -11,13 +11,13 @@ public static partial class ConsoleDispatcher {
 				.AsNoTracking()
 				.OrderBy(a => a.Username)
 				.Select(a => new { a.AccountId, a.Username, a.Role })
-				.Take(MaxListItems + 1) // 多取1个以检测数量是否过多
+				.Take(MaxDisplayCount + 1) // 多取1个以检测数量是否过多
 				.ToListAsync();
 
-			return PrintList(
+			return PrintListWithSummary(
 				accounts,
 				"没有找到任何账户",
-				$"账户数量过多（超过 {MaxListItems} 个），请使用 query 命令或数据库管理工具查询",
+				$"账户数量过多（超过 {MaxDisplayCount} 个），请使用 query 命令或数据库管理工具查询",
 				"账户",
 				account => Console.WriteLine($"  [{account.AccountId}] {account.Username} ({account.Role})")
 			);
@@ -32,21 +32,21 @@ public static partial class ConsoleDispatcher {
 				.Where(a => a.Username.Contains(partOfName))
 				.OrderBy(a => a.Username)
 				.Select(a => new { a.AccountId, a.Username, a.Role })
-				.Take(MaxListItems + 1) // 多取1个以检测数量是否过多
+				.Take(MaxDisplayCount + 1) // 多取1个以检测数量是否过多
 				.ToListAsync();
 
-			return PrintList(
+			return PrintListWithSummary(
 				accounts,
 				"没有找到匹配的账户",
-				$"匹配的账户数量过多（超过 {MaxListItems} 个），请使用更精确的查询条件",
+				$"匹配的账户数量过多（超过 {MaxDisplayCount} 个），请使用更精确的查询条件",
 				"账户",
 				account => Console.WriteLine($"  [{account.AccountId}] {account.Username} ({account.Role})")
 			);
 		}
 
 		// account add <name> <role>
-		if (argsAfterVerb is ["add", var name, var roleStr]) {
-			if (!Enum.TryParse(roleStr, true, out AccountRole role)) {
+		if (argsAfterVerb is ["add", var nameToAdd, var roleString]) {
+			if (!Enum.TryParse(roleString, true, out AccountRole role)) {
 				Console.WriteLine("无效的用户角色");
 				return 3;
 			}
@@ -56,7 +56,7 @@ public static partial class ConsoleDispatcher {
 				return 5;
 			}
 
-			if (!GeneratedRegex.IdentityRegex().IsMatch(name)) {
+			if (!GeneratedRegex.IdentityRegex().IsMatch(nameToAdd)) {
 				Console.WriteLine("用户名不符合身份标识格式");
 				return 3;
 			}
@@ -67,7 +67,7 @@ public static partial class ConsoleDispatcher {
 			var unprotectedSecretKey = ISecurityServiceV1.GenerateRandomBytes();
 
 			var newAccount = new Account {
-				Username = name,
+				Username = nameToAdd,
 				ProtectedSecretKey = dataProtector.ProtectKey(unprotectedSecretKey),
 				Role = role
 			};
@@ -82,6 +82,8 @@ public static partial class ConsoleDispatcher {
 
 			Console.WriteLine($"账户 [{newAccount.AccountId}] {newAccount.Username} 添加成功");
 			Console.WriteLine($"操作密钥：{Convert.ToBase64String(unprotectedSecretKey)}");
+
+			await UpdateLastModifiedTimeInternalAsync(db);
 			return 0;
 		}
 
@@ -103,6 +105,8 @@ public static partial class ConsoleDispatcher {
 
 			Console.WriteLine($"账户 {nameToReset} 的操作密钥已重置");
 			Console.WriteLine($"新操作密钥：{Convert.ToBase64String(newUnprotectedSecretKey)}");
+
+			await UpdateLastModifiedTimeInternalAsync(db);
 			return 0;
 		}
 
@@ -130,6 +134,8 @@ public static partial class ConsoleDispatcher {
 			}
 
 			Console.WriteLine($"账户重命名成功：{oldName} -> {newName}");
+
+			await UpdateLastModifiedTimeInternalAsync(db);
 			return 0;
 		}
 
@@ -147,6 +153,8 @@ public static partial class ConsoleDispatcher {
 			}
 
 			Console.WriteLine($"账户 {nameToDelete} 已删除");
+
+			await UpdateLastModifiedTimeInternalAsync(db);
 			return 0;
 		}
 
