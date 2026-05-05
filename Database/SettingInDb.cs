@@ -7,9 +7,9 @@ public enum SettingInDbKey {
 	AppVersion,
 
 	/// <summary>
-	/// 实体鉴权信息上次修改时间，用于在数据库中的数据被外部修改后能够及时更新缓存，应当为毫秒时间戳的字符串表示
+	/// 实体鉴权信息版本，用于在数据库中的鉴权相关数据发生变更后通知缓存刷新，应当为 GUID 的字符串表示
 	/// </summary>
-	EntityAuthInfoLastModifiedTime
+	EntityAuthInfoVersion
 }
 
 
@@ -96,22 +96,22 @@ public class SettingInDb {
 
 
 	/// <summary>
-	/// 对比数据库中 <see cref="SettingInDbKey.EntityAuthInfoLastModifiedTime"/> 设置值与提供的时间戳字符串是否相等，如果设置不存在则返回 false
+	/// 对比数据库中 <see cref="SettingInDbKey.EntityAuthInfoVersion"/> 设置值与提供的版本字符串是否相等，如果设置不存在则返回 false
 	/// </summary>
 	/// <param name="context">数据库上下文</param>
-	/// <param name="lastModifiedTime">要对比的时间戳字符串</param>
+	/// <param name="version">要对比的版本字符串</param>
 	/// <returns>一个表示异步操作的任务，任务结果指示两个值是否相等</returns>
-	public static async Task<bool> CompareEntityAuthInfoLastModifiedTimeAsync(DeviceStatusBeaconContext context, string lastModifiedTime) =>
-		await GetValueAsync(context, SettingInDbKey.EntityAuthInfoLastModifiedTime) == lastModifiedTime;
+	public static async Task<bool> CompareEntityAuthInfoVersionAsync(DeviceStatusBeaconContext context, string version) =>
+		await GetValueAsync(context, SettingInDbKey.EntityAuthInfoVersion) == version;
 
 	/// <summary>
-	/// 更新数据库中 <see cref="SettingInDbKey.EntityAuthInfoLastModifiedTime"/> 设置值为当前时间的毫秒时间戳字符串表示，当该设置项不存在时，将会被创建并设置值
+	/// 更新数据库中 <see cref="SettingInDbKey.EntityAuthInfoVersion"/> 设置值为新的 GUID 字符串表示，当该设置项不存在时，将会被创建并设置值
 	/// </summary>
 	/// <param name="context">数据库上下文</param>
-	/// <returns>一个表示异步操作的任务，任务结果为更新后的时间戳字符串</returns>
-	public static async Task<string> UpdateEntityAuthInfoLastModifiedTimeAsync(DeviceStatusBeaconContext context) {
-		var newLastModifiedTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
-		await SetValueAsync(context, SettingInDbKey.EntityAuthInfoLastModifiedTime, newLastModifiedTime);
-		return newLastModifiedTime;
+	/// <returns>一个表示异步操作的任务，任务结果为更新后的版本字符串</returns>
+	public static async Task<string> UpdateEntityAuthInfoVersionAsync(DeviceStatusBeaconContext context) {
+		var newVersion = Guid.NewGuid().ToString("D");
+		await SetValueAsync(context, SettingInDbKey.EntityAuthInfoVersion, newVersion);
+		return newVersion;
 	}
 }

@@ -89,7 +89,7 @@ public static partial class ConsoleDispatcher {
 			Console.WriteLine($"账户 [{newAccount.AccountId}] {newAccount.Username} 添加成功");
 			Console.WriteLine($"操作密钥：{Convert.ToBase64String(unprotectedSecretKey)}");
 
-			await UpdateLastModifiedTimeInternalAsync(db);
+			await UpdateEntityAuthInfoVersionInternalAsync(db);
 			return 0;
 		}
 
@@ -112,7 +112,7 @@ public static partial class ConsoleDispatcher {
 			Console.WriteLine($"账户 {nameToReset} 的操作密钥已重置");
 			Console.WriteLine($"新操作密钥：{Convert.ToBase64String(newUnprotectedSecretKey)}");
 
-			await UpdateLastModifiedTimeInternalAsync(db);
+			await UpdateEntityAuthInfoVersionInternalAsync(db);
 			return 0;
 		}
 
@@ -141,7 +141,7 @@ public static partial class ConsoleDispatcher {
 
 			Console.WriteLine($"账户重命名成功：{oldName} -> {newName}");
 
-			await UpdateLastModifiedTimeInternalAsync(db);
+			await UpdateEntityAuthInfoVersionInternalAsync(db);
 			return 0;
 		}
 
@@ -160,7 +160,7 @@ public static partial class ConsoleDispatcher {
 
 			Console.WriteLine($"账户 {nameToDelete} 已删除");
 
-			await UpdateLastModifiedTimeInternalAsync(db);
+			await UpdateEntityAuthInfoVersionInternalAsync(db);
 			return 0;
 		}
 

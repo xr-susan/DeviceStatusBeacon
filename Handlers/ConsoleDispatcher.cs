@@ -135,16 +135,16 @@ public static partial class ConsoleDispatcher {
 		PrintListWithHeader(list, emptyMessage, overflowMessage, $"{itemTypeName}列表（共 {list.Count} 个{itemTypeName}）：", itemPrinter, maxDisplayCount);
 
 	/// <summary>
-	/// 更新实体认证信息最后修改时间以通知正在运行的 web server 刷新缓存
+	/// 更新实体认证信息版本以通知正在运行的 web server 刷新缓存
 	/// </summary>
 	/// <remarks>此方法不会抛出异常，在捕获到异常时将会反映到控制台</remarks>
 	/// <param name="db">数据库上下文</param>
 	/// <returns>一个表示异步操作的任务</returns>
-	internal static async Task UpdateLastModifiedTimeInternalAsync(DeviceStatusBeaconContext db) {
+	internal static async Task UpdateEntityAuthInfoVersionInternalAsync(DeviceStatusBeaconContext db) {
 		try {
-			await SettingInDb.UpdateEntityAuthInfoLastModifiedTimeAsync(db);
+			await SettingInDb.UpdateEntityAuthInfoVersionAsync(db);
 		} catch (Exception e) {
-			Console.WriteLine($"\n警告：更新实体认证信息最后修改时间时发生错误：{e.Message}");
+			Console.WriteLine($"\n警告：更新实体认证信息版本时发生错误：{e.Message}");
 			Console.WriteLine("基础操作已经完成，但正在运行中的 web server 可能无法及时刷新缓存以应用此更改。\n");
 		}
 	}

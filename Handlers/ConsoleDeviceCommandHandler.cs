@@ -140,7 +140,7 @@ public static partial class ConsoleDispatcher {
 			Console.WriteLine($"设备 [{newDevice.DeviceId}] {newDevice.DeviceName} 添加成功");
 			Console.WriteLine($"操作密钥：{Convert.ToBase64String(unprotectedSecretKey)}");
 
-			await UpdateLastModifiedTimeInternalAsync(db);
+			await UpdateEntityAuthInfoVersionInternalAsync(db);
 			return 0;
 		}
 
@@ -163,7 +163,7 @@ public static partial class ConsoleDispatcher {
 			Console.WriteLine($"设备 {nameToReset} 的操作密钥已重置");
 			Console.WriteLine($"新操作密钥：{Convert.ToBase64String(newUnprotectedSecretKey)}");
 
-			await UpdateLastModifiedTimeInternalAsync(db);
+			await UpdateEntityAuthInfoVersionInternalAsync(db);
 			return 0;
 		}
 
@@ -192,7 +192,7 @@ public static partial class ConsoleDispatcher {
 
 			Console.WriteLine($"设备重命名成功：{oldName} -> {newName}");
 
-			await UpdateLastModifiedTimeInternalAsync(db);
+			await UpdateEntityAuthInfoVersionInternalAsync(db);
 			return 0;
 		}
 
@@ -211,7 +211,7 @@ public static partial class ConsoleDispatcher {
 
 			Console.WriteLine($"设备 {nameToSetDisplayName} 的显示名称已更新为：{displayName}");
 
-			await UpdateLastModifiedTimeInternalAsync(db);
+			await UpdateEntityAuthInfoVersionInternalAsync(db);
 			return 0;
 		}
 
@@ -230,7 +230,7 @@ public static partial class ConsoleDispatcher {
 
 			Console.WriteLine($"设备 {nameToDelete} 已删除");
 
-			await UpdateLastModifiedTimeInternalAsync(db);
+			await UpdateEntityAuthInfoVersionInternalAsync(db);
 			return 0;
 		}
 
