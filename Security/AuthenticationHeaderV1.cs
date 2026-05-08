@@ -15,9 +15,9 @@ public enum AuthenticationSchemeV1 {
 	Unknown,
 
 	/// <summary>
-	/// 用户账号鉴权方案
+	/// API 凭据鉴权方案
 	/// </summary>
-	Account,
+	ApiCredential,
 
 	/// <summary>
 	/// 设备鉴权方案
@@ -30,11 +30,11 @@ public enum AuthenticationSchemeV1 {
 /// 从 HTTP Authorization 头解析出的鉴权信息
 /// </summary>
 /// <param name="Scheme">鉴权方案</param>
-/// <param name="Identity">用户身份（名称）</param>
+/// <param name="Identity">主体身份唯一标识符，当前使用 Guid</param>
 /// <param name="Timestamp">时间戳</param>
 /// <param name="Nonce">随机字符串</param>
 /// <param name="SignatureBase64">签名的 Base64 字符串</param>
-public sealed record AuthenticationHeaderV1(AuthenticationSchemeV1 Scheme, string Identity, long Timestamp, string Nonce, string SignatureBase64) {
+public sealed record AuthenticationHeaderV1(AuthenticationSchemeV1 Scheme, Guid Identity, long Timestamp, string Nonce, string SignatureBase64) {
 	/// <summary>
 	/// 尝试从 HTTP Authorization 头解析出 AuthenticationHeaderV1 实例
 	/// </summary>
@@ -69,6 +69,7 @@ public sealed record AuthenticationHeaderV1(AuthenticationSchemeV1 Scheme, strin
 		result = null;
 
 		// Authorization: <Scheme> <Identity>:<Timestamp>:<Nonce>:<Signature>
+		// 当前 Device 使用 DeviceId，ApiCredential 使用 ApiCredentialId
 
 		// 确保 authorizationHeaderValueString 长度在允许范围内且非全空白
 		if (authorizationHeaderValueSpan.Length is < ISecurityServiceV1.MinAuthorizationHeaderValueLength or > ISecurityServiceV1.MaxAuthorizationHeaderValueLength
@@ -105,18 +106,18 @@ public sealed record AuthenticationHeaderV1(AuthenticationSchemeV1 Scheme, strin
 		var nonceSpan = dataPart[dataPartsRange[2]];
 		var signatureBase64Span = dataPart[dataPartsRange[3]];
 
-		// 确保 identity 长度在允许范围内
 		// 确保 nonce 长度在允许范围内
 		// 确保 timestamp 可解析为 long
 		// 确保 signatureBase64 解码后的长度合法
-		if (identitySpan.Length is 0 or > ISecurityServiceV1.MaxIdentityLength
-			|| nonceSpan.Length is < ISecurityServiceV1.MinNonceLength or > ISecurityServiceV1.MaxNonceLength
+		// 确保 identity 可解析为 Guid
+		if (nonceSpan.Length is < ISecurityServiceV1.MinNonceLength or > ISecurityServiceV1.MaxNonceLength
 			|| !long.TryParse(timestampSpan, out var timestamp)
-			|| ISecurityServiceV1.GetBase64DecodedLength(signatureBase64Span) != HMACSHA256.HashSizeInBytes) {
+			|| ISecurityServiceV1.GetBase64DecodedLength(signatureBase64Span) != HMACSHA256.HashSizeInBytes
+			|| !Guid.TryParseExact(identitySpan, "D", out var identity)) {
 			return false;
 		}
 
-		result = new(scheme, identitySpan.ToString(), timestamp, nonceSpan.ToString(), signatureBase64Span.ToString());
+		result = new(scheme, identity, timestamp, nonceSpan.ToString(), signatureBase64Span.ToString());
 		return true;
 	}
 }

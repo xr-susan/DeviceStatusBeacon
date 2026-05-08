@@ -30,38 +30,31 @@ public class AuthenticationHandlerV1(IOptionsMonitor<AuthenticationSchemeOptions
 		// 后续修改实体后调用 Update 方法即可
 		IHasProtectedSecretKey? entity = null;
 		List<Claim> claims = [
-			new(ClaimTypes.AuthenticationMethod, authHeader.Scheme.ToString()),
-			new(ClaimTypes.Name, authHeader.Identity)
+			new(ClaimTypes.NameIdentifier, authHeader.Identity.ToString())
 		];
 
 		if (authHeader.Scheme == AuthenticationSchemeV1.Device) {
 			// 查询到的设备将被缓存
 			var device = await dbContext.Devices.AsNoTracking()
-				.FirstOrDefaultAsync(d => d.DeviceName == authHeader.Identity && d.Enabled);
+				.SingleOrDefaultAsync(d => d.DeviceId == authHeader.Identity && d.Enabled);
 
 			if (device is null) {
-				return AuthenticateResult.Fail("无法找到指定名称的设备实体，或找到的设备实体已被禁用");
+				return AuthenticateResult.Fail("无法找到指定 DeviceId 的设备实体，或找到的设备实体已被禁用");
 			}
 
 			entity = device;
-			claims.AddRange([
-				new(ClaimTypes.NameIdentifier, device.DeviceId.ToString()),
-				new(ClaimTypes.Role, "Device")
-			]);
-		} else if (authHeader.Scheme == AuthenticationSchemeV1.Account) {
-			// 查询到的用户将被缓存
-			var account = await dbContext.Accounts.AsNoTracking()
-				.FirstOrDefaultAsync(u => u.Username == authHeader.Identity);
+			claims.Add(new(ClaimTypes.Role, "Device"));
+		} else if (authHeader.Scheme == AuthenticationSchemeV1.ApiCredential) {
+			// 查询到的 API 凭据将被缓存
+			var apiCredential = await dbContext.ApiCredentials.AsNoTracking()
+				.SingleOrDefaultAsync(c => c.ApiCredentialId == authHeader.Identity);
 
-			if (account is null) {
-				return AuthenticateResult.Fail("无法找到指定名称的账户实体");
+			if (apiCredential is null) {
+				return AuthenticateResult.Fail("无法找到指定 ApiCredentialId 的 API 凭据实体");
 			}
 
-			entity = account;
-			claims.AddRange([
-				new(ClaimTypes.NameIdentifier, account.AccountId.ToString()),
-				new(ClaimTypes.Role, account.Role.ToString())
-			]);
+			entity = apiCredential;
+			claims.Add(new(ClaimTypes.Role, apiCredential.Role.ToString()));
 		} else {
 			// 代码逻辑上不应到达此处
 			throw new InvalidOperationException("不支持的鉴权方案");

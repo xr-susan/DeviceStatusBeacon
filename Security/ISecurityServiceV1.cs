@@ -11,16 +11,6 @@ public interface ISecurityServiceV1 {
 	const long MaxAllowedTimestampDriftInSeconds = 300;
 
 	/// <summary>
-	/// 鉴权时传入的身份标识的最大长度
-	/// </summary>
-	const int MaxIdentityLength = 64;
-
-	/// <summary>
-	/// 鉴权时传入的身份标识的最小长度
-	/// </summary>
-	const int MinIdentityLength = 4;
-
-	/// <summary>
 	/// 鉴权时传入的随机字符串的最大长度
 	/// </summary>
 	const int MaxNonceLength = 64;
@@ -33,14 +23,14 @@ public interface ISecurityServiceV1 {
 	/// <summary>
 	/// 鉴权时 HTTP Authorization 头的最大允许长度
 	/// </summary>
-	/// <remarks>Scheme(&lt;=7) Identity(&lt;=<see cref="MaxIdentityLength"/>):Timestamp(&lt;=20):Nonce(&lt;=<see cref="MaxNonceLength"/>):Signature(44)</remarks>
-	const int MaxAuthorizationHeaderValueLength = 7 + 1 + MaxIdentityLength + 1 + 20 + 1 + MaxNonceLength + 1 + 44;
+	/// <remarks>Scheme(&lt;=13) Identity(Guid=36):Timestamp(&lt;=20):Nonce(&lt;=<see cref="MaxNonceLength"/>):Signature(44)</remarks>
+	const int MaxAuthorizationHeaderValueLength = 13 + 1 + 36 + 1 + 20 + 1 + MaxNonceLength + 1 + 44;
 
 	/// <summary>
 	/// 鉴权时 HTTP Authorization 头的最小允许长度
 	/// </summary>
-	/// <remarks>Scheme(&gt;=6) Identity(&gt;=<see cref="MinIdentityLength"/>):Timestamp(&gt;=1):Nonce(&gt;=<see cref="MinNonceLength"/>):Signature(44)</remarks>
-	const int MinAuthorizationHeaderValueLength = 6 + 1 + MinIdentityLength + 1 + 1 + 1 + MinNonceLength + 1 + 44;
+	/// <remarks>Scheme(&gt;=6) Identity(Guid=36):Timestamp(&gt;=1):Nonce(&gt;=<see cref="MinNonceLength"/>):Signature(44)</remarks>
+	const int MinAuthorizationHeaderValueLength = 6 + 1 + 36 + 1 + 1 + 1 + MinNonceLength + 1 + 44;
 
 	/// <summary>
 	/// 安全的 UTF-8 编码器，遇到无效字节时会抛出异常，不带有 BOM

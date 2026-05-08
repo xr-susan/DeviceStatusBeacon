@@ -9,6 +9,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.2" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.2">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
@@ -19,11 +20,7 @@
 	<ItemGroup>
 		<Using Include="DeviceStatusBeacon" />
 		<Using Include="DeviceStatusBeacon.Database" />
-		<Using Include="DeviceStatusBeacon.Handlers" />
 		<Using Include="DeviceStatusBeacon.Security" />
-		<Using Include="System.Net" />
-		<Using Include="Microsoft.AspNetCore.DataProtection" />
-		<Using Include="Microsoft.Data.Sqlite" />
 		<Using Include="Microsoft.EntityFrameworkCore" />
 	</ItemGroup>
 

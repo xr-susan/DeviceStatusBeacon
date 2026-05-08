@@ -4,7 +4,7 @@
 /// 控制台命令分发器
 /// </summary>
 public static partial class ConsoleDispatcher {
-	internal static readonly HashSet<string> ValidVerbs = ["account", "device", "help", "exit"];
+	internal static readonly HashSet<string> ValidVerbs = ["api-credential", "device", "user", "help", "exit"];
 	internal const int MaxDisplayCount = 50;
 
 	/// <summary>
@@ -30,8 +30,9 @@ public static partial class ConsoleDispatcher {
 
 		// 根据动词参数分发到相应的命令处理程序
 		var exitCode = verb switch {
-			"account" => await HandleAccountCommandAsync(argsAfterVerb, provider),
+			"api-credential" => await HandleApiCredentialCommandAsync(argsAfterVerb, provider),
 			"device" => await HandleDeviceCommandAsync(argsAfterVerb, provider),
+			"user" => await HandleUserCommandAsync(argsAfterVerb, provider),
 			"help" => HandleHelpCommand(),
 			"exit" => 0,
 			_ => throw new InvalidOperationException("不支持的命令动词") // 代码逻辑上不应到达此处
@@ -46,12 +47,19 @@ public static partial class ConsoleDispatcher {
 	/// <returns>应用程序的退出代码，恒为 0</returns>
 	private static int HandleHelpCommand() {
 		Console.WriteLine("支持的命令：");
-		Console.WriteLine("  account add <name> <role>                      添加新账户");
-		Console.WriteLine("  account delete <name>                          删除指定账户");
-		Console.WriteLine("  account list                                   列出所有账户");
-		Console.WriteLine("  account query <part-of-name>                   查询匹配的账户");
-		Console.WriteLine("  account rename <old-name> <new-name>           重命名指定账户");
-		Console.WriteLine("  account reset-key <name>                       重置指定账户的操作密钥");
+		Console.WriteLine("  api-credential add <user-name> <role>          添加新 API 凭据");
+		Console.WriteLine("  api-credential delete <api-credential-id>      删除指定 API 凭据");
+		Console.WriteLine("  api-credential list                            列出所有 API 凭据");
+		Console.WriteLine("  api-credential query-by-user <user-name>       查询指定用户关联的 API 凭据");
+		Console.WriteLine("  api-credential reset-key <api-credential-id>   重置指定 API 凭据的操作密钥");
+		Console.WriteLine();
+		Console.WriteLine("  user add <name> <role> <password>              添加新用户");
+		Console.WriteLine("  user delete <name>                             删除指定用户");
+		Console.WriteLine("  user list                                      列出所有用户");
+		Console.WriteLine("  user query <part-of-name>                      查询匹配的用户");
+		Console.WriteLine("  user rename <old-name> <new-name>              重命名指定用户");
+		Console.WriteLine("  user reset-password <name> <new-password>      重置指定用户的密码");
+		Console.WriteLine("  user set-role <name> <role>                    设置指定用户的角色");
 		Console.WriteLine();
 		Console.WriteLine("  device add <name> [display-name]               添加新设备");
 		Console.WriteLine("  device delete <name>                           删除指定设备");

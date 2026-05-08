@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace DeviceStatusBeacon;
 
@@ -13,8 +13,7 @@ public static class CustomServiceCollectionExtensions {
 		/// <param name="services">将要添加服务的 <see cref="IServiceCollection"/></param>
 		/// <returns>当前的 <see cref="IServiceCollection"/>，用于链式调用</returns>
 		public IServiceCollection AddCustomServices() =>
-			services.AddScoped<IAuthorizationHandler, AuthorizationHandlerV1>()
-				.AddSingleton<IDataProtectorV1, DataProtectorV1>()
+			services.AddSingleton<IDataProtectorV1, DataProtectorV1>()
 				.AddScoped<ISecurityServiceV1, SecurityServiceV1>();
 
 		/// <summary>
@@ -68,6 +67,18 @@ public static class CustomServiceCollectionExtensions {
 			}
 
 			return services;
+		}
+	}
+
+	extension(IServiceProvider serviceProvider) {
+		/// <summary>
+		/// 应用数据库迁移
+		/// </summary>
+		/// <returns>一个表示异步迁移操作的任务</returns>
+		public async Task MigrateDatabaseAsync() {
+			using var scope = serviceProvider.CreateScope();
+			var dbContext = scope.ServiceProvider.GetRequiredService<DeviceStatusBeaconContext>();
+			await dbContext.Database.MigrateAsync();
 		}
 	}
 }

@@ -1,7 +1,12 @@
-﻿namespace DeviceStatusBeacon.Database;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
+
+namespace DeviceStatusBeacon.Database;
 
 /// <inheritdoc/>
-public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContext> options) : DbContext(options) {
+public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContext> options)
+	: IdentityDbContext<User, IdentityRole<Guid>, Guid, IdentityUserClaim<Guid>, UserRole, IdentityUserLogin<Guid>, IdentityRoleClaim<Guid>, IdentityUserToken<Guid>>(options) {
 	/// <summary>
 	/// 存储在线日志 <seealso cref="OnlineLog"/> 的实体集合，由 EF Core 自动映射到数据库表
 	/// </summary>
@@ -13,9 +18,9 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 	public DbSet<Device> Devices { get; set; }
 
 	/// <summary>
-	/// 存储账户 <seealso cref="Account"/> 的实体集合，由 EF Core 自动映射到数据库表
+	/// 存储 API 凭据 <seealso cref="ApiCredential"/> 的实体集合，由 EF Core 自动映射到数据库表
 	/// </summary>
-	public DbSet<Account> Accounts { get; set; }
+	public DbSet<ApiCredential> ApiCredentials { get; set; }
 
 	/// <summary>
 	/// 存储设置 <seealso cref="SettingInDb"/> 的实体集合，由 EF Core 自动映射到数据库表
@@ -24,7 +29,9 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 
 	/// <inheritdoc/>
 	protected override void OnModelCreating(ModelBuilder modelBuilder) {
-		// 定义设备名称为设备实体的唯一索引
+		base.OnModelCreating(modelBuilder);
+
+		// 定义设备名称为设备实体的人类管理名称唯一索引
 		modelBuilder.Entity<Device>().HasIndex(e => e.DeviceName).IsUnique();
 
 		// 为日志时间创建索引以优化查询性能并方便过期数据的删除
@@ -33,8 +40,20 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 		// 为日志创建 (设备 ID, 日志时间) 复合索引以优化按设备查询日志的性能
 		modelBuilder.Entity<OnlineLog>().HasIndex(e => new { e.DeviceId, e.LogTime });
 
-		// 定义用户名为账户实体的唯一索引
-		modelBuilder.Entity<Account>().HasIndex(e => e.Username).IsUnique();
+		// 定义 API 凭据的 DisplayName 在同一用户下唯一的索引，以方便管理和查询
+		// 此索引可同时作用于按 UserId 单项的查询，同样可以提升按 UserId 查询的性能
+		modelBuilder.Entity<ApiCredential>().HasIndex(e => new { e.UserId, e.DisplayName }).IsUnique();
+
+		// 每个用户最多只能关联一个 Identity 角色，以匹配当前的四层权限模型
+		modelBuilder.Entity<UserRole>().HasIndex(e => e.UserId).IsUnique();
+
+		// 预置固定的 Identity 角色，交由 EF Core Migration 管理
+		modelBuilder.Entity<IdentityRole<Guid>>().HasData([
+			BuildIdentityRole("5121009f-b5bd-4ec7-95ee-edb11bca4f92", PrincipalRole.LimitedQuery),
+			BuildIdentityRole("0e132786-0e18-4cd1-bf41-cfdd18b12d90", PrincipalRole.FullQuery),
+			BuildIdentityRole("a8a0d700-c15d-487a-97c6-3359113d367f", PrincipalRole.DeviceManager),
+			BuildIdentityRole("3df54d97-ee56-47f1-a1c0-3044dbdb8e41", PrincipalRole.Administrator)
+		]);
 	}
 
 	/// <summary>
@@ -83,5 +102,15 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 		}
 
 		return (dbConnectionString, dbDirectoryInfo);
+	}
+
+	private static IdentityRole<Guid> BuildIdentityRole(string id, PrincipalRole role) {
+		var roleName = role.ToString();
+		return new() {
+			Id = Guid.Parse(id),
+			Name = roleName,
+			NormalizedName = roleName.ToUpperInvariant(),
+			ConcurrencyStamp = id
+		};
 	}
 }

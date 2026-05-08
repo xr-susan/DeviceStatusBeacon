@@ -1,0 +1,43 @@
+﻿using Microsoft.AspNetCore.Identity;
+
+namespace DeviceStatusBeacon.Database;
+
+public class User : IdentityUser<Guid> {
+	/// <summary>
+	/// 用户显示名称（可选）
+	/// </summary>
+	public string? DisplayName { get; set; }
+
+	/// <summary>
+	/// 该用户关联的主体角色列表，受唯一索引约束，每个用户最多只能关联一个角色，以匹配当前的四层权限模型
+	/// </summary>
+	/// <remarks>此集合由 EF Core 管理</remarks>
+	public ICollection<UserRole> UserRoles { get; } = [];
+
+	/// <summary>
+	/// 该用户关联的 API 凭据列表
+	/// </summary>
+	/// <remarks>此集合由 EF Core 管理</remarks>
+	public ICollection<ApiCredential> ApiCredentials { get; } = [];
+
+	/// <summary>
+	/// 该用户有权限查询的设备列表，仅适用于具有 <see cref="PrincipalRole.LimitedQuery"/> 角色的用户
+	/// </summary>
+	/// <remarks>此集合由 EF Core 管理</remarks>
+	public ICollection<Device> AuthorizedDevices { get; } = [];
+}
+
+
+public class UserRole : IdentityUserRole<Guid> {
+	/// <summary>
+	/// 该用户角色条目关联的角色实体
+	/// </summary>
+	/// <remarks>此实体由 EF Core 管理</remarks>
+	public IdentityRole<Guid> Role { get; set; } = null!;
+
+	/// <summary>
+	/// 该用户角色条目关联的用户实体
+	/// </summary>
+	/// <remarks>此实体由 EF Core 管理</remarks>
+	public User User { get; set; } = null!;
+}

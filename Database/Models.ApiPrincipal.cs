@@ -1,0 +1,121 @@
+﻿using System.Net;
+
+namespace DeviceStatusBeacon.Database;
+
+public interface IHasProtectedSecretKey {
+	/// <summary>
+	/// 经 ASP.NET Core 数据保护 API 保护后的操作密钥
+	/// </summary>
+	byte[] ProtectedSecretKey { get; }  // skipcq: CS-W1096 此处 byte[] 与 SQLite 的 BLOB 类型对应，且用于存储加密后的数据，故直接保留数组
+}
+
+
+public class ApiCredential : IHasProtectedSecretKey {
+	/// <summary>
+	/// API 凭据唯一标识符，用于签名鉴权
+	/// </summary>
+	public Guid ApiCredentialId { get; set; }
+
+	/// <summary>
+	/// API 凭据显示名称（可选）
+	/// </summary>
+	public string? DisplayName { get; set; }
+
+	/// <summary>
+	/// 所属用户唯一标识符
+	/// </summary>
+	public Guid UserId { get; set; }
+
+	/// <summary>
+	/// 所属用户
+	/// </summary>
+	/// <remarks>此实体由 EF Core 管理</remarks>
+	public User User { get; set; } = null!;
+
+	/// <summary>
+	/// 经 ASP.NET Core 数据保护 API 保护后的 API 凭据操作密钥
+	/// </summary>
+	public required byte[] ProtectedSecretKey { get; set; }  // skipcq: CS-W1096 此处 byte[] 与 SQLite 的 BLOB 类型对应，且用于存储加密后的数据，故直接保留数组
+
+	/// <summary>
+	/// API 凭据角色
+	/// </summary>
+	public PrincipalRole Role { get; set; }
+
+	/// <summary>
+	/// API 凭据是否启用
+	/// </summary>
+	public bool Enabled { get; set; } = true;
+
+	/// <summary>
+	/// 该 API 凭据有权限查询的设备列表，仅适用于 <see cref="Role"/> 为 <see cref="PrincipalRole.LimitedQuery"/> 的 API 凭据
+	/// </summary>
+	/// <remarks>此集合由 EF Core 管理</remarks>
+	public ICollection<Device> AuthorizedDevices { get; } = [];
+}
+
+
+public class Device : IHasProtectedSecretKey {
+	/// <summary>
+	/// 设备唯一标识符
+	/// </summary>
+	public Guid DeviceId { get; set; }
+
+	/// <summary>
+	/// 设备唯一名称，用于人类管理
+	/// </summary>
+	public required string DeviceName { get; set; }
+
+	/// <summary>
+	/// 经 ASP.NET Core 数据保护 API 保护后的设备操作密钥
+	/// </summary>
+	public required byte[] ProtectedSecretKey { get; set; }  // skipcq: CS-W1096 此处 byte[] 与 SQLite 的 BLOB 类型对应，且用于存储加密后的数据，故直接保留数组
+
+	/// <summary>
+	/// 设备显示名称（可选）
+	/// </summary>
+	public string? DisplayName { get; set; }
+
+
+	/// <summary>
+	/// 该设备最新上线日志的提交时间
+	/// </summary>
+	public DateTime LatestLogTime { get; set; }
+
+	/// <summary>
+	/// 该设备最新上线日志中报告的地址列表
+	/// </summary>
+	/// <remarks>EF Core 会自动处理 <see cref="List{IPAddress}"/> 的值转换</remarks>
+	public List<IPAddress> LatestReportedAddresses { get; set; } = [];
+
+	/// <summary>
+	/// 该设备最新上线日志中上报者的远程地址
+	/// </summary>
+	/// <remarks>EF Core 会自动处理 <see cref="IPAddress"/> 的值转换</remarks>
+	public IPAddress? LatestReporterRemoteAddress { get; set; }
+
+
+	/// <summary>
+	/// 设备是否启用
+	/// </summary>
+	public bool Enabled { get; set; } = true;
+
+
+	/// <summary>
+	/// 关联的上线日志列表
+	/// </summary>
+	/// <remarks>此集合由 EF Core 管理</remarks>
+	public ICollection<OnlineLog> OnlineLogs { get; } = [];
+
+	/// <summary>
+	/// 有权限查询该设备数据的 API 凭据列表，仅适用于 <see cref="Role"/> 为 <see cref="PrincipalRole.LimitedQuery"/> 的 API 凭据
+	/// </summary>
+	/// <remarks>此集合由 EF Core 管理</remarks>
+	public ICollection<ApiCredential> AuthorizedApiCredentials { get; } = [];
+
+	/// <summary>
+	/// 有权限查询该设备数据的用户列表，仅适用于具有 <see cref="PrincipalRole.LimitedQuery"/> 角色的用户
+	/// </summary>
+	/// <remarks>此集合由 EF Core 管理</remarks>
+	public ICollection<User> AuthorizedUsers { get; } = [];
+}

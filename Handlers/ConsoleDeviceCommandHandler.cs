@@ -1,4 +1,6 @@
-﻿namespace DeviceStatusBeacon.Handlers;
+﻿using Microsoft.Data.Sqlite;
+
+namespace DeviceStatusBeacon.Handlers;
 
 /// <inheritdoc/>
 public static partial class ConsoleDispatcher {
@@ -9,14 +11,14 @@ public static partial class ConsoleDispatcher {
 	/// <param name="sp">负责依赖注入的服务提供者</param>
 	/// <returns>一个表示异步操作的任务，任务结果指示应用程序的退出代码</returns>
 	private static async Task<int> HandleDeviceCommandAsync(string[] argsAfterVerb, IServiceProvider sp) {
+		await using var db = sp.GetRequiredService<DeviceStatusBeaconContext>();
+
 		// device list
 		if (argsAfterVerb is ["list"]) {
-			await using var db = sp.GetRequiredService<DeviceStatusBeaconContext>();
-
 			var devices = await db.Devices
 				.AsNoTracking()
-				.OrderBy(d => d.DeviceName)
 				.Select(d => new { d.DeviceId, d.DeviceName, d.DisplayName })
+				.OrderBy(d => d.DeviceName)
 				.Take(MaxDisplayCount + 1) // 多取1个以检测数量是否过多
 				.ToListAsync();
 
@@ -31,13 +33,11 @@ public static partial class ConsoleDispatcher {
 
 		// device query <part-of-name>
 		if (argsAfterVerb is ["query", var partOfName]) {
-			await using var db = sp.GetRequiredService<DeviceStatusBeaconContext>();
-
 			var devices = await db.Devices
 				.AsNoTracking()
 				.Where(d => d.DeviceName.Contains(partOfName))
-				.OrderBy(d => d.DeviceName)
 				.Select(d => new { d.DeviceId, d.DeviceName, d.DisplayName })
+				.OrderBy(d => d.DeviceName)
 				.Take(MaxDisplayCount + 1) // 多取1个以检测数量是否过多
 				.ToListAsync();
 
@@ -52,46 +52,46 @@ public static partial class ConsoleDispatcher {
 
 		// device show <name>
 		if (argsAfterVerb is ["show", var nameToShow]) {
-			await using var db = sp.GetRequiredService<DeviceStatusBeaconContext>();
-
 			var device = await db.Devices
 				.AsNoTracking()
 				.Where(d => d.DeviceName == nameToShow)
 				.Select(d => new { d.DeviceId, d.DeviceName, d.DisplayName, d.LatestLogTime, d.LatestReportedAddresses, d.LatestReporterRemoteAddress })
-				.FirstOrDefaultAsync();
+				.SingleOrDefaultAsync();
 
 			if (device is null) {
 				Console.WriteLine("未找到指定的设备");
 				return 2;
 			}
 
-			Console.WriteLine("设备信息：");
-			Console.WriteLine($"  设备 ID：{device.DeviceId}");
-			Console.WriteLine($"  设备名称：{device.DeviceName}");
-			Console.WriteLine($"  显示名称：{device.DisplayName}");
-			Console.WriteLine($"  最新日志时间：{device.LatestLogTime:u}");
-			Console.WriteLine($"  最新上报地址列表：[{string.Join(", ", device.LatestReportedAddresses)}]");
-			Console.WriteLine($"  最新上报者远程地址：{device.LatestReporterRemoteAddress}");
+			Console.WriteLine($"""
+			设备信息：
+			  设备 ID：{device.DeviceId}
+			  设备名称：{device.DeviceName}
+			  显示名称：{device.DisplayName}
+			  最新日志时间：{device.LatestLogTime:u}
+			  最新上报地址列表：[{string.Join(", ", device.LatestReportedAddresses)}]
+			  最新上报者远程地址：{device.LatestReporterRemoteAddress}
+			""");
 
 			return 0;
 		}
 
 		// device history <name> <count>
-		if (argsAfterVerb is ["history", var nameToGetHistory, var countString]
-			&& int.TryParse(countString, out var count)) {
-
-			if (count is <= 0 or > MaxDisplayCount) {
+		if (argsAfterVerb is ["history", var nameToGetHistory, var countString]) {
+			if (!int.TryParse(countString, out var count) || count is <= 0 or > MaxDisplayCount) {
 				Console.WriteLine($"日志数量必须在 1 到 {MaxDisplayCount} 之间");
 				return 3;
 			}
 
-			await using var db = sp.GetRequiredService<DeviceStatusBeaconContext>();
-
+			// 使用子查询获取设备 ID，通过索引提高性能
 			var logs = await db.OnlineLogs
 				.AsNoTracking()
-				.Where(l => l.Device.DeviceName == nameToGetHistory)
-				.OrderByDescending(l => l.LogTime)
+				.Where(l => l.DeviceId == db.Devices
+					.Where(d => d.DeviceName == nameToGetHistory)
+					.Select(d => d.DeviceId)
+					.SingleOrDefault())
 				.Select(l => new { l.LogTime, l.ReportedAddresses, l.ReporterRemoteAddress, l.Message })
+				.OrderByDescending(l => l.LogTime)
 				.Take(count)
 				.ToListAsync();
 
@@ -118,8 +118,6 @@ public static partial class ConsoleDispatcher {
 				return 3;
 			}
 
-			await using var db = sp.GetRequiredService<DeviceStatusBeaconContext>();
-
 			var dataProtector = sp.GetRequiredService<IDataProtectorV1>();
 			var unprotectedSecretKey = ISecurityServiceV1.GenerateRandomBytes();
 
@@ -137,8 +135,13 @@ public static partial class ConsoleDispatcher {
 				return 1;
 			}
 
-			Console.WriteLine($"设备 [{newDevice.DeviceId}] {newDevice.DeviceName} 添加成功");
-			Console.WriteLine($"操作密钥：{Convert.ToBase64String(unprotectedSecretKey)}");
+			Console.WriteLine($"""
+				设备添加成功：
+				  设备 ID：{newDevice.DeviceId}
+				  设备名称：{newDevice.DeviceName}
+				  显示名称：{newDevice.DisplayName}
+				  操作密钥：{Convert.ToBase64String(unprotectedSecretKey)}
+				""");
 
 			await UpdateEntityAuthInfoVersionInternalAsync(db);
 			return 0;
@@ -146,14 +149,12 @@ public static partial class ConsoleDispatcher {
 
 		// device reset-key <name>
 		if (argsAfterVerb is ["reset-key", var nameToReset]) {
-			await using var db = sp.GetRequiredService<DeviceStatusBeaconContext>();
-
 			var dataProtector = sp.GetRequiredService<IDataProtectorV1>();
-			var newUnprotectedSecretKey = ISecurityServiceV1.GenerateRandomBytes();
+			var unprotectedSecretKey = ISecurityServiceV1.GenerateRandomBytes();
 
 			var updatedCount = await db.Devices
 				.Where(d => d.DeviceName == nameToReset)
-				.ExecuteUpdateAsync(d => d.SetProperty(dev => dev.ProtectedSecretKey, dataProtector.ProtectKey(newUnprotectedSecretKey)));
+				.ExecuteUpdateAsync(d => d.SetProperty(dev => dev.ProtectedSecretKey, dataProtector.ProtectKey(unprotectedSecretKey)));
 
 			if (updatedCount == 0) {
 				Console.WriteLine("未找到指定的设备");
@@ -161,7 +162,7 @@ public static partial class ConsoleDispatcher {
 			}
 
 			Console.WriteLine($"设备 {nameToReset} 的操作密钥已重置");
-			Console.WriteLine($"新操作密钥：{Convert.ToBase64String(newUnprotectedSecretKey)}");
+			Console.WriteLine($"新操作密钥：{Convert.ToBase64String(unprotectedSecretKey)}");
 
 			await UpdateEntityAuthInfoVersionInternalAsync(db);
 			return 0;
@@ -173,8 +174,6 @@ public static partial class ConsoleDispatcher {
 				Console.WriteLine("新设备名称不符合身份标识格式");
 				return 3;
 			}
-
-			await using var db = sp.GetRequiredService<DeviceStatusBeaconContext>();
 
 			try {
 				var updatedCount = await db.Devices
@@ -198,8 +197,6 @@ public static partial class ConsoleDispatcher {
 
 		// device set-display-name <name> <display-name>
 		if (argsAfterVerb is ["set-display-name", var nameToSetDisplayName, var displayName]) {
-			await using var db = sp.GetRequiredService<DeviceStatusBeaconContext>();
-
 			var updatedCount = await db.Devices
 				.Where(d => d.DeviceName == nameToSetDisplayName)
 				.ExecuteUpdateAsync(d => d.SetProperty(dev => dev.DisplayName, displayName));
@@ -217,8 +214,6 @@ public static partial class ConsoleDispatcher {
 
 		// device delete <name>
 		if (argsAfterVerb is ["delete", var nameToDelete]) {
-			await using var db = sp.GetRequiredService<DeviceStatusBeaconContext>();
-
 			var deletedCount = await db.Devices
 				.Where(d => d.DeviceName == nameToDelete)
 				.ExecuteDeleteAsync();
