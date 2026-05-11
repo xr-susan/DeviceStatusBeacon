@@ -44,7 +44,7 @@ public static partial class ConsoleDispatcher {
 
 			var users = await db.Users
 				.AsNoTracking()
-				.Where(u => u.NormalizedUserName != null
+				.Where(u => u.NormalizedUserName != null // skipcq: CS-R1136 表达式树不支持 is 模式匹配
 					&& u.NormalizedUserName.Contains(normalizedPartOfName))
 				.OrderBy(u => u.NormalizedUserName)
 				.Select(u => new {
@@ -190,54 +190,7 @@ public static partial class ConsoleDispatcher {
 			// 收窄相应的全部 API 凭据的权限范围（如果有的话），以匹配用户的新角色
 			// 原先不存在角色、原先的角色有误、角色降级这三种情况下需要进行权限范围的收窄
 			if (currentRoles.Count == 0 || !Enum.TryParse(currentRoles[0], true, out PrincipalRole currentRole) || role < currentRole) {
-				List<ApiCredential>? apiCredentialsToUpdate = null;
-
-				// 仅在用户被降级为 LimitedQuery 角色时才会被赋值
-				HashSet<Guid>? userDeviceIds = null;
-
-				if (role == PrincipalRole.LimitedQuery) {
-					// 通过用户 ID 查询用户授权的设备 ID 列表，利用索引加速查询
-					// 此查询结果一定不会被修改，使用 AsNoTracking 来提升性能
-					userDeviceIds = await db.Devices
-						.AsNoTracking()
-						.Where(d => d.AuthorizedUsers.Any(u => u.Id == user.Id))
-						.Select(d => d.DeviceId)
-						.ToHashSetAsync();
-
-					// 通过用户 ID 查询相关的 API 凭据，利用索引加速查询
-					apiCredentialsToUpdate = await db.ApiCredentials
-						.Where(c => c.UserId == user.Id)
-						.Include(c => c.AuthorizedDevices)
-						.ToListAsync();
-				} else {
-					// 通过用户 ID 查询相关的 API 凭据，利用索引加速查询
-					apiCredentialsToUpdate = await db.ApiCredentials
-						.Where(c => c.UserId == user.Id)
-						.ToListAsync();
-				}
-
-				foreach (var credential in apiCredentialsToUpdate) {
-					// 将 API 凭据的角色降级为用户的新角色，以匹配用户的新角色
-					if (credential.Role > role) {
-						credential.Role = role;
-					}
-
-					// 如果用户被降级为 LimitedQuery 角色
-					if (role == PrincipalRole.LimitedQuery) {
-						// 逐个检查 AuthorizedDevices 列表是否超过所属用户的 AuthorizedDevices，如果存在超过的情况，则移除这些设备的授权
-						var devicesToRemove = credential.AuthorizedDevices
-							.Where(ad => !userDeviceIds!.Contains(ad.DeviceId))
-							.ToList();
-
-						if (devicesToRemove.Count > 0) {
-							foreach (var deviceToRemove in devicesToRemove) {
-								credential.AuthorizedDevices.Remove(deviceToRemove);
-							}
-						}
-					}
-				}
-
-				await db.SaveChangesAsync();
+				await ShrinkApiCredentialScopesAsync(db, user.Id, role);
 			}
 
 			// 提前提交事务，不理会后续 UpdateEntityAuthInfoVersionInternalAsync 的结果
@@ -276,5 +229,63 @@ public static partial class ConsoleDispatcher {
 		Console.WriteLine("操作 ASP.NET Core Identity 用户失败，错误信息：");
 		Console.WriteLine(string.Join(Environment.NewLine, result.Errors.Select(e => e.Description)));
 		return -1;
+	}
+
+	/// <summary>
+	/// 收窄关联指定用户的 API 凭据的权限范围以匹配用户的新角色
+	/// </summary>
+	/// <param name="db">数据库上下文</param>
+	/// <param name="userId">用户 ID</param>
+	/// <param name="newRole">用户的新角色</param>
+	/// <returns>一个表示异步操作的任务</returns>
+	private static async Task ShrinkApiCredentialScopesAsync(DeviceStatusBeaconContext db, Guid userId, PrincipalRole newRole) {
+		List<ApiCredential>? apiCredentialsToUpdate = null;
+
+		// 仅在用户被降级为 LimitedQuery 角色时才会被赋值
+		HashSet<Guid>? userDeviceIds = null;
+
+		if (newRole == PrincipalRole.LimitedQuery) {
+			// 通过用户 ID 查询用户授权的设备 ID 列表，利用索引加速查询
+			// 此查询结果一定不会被修改，使用 AsNoTracking 来提升性能
+			userDeviceIds = await db.Devices
+				.AsNoTracking()
+				.Where(d => d.AuthorizedUsers.Any(u => u.Id == userId))
+				.Select(d => d.DeviceId)
+				.ToHashSetAsync();
+
+			// 通过用户 ID 查询相关的 API 凭据，利用索引加速查询
+			apiCredentialsToUpdate = await db.ApiCredentials
+				.Where(c => c.UserId == userId)
+				.Include(c => c.AuthorizedDevices)
+				.ToListAsync();
+		} else {
+			// 通过用户 ID 查询相关的 API 凭据，利用索引加速查询
+			apiCredentialsToUpdate = await db.ApiCredentials
+				.Where(c => c.UserId == userId)
+				.ToListAsync();
+		}
+
+		foreach (var credential in apiCredentialsToUpdate) {
+			// 将 API 凭据的角色降级为用户的新角色，以匹配用户的新角色
+			if (credential.Role > newRole) {
+				credential.Role = newRole;
+			}
+
+			// 如果用户被降级为 LimitedQuery 角色
+			if (newRole == PrincipalRole.LimitedQuery) {
+				// 逐个检查 AuthorizedDevices 列表是否超过所属用户的 AuthorizedDevices，如果存在超过的情况，则移除这些设备的授权
+				var devicesToRemove = credential.AuthorizedDevices
+					.Where(ad => !userDeviceIds!.Contains(ad.DeviceId))
+					.ToList();
+
+				if (devicesToRemove.Count > 0) {
+					foreach (var deviceToRemove in devicesToRemove) {
+						credential.AuthorizedDevices.Remove(deviceToRemove);
+					}
+				}
+			}
+		}
+
+		await db.SaveChangesAsync();
 	}
 }
