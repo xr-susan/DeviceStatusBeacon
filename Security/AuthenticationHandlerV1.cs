@@ -47,10 +47,10 @@ public class AuthenticationHandlerV1(IOptionsMonitor<AuthenticationSchemeOptions
 		} else if (authHeader.Scheme == AuthenticationSchemeV1.ApiCredential) {
 			// 查询到的 API 凭据将被缓存
 			var apiCredential = await dbContext.ApiCredentials.AsNoTracking()
-				.SingleOrDefaultAsync(c => c.ApiCredentialId == authHeader.Identity);
+				.SingleOrDefaultAsync(c => c.ApiCredentialId == authHeader.Identity && c.Enabled);
 
 			if (apiCredential is null) {
-				return AuthenticateResult.Fail("无法找到指定 ApiCredentialId 的 API 凭据实体");
+				return AuthenticateResult.Fail("无法找到指定 ApiCredentialId 的 API 凭据实体，或找到的 API 凭据实体已被禁用");
 			}
 
 			entity = apiCredential;

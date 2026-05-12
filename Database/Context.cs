@@ -47,6 +47,22 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 		// 每个用户最多只能关联一个 Identity 角色，以匹配当前的四层权限模型
 		modelBuilder.Entity<UserRole>().HasIndex(e => e.UserId).IsUnique();
 
+		// 显式配置 UserRole 实体与 IdentityRole 实体之间的关系，确保外键约束和删除行为正确
+		modelBuilder.Entity<UserRole>()
+			.HasOne(ur => ur.Role)
+			.WithMany()
+			.HasForeignKey(ur => ur.RoleId)
+			.IsRequired()
+			.OnDelete(DeleteBehavior.Restrict);
+
+		// 显式配置 UserRole 实体与 User 实体之间的关系，确保外键约束和删除行为正确
+		modelBuilder.Entity<UserRole>()
+			.HasOne(ur => ur.User)
+			.WithMany(u => u.UserRoles)
+			.HasForeignKey(ur => ur.UserId)
+			.IsRequired()
+			.OnDelete(DeleteBehavior.Cascade);
+
 		// 预置固定的 Identity 角色，交由 EF Core Migration 管理
 		modelBuilder.Entity<IdentityRole<Guid>>().HasData([
 			BuildIdentityRole("5121009f-b5bd-4ec7-95ee-edb11bca4f92", PrincipalRole.LimitedQuery),
