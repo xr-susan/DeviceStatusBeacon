@@ -13,45 +13,32 @@ public static partial class ConsoleDispatcher {
 	private static async Task<int> HandleUserCommandAsync(string[] argsAfterVerb, IServiceProvider sp) {
 		await using var db = sp.GetRequiredService<DeviceStatusBeaconContext>();
 		using var userManager = sp.GetRequiredService<UserManager<User>>();
-		var normalizer = sp.GetRequiredService<ILookupNormalizer>();
 
-		// user list
-		if (argsAfterVerb is ["list"]) {
-			return await HandleUserListAsync(db);
-		}
+		return argsAfterVerb switch {
+			// user list
+			["list"] => await HandleUserListAsync(db),
 
-		// user query <part-of-name>
-		if (argsAfterVerb is ["query", var partOfName]) {
-			return await HandleUserQueryAsync(db, normalizer, partOfName);
-		}
+			// user query <part-of-name>
+			["query", var partOfName] => await HandleUserQueryAsync(db, sp, partOfName),
 
-		// user add <name> <role> <password>
-		if (argsAfterVerb is ["add", var userNameToAdd, var roleString, var password]) {
-			return await HandleUserAddAsync(db, userManager, userNameToAdd, roleString, password);
-		}
+			// user add <name> <role> <password>
+			["add", var userName, var roleString, var password] => await HandleUserAddAsync(db, userManager, userName, roleString, password),
 
-		// user reset-password <name> <new-password>
-		if (argsAfterVerb is ["reset-password", var userNameToReset, var newPassword]) {
-			return await HandleUserResetPasswordAsync(db, userManager, userNameToReset, newPassword);
-		}
+			// user reset-password <name> <new-password>
+			["reset-password", var userName, var newPassword] => await HandleUserResetPasswordAsync(db, userManager, userName, newPassword),
 
-		// user rename <old-name> <new-name>
-		if (argsAfterVerb is ["rename", var oldUserName, var newUserName]) {
-			return await HandleUserRenameAsync(db, userManager, oldUserName, newUserName);
-		}
+			// user rename <old-name> <new-name>
+			["rename", var oldUserName, var newUserName] => await HandleUserRenameAsync(db, userManager, oldUserName, newUserName),
 
-		// user set-role <name> <role>
-		if (argsAfterVerb is ["set-role", var userNameToSetRole, var roleStringToSet]) {
-			return await HandleUserSetRoleAsync(db, userManager, userNameToSetRole, roleStringToSet);
-		}
+			// user set-role <name> <role>
+			["set-role", var userName, var roleString] => await HandleUserSetRoleAsync(db, userManager, userName, roleString),
 
-		// user delete <name>
-		if (argsAfterVerb is ["delete", var userNameToDelete]) {
-			return await HandleUserDeleteAsync(db, userManager, userNameToDelete);
-		}
+			// user delete <name>
+			["delete", var userName] => await HandleUserDeleteAsync(db, userManager, userName),
 
-		Console.WriteLine("无效的 user 命令参数。");
-		return 3;
+			// 无效的 user 命令参数
+			_ => ExitWithInvalidCommandMessage("user")
+		};
 	}
 
 	/// <summary>
@@ -85,10 +72,11 @@ public static partial class ConsoleDispatcher {
 	/// 处理 user query <part-of-name> 命令，列出所有用户名包含指定字符串的用户的 ID、用户名、显示名称和角色
 	/// </summary>
 	/// <param name="db">数据库上下文</param>
-	/// <param name="normalizer">用于规范化用户名的工具</param>
+	/// <param name="sp">负责依赖注入的服务提供者</param>
 	/// <param name="partOfName">要查询的用户名部分</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleUserQueryAsync(DeviceStatusBeaconContext db, ILookupNormalizer normalizer, string partOfName) {
+	private static async Task<int> HandleUserQueryAsync(DeviceStatusBeaconContext db, IServiceProvider sp, string partOfName) {
+		var normalizer = sp.GetRequiredService<ILookupNormalizer>();
 		var normalizedPartOfName = normalizer.NormalizeName(partOfName);
 
 		var users = await db.Users
@@ -119,12 +107,12 @@ public static partial class ConsoleDispatcher {
 	/// </summary>
 	/// <param name="db">数据库上下文</param>
 	/// <param name="userManager">用户管理器</param>
-	/// <param name="userNameToAdd">要添加的用户名</param>
+	/// <param name="userName">要添加的用户名</param>
 	/// <param name="roleString">要分配的角色字符串</param>
 	/// <param name="password">用户的密码</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleUserAddAsync(DeviceStatusBeaconContext db, UserManager<User> userManager, string userNameToAdd, string roleString, string password) {
-		if (!GeneratedRegex.IdentityRegex().IsMatch(userNameToAdd)) {
+	private static async Task<int> HandleUserAddAsync(DeviceStatusBeaconContext db, UserManager<User> userManager, string userName, string roleString, string password) {
+		if (!GeneratedRegex.IdentityRegex().IsMatch(userName)) {
 			Console.WriteLine("用户名不符合身份标识格式");
 			return 3;
 		}
@@ -135,7 +123,7 @@ public static partial class ConsoleDispatcher {
 		}
 
 		var newUser = new User {
-			UserName = userNameToAdd
+			UserName = userName
 		};
 
 		await using var transaction = await db.Database.BeginTransactionAsync();
@@ -167,12 +155,13 @@ public static partial class ConsoleDispatcher {
 	/// <summary>
 	/// 处理 user reset-password <name> <new-password> 命令，重置指定用户的密码
 	/// </summary>
+	/// <param name="db">数据库上下文</param>
 	/// <param name="userManager">用户管理器</param>
-	/// <param name="userNameToReset">要重置密码的用户名</param>
+	/// <param name="userName">要重置密码的用户名</param>
 	/// <param name="newPassword">新的密码</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleUserResetPasswordAsync(DeviceStatusBeaconContext db, UserManager<User> userManager, string userNameToReset, string newPassword) {
-		var user = await userManager.FindByNameAsync(userNameToReset);
+	private static async Task<int> HandleUserResetPasswordAsync(DeviceStatusBeaconContext db, UserManager<User> userManager, string userName, string newPassword) {
+		var user = await userManager.FindByNameAsync(userName);
 		if (user is null) {
 			Console.WriteLine("未找到指定的用户");
 			return 2;
@@ -184,7 +173,7 @@ public static partial class ConsoleDispatcher {
 			return PrintIdentityErrors(resetResult);
 		}
 
-		Console.WriteLine($"用户 {userNameToReset} 的密码已重置");
+		Console.WriteLine($"用户 {userName} 的密码已重置");
 
 		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;
@@ -226,16 +215,16 @@ public static partial class ConsoleDispatcher {
 	/// </summary>
 	/// <param name="db">数据库上下文</param>
 	/// <param name="userManager">用户管理器</param>
-	/// <param name="userNameToSetRole">要设置角色的用户名</param>
-	/// <param name="roleStringToSet">要设置的角色字符串</param>
+	/// <param name="userName">要设置角色的用户名</param>
+	/// <param name="roleString">要设置的角色字符串</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleUserSetRoleAsync(DeviceStatusBeaconContext db, UserManager<User> userManager, string userNameToSetRole, string roleStringToSet) {
-		if (!Enum.TryParse(roleStringToSet, true, out PrincipalRole role)) {
+	private static async Task<int> HandleUserSetRoleAsync(DeviceStatusBeaconContext db, UserManager<User> userManager, string userName, string roleString) {
+		if (!Enum.TryParse(roleString, true, out PrincipalRole role)) {
 			Console.WriteLine("无效的用户角色");
 			return 3;
 		}
 
-		var user = await userManager.FindByNameAsync(userNameToSetRole);
+		var user = await userManager.FindByNameAsync(userName);
 		if (user is null) {
 			Console.WriteLine("未找到指定的用户");
 			return 2;
@@ -244,7 +233,7 @@ public static partial class ConsoleDispatcher {
 		var targetRoleName = role.ToString();
 		var currentRoles = await userManager.GetRolesAsync(user);
 		if (currentRoles.Count == 1 && currentRoles[0] == targetRoleName) {
-			Console.WriteLine($"用户 {userNameToSetRole} 的角色已经是：{role}");
+			Console.WriteLine($"用户 {userName} 的角色已经是：{role}");
 			return 0;
 		}
 
@@ -273,7 +262,7 @@ public static partial class ConsoleDispatcher {
 		// 提前提交事务，不理会后续 UpdateEntityAuthInfoVersionInternalAsync 的结果
 		await transaction.CommitAsync();
 
-		Console.WriteLine($"用户 {userNameToSetRole} 的角色已更新为：{role}");
+		Console.WriteLine($"用户 {userName} 的角色已更新为：{role}");
 
 		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;
@@ -284,10 +273,10 @@ public static partial class ConsoleDispatcher {
 	/// </summary>
 	/// <param name="db">数据库上下文</param>
 	/// <param name="userManager">用户管理器</param>
-	/// <param name="userNameToDelete">要删除的用户名</param>
+	/// <param name="userName">要删除的用户名</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleUserDeleteAsync(DeviceStatusBeaconContext db, UserManager<User> userManager, string userNameToDelete) {
-		var user = await userManager.FindByNameAsync(userNameToDelete);
+	private static async Task<int> HandleUserDeleteAsync(DeviceStatusBeaconContext db, UserManager<User> userManager, string userName) {
+		var user = await userManager.FindByNameAsync(userName);
 		if (user is null) {
 			Console.WriteLine("未找到指定的用户");
 			return 2;
@@ -298,7 +287,7 @@ public static partial class ConsoleDispatcher {
 			return PrintIdentityErrors(deleteResult);
 		}
 
-		Console.WriteLine($"用户 {userNameToDelete} 已删除");
+		Console.WriteLine($"用户 {userName} 已删除");
 
 		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;

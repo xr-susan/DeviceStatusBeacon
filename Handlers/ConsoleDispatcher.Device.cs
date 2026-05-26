@@ -13,54 +13,38 @@ public static partial class ConsoleDispatcher {
 	private static async Task<int> HandleDeviceCommandAsync(string[] argsAfterVerb, IServiceProvider sp) {
 		await using var db = sp.GetRequiredService<DeviceStatusBeaconContext>();
 
-		// device list
-		if (argsAfterVerb is ["list"]) {
-			return await HandleDeviceListAsync(db);
-		}
+		return argsAfterVerb switch {
+			// device list
+			["list"] => await HandleDeviceListAsync(db),
 
-		// device query <part-of-name>
-		if (argsAfterVerb is ["query", var partOfName]) {
-			return await HandleDeviceQueryAsync(db, partOfName);
-		}
+			// device query <part-of-name>
+			["query", var partOfName] => await HandleDeviceQueryAsync(db, partOfName),
 
-		// device show <name>
-		if (argsAfterVerb is ["show", var nameToShow]) {
-			return await HandleDeviceShowAsync(db, nameToShow);
-		}
+			// device show <name>
+			["show", var name] => await HandleDeviceShowAsync(db, name),
 
-		// device history <name> <count>
-		if (argsAfterVerb is ["history", var nameToGetHistory, var countString]) {
-			return await HandleDeviceHistoryAsync(db, nameToGetHistory, countString);
-		}
+			// device history <name> <count>
+			["history", var name, var countString] => await HandleDeviceHistoryAsync(db, name, countString),
 
-		// device add <name> [display-name]
-		if (argsAfterVerb is ["add", ..] and { Length: 2 or 3 }) {
-			return await HandleDeviceAddAsync(db, sp, argsAfterVerb);
-		}
+			// device add <name> [display-name]
+			["add", var name, var displayName] => await HandleDeviceAddAsync(db, sp, name, displayName),
+			["add", var name] => await HandleDeviceAddAsync(db, sp, name),
 
-		// device reset-key <name>
-		if (argsAfterVerb is ["reset-key", var nameToReset]) {
-			return await HandleDeviceResetKeyAsync(db, sp, nameToReset);
-		}
+			// device reset-key <name>
+			["reset-key", var name] => await HandleDeviceResetKeyAsync(db, sp, name),
 
-		// device rename <old-name> <new-name>
-		if (argsAfterVerb is ["rename", var oldName, var newName]) {
-			return await HandleDeviceRenameAsync(db, oldName, newName);
-		}
+			// device rename <old-name> <new-name>
+			["rename", var oldName, var newName] => await HandleDeviceRenameAsync(db, oldName, newName),
 
-		// device set-display-name <name> <display-name>
-		if (argsAfterVerb is ["set-display-name", var nameToSetDisplayName, var displayName]) {
-			return await HandleDeviceSetDisplayNameAsync(db, nameToSetDisplayName, displayName);
-		}
+			// device set-display-name <name> <display-name>
+			["set-display-name", var name, var displayName] => await HandleDeviceSetDisplayNameAsync(db, name, displayName),
 
-		// device delete <name>
-		if (argsAfterVerb is ["delete", var nameToDelete]) {
-			return await HandleDeviceDeleteAsync(db, nameToDelete);
-		}
+			// device delete <name>
+			["delete", var name] => await HandleDeviceDeleteAsync(db, name),
 
-
-		Console.WriteLine("无效的 device 命令参数。");
-		return 3;
+			// 无效的 device 命令参数
+			_ => ExitWithInvalidCommandMessage("device")
+		};
 	}
 
 	/// <summary>
@@ -113,12 +97,12 @@ public static partial class ConsoleDispatcher {
 	/// 处理 device show <name> 命令
 	/// </summary>
 	/// <param name="db">数据库上下文</param>
-	/// <param name="nameToShow">要展示的设备名称</param>
+	/// <param name="name">要展示的设备名称</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleDeviceShowAsync(DeviceStatusBeaconContext db, string nameToShow) {
+	private static async Task<int> HandleDeviceShowAsync(DeviceStatusBeaconContext db, string name) {
 		var device = await db.Devices
 			.AsNoTracking()
-			.Where(d => d.DeviceName == nameToShow)
+			.Where(d => d.DeviceName == name)
 			.Select(d => new { d.DeviceId, d.DeviceName, d.DisplayName, d.LatestLogTime, d.LatestReportedAddresses, d.LatestReporterRemoteAddress })
 			.SingleOrDefaultAsync();
 
@@ -144,10 +128,10 @@ public static partial class ConsoleDispatcher {
 	/// 处理 device history <name> <count> 命令
 	/// </summary>
 	/// <param name="db">数据库上下文</param>
-	/// <param name="nameToGetHistory">要查询日志的设备名称</param>
+	/// <param name="name">要查询日志的设备名称</param>
 	/// <param name="countString">要查询的日志数量字符串</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleDeviceHistoryAsync(DeviceStatusBeaconContext db, string nameToGetHistory, string countString) {
+	private static async Task<int> HandleDeviceHistoryAsync(DeviceStatusBeaconContext db, string name, string countString) {
 		if (!int.TryParse(countString, out var count) || count is <= 0 or > MaxDisplayCount) {
 			Console.WriteLine($"日志数量必须在 1 到 {MaxDisplayCount} 之间");
 			return 3;
@@ -157,7 +141,7 @@ public static partial class ConsoleDispatcher {
 		var logs = await db.OnlineLogs
 			.AsNoTracking()
 			.Where(l => l.DeviceId == db.Devices
-				.Where(d => d.DeviceName == nameToGetHistory)
+				.Where(d => d.DeviceName == name)
 				.Select(d => d.DeviceId)
 				.SingleOrDefault())
 			.Select(l => new { l.LogTime, l.ReportedAddresses, l.ReporterRemoteAddress, l.Message })
@@ -169,7 +153,7 @@ public static partial class ConsoleDispatcher {
 			logs,
 			"未找到指定的设备或该设备没有日志",
 			null,
-			$"设备 {nameToGetHistory} 的最新 {logs.Count} 条日志：",
+			$"设备 {name} 的最新 {logs.Count} 条日志：",
 			log => {
 				Console.WriteLine($"  [{log.LogTime:u}] 附加消息：{log.Message}");
 				Console.WriteLine($"    上报地址列表：[{string.Join(", ", log.ReportedAddresses)}]");
@@ -183,13 +167,11 @@ public static partial class ConsoleDispatcher {
 	/// </summary>
 	/// <param name="db">数据库上下文</param>
 	/// <param name="sp">负责依赖注入的服务提供者</param>
-	/// <param name="argsAfterVerb">动词之后的参数</param>
+	/// <param name="name">设备名称</param>
+	/// <param name="displayName">设备显示名称（可选）</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleDeviceAddAsync(DeviceStatusBeaconContext db, IServiceProvider sp, string[] argsAfterVerb) {
-		var nameToAdd = argsAfterVerb[1];
-		var displayNameToAdd = argsAfterVerb.Length == 3 ? argsAfterVerb[2] : null;
-
-		if (!GeneratedRegex.IdentityRegex().IsMatch(nameToAdd)) {
+	private static async Task<int> HandleDeviceAddAsync(DeviceStatusBeaconContext db, IServiceProvider sp, string name, string? displayName = null) {
+		if (!GeneratedRegex.IdentityRegex().IsMatch(name)) {
 			Console.WriteLine("设备名称不符合身份标识格式");
 			return 3;
 		}
@@ -198,8 +180,8 @@ public static partial class ConsoleDispatcher {
 		var unprotectedSecretKey = ISecurityServiceV1.GenerateRandomBytes();
 
 		var newDevice = new Device {
-			DeviceName = nameToAdd,
-			DisplayName = displayNameToAdd,
+			DeviceName = name,
+			DisplayName = displayName,
 			ProtectedSecretKey = dataProtector.ProtectKey(unprotectedSecretKey)
 		};
 
@@ -228,14 +210,14 @@ public static partial class ConsoleDispatcher {
 	/// </summary>
 	/// <param name="db">数据库上下文</param>
 	/// <param name="sp">负责依赖注入的服务提供者</param>
-	/// <param name="nameToReset">要重置操作密钥的设备名称</param>
+	/// <param name="name">要重置操作密钥的设备名称</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleDeviceResetKeyAsync(DeviceStatusBeaconContext db, IServiceProvider sp, string nameToReset) {
+	private static async Task<int> HandleDeviceResetKeyAsync(DeviceStatusBeaconContext db, IServiceProvider sp, string name) {
 		var dataProtector = sp.GetRequiredService<IDataProtectorV1>();
 		var unprotectedSecretKey = ISecurityServiceV1.GenerateRandomBytes();
 
 		var updatedCount = await db.Devices
-			.Where(d => d.DeviceName == nameToReset)
+			.Where(d => d.DeviceName == name)
 			.ExecuteUpdateAsync(d => d.SetProperty(dev => dev.ProtectedSecretKey, dataProtector.ProtectKey(unprotectedSecretKey)));
 
 		if (updatedCount == 0) {
@@ -243,7 +225,7 @@ public static partial class ConsoleDispatcher {
 			return 2;
 		}
 
-		Console.WriteLine($"设备 {nameToReset} 的操作密钥已重置");
+		Console.WriteLine($"设备 {name} 的操作密钥已重置");
 		Console.WriteLine($"新操作密钥：{Convert.ToBase64String(unprotectedSecretKey)}");
 
 		await UpdateEntityAuthInfoVersionInternalAsync(db);
@@ -287,12 +269,12 @@ public static partial class ConsoleDispatcher {
 	/// 处理 device set-display-name <name> <display-name> 命令
 	/// </summary>
 	/// <param name="db">数据库上下文</param>
-	/// <param name="nameToSetDisplayName">要设置显示名称的设备名称</param>
+	/// <param name="name">要设置显示名称的设备名称</param>
 	/// <param name="displayName">新的显示名称</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleDeviceSetDisplayNameAsync(DeviceStatusBeaconContext db, string nameToSetDisplayName, string displayName) {
+	private static async Task<int> HandleDeviceSetDisplayNameAsync(DeviceStatusBeaconContext db, string name, string displayName) {
 		var updatedCount = await db.Devices
-			.Where(d => d.DeviceName == nameToSetDisplayName)
+			.Where(d => d.DeviceName == name)
 			.ExecuteUpdateAsync(d => d.SetProperty(dev => dev.DisplayName, displayName));
 
 		if (updatedCount == 0) {
@@ -300,7 +282,7 @@ public static partial class ConsoleDispatcher {
 			return 2;
 		}
 
-		Console.WriteLine($"设备 {nameToSetDisplayName} 的显示名称已更新为：{displayName}");
+		Console.WriteLine($"设备 {name} 的显示名称已更新为：{displayName}");
 
 		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;
@@ -310,11 +292,11 @@ public static partial class ConsoleDispatcher {
 	/// 处理 device delete <name> 命令
 	/// </summary>
 	/// <param name="db">数据库上下文</param>
-	/// <param name="nameToDelete">要删除的设备名称</param>
+	/// <param name="name">要删除的设备名称</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleDeviceDeleteAsync(DeviceStatusBeaconContext db, string nameToDelete) {
+	private static async Task<int> HandleDeviceDeleteAsync(DeviceStatusBeaconContext db, string name) {
 		var deletedCount = await db.Devices
-			.Where(d => d.DeviceName == nameToDelete)
+			.Where(d => d.DeviceName == name)
 			.ExecuteDeleteAsync();
 
 		if (deletedCount == 0) {
@@ -322,7 +304,7 @@ public static partial class ConsoleDispatcher {
 			return 2;
 		}
 
-		Console.WriteLine($"设备 {nameToDelete} 已删除");
+		Console.WriteLine($"设备 {name} 已删除");
 
 		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;

@@ -46,35 +46,49 @@ public static partial class ConsoleDispatcher {
 	/// </summary>
 	/// <returns>应用程序的退出代码，恒为 0</returns>
 	private static int HandleHelpCommand() {
-		Console.WriteLine("支持的命令：");
-		Console.WriteLine("  api-credential add <user-name> <role>          添加新 API 凭据");
-		Console.WriteLine("  api-credential delete <api-credential-id>      删除指定 API 凭据");
-		Console.WriteLine("  api-credential list                            列出所有 API 凭据");
-		Console.WriteLine("  api-credential query-by-user <user-name>       查询指定用户关联的 API 凭据");
-		Console.WriteLine("  api-credential reset-key <api-credential-id>   重置指定 API 凭据的操作密钥");
-		Console.WriteLine();
-		Console.WriteLine("  user add <name> <role> <password>              添加新用户");
-		Console.WriteLine("  user delete <name>                             删除指定用户");
-		Console.WriteLine("  user list                                      列出所有用户");
-		Console.WriteLine("  user query <part-of-name>                      查询匹配的用户");
-		Console.WriteLine("  user rename <old-name> <new-name>              重命名指定用户");
-		Console.WriteLine("  user reset-password <name> <new-password>      重置指定用户的密码");
-		Console.WriteLine("  user set-role <name> <role>                    设置指定用户的角色");
-		Console.WriteLine();
-		Console.WriteLine("  device add <name> [display-name]               添加新设备");
-		Console.WriteLine("  device delete <name>                           删除指定设备");
-		Console.WriteLine("  device history <name> <count>                  查询指定设备最近的日志");
-		Console.WriteLine("  device list                                    列出所有设备");
-		Console.WriteLine("  device query <part-of-name>                    查询匹配的设备");
-		Console.WriteLine("  device rename <old-name> <new-name>            重命名指定设备");
-		Console.WriteLine("  device reset-key <name>                        重置指定设备的操作密钥");
-		Console.WriteLine("  device set-display-name <name> <display-name>  设置指定设备的显示名称");
-		Console.WriteLine("  device show <name>                             展示指定设备最新的信息");
-		Console.WriteLine();
-		Console.WriteLine("  help                                           显示此帮助信息");
-		Console.WriteLine("  exit                                           退出应用程序");
+		Console.WriteLine(
+			"""
+			支持的命令：
+			  api-credential add <user-name> <role> [display-name]  添加新 API 凭据
+			  api-credential delete <api-credential-id>             删除指定 API 凭据
+			  api-credential list                                   列出所有 API 凭据
+			  api-credential query-by-user <user-name>              查询指定用户关联的 API 凭据
+			  api-credential reset-key <api-credential-id>          重置指定 API 凭据的操作密钥
+
+			  user add <name> <role> <password>                     添加新用户
+			  user delete <name>                                    删除指定用户
+			  user list                                             列出所有用户
+			  user query <part-of-name>                             查询匹配的用户
+			  user rename <old-name> <new-name>                     重命名指定用户
+			  user reset-password <name> <new-password>             重置指定用户的密码
+			  user set-role <name> <role>                           设置指定用户的角色
+
+			  device add <name> [display-name]                      添加新设备
+			  device delete <name>                                  删除指定设备
+			  device history <name> <count>                         查询指定设备最近的日志
+			  device list                                           列出所有设备
+			  device query <part-of-name>                           查询匹配的设备
+			  device rename <old-name> <new-name>                   重命名指定设备
+			  device reset-key <name>                               重置指定设备的操作密钥
+			  device set-display-name <name> <display-name>         设置指定设备的显示名称
+			  device show <name>                                    展示指定设备最新的信息
+
+			  help                                                  显示此帮助信息
+			  exit                                                  退出应用程序
+			""");
 
 		return 0;
+	}
+
+	/// <summary>
+	/// 当控制台命令参数无效时，打印相应的错误消息并返回一个固定的退出代码
+	/// </summary>
+	/// <param name="commandCategory">命令类别</param>
+	/// <returns>应用程序的退出代码，固定为 3</returns>
+	internal static int ExitWithInvalidCommandMessage(string commandCategory) {
+		Console.WriteLine($"无效的 {commandCategory} 命令参数。");
+		Console.WriteLine("使用 'help' 命令查看支持的命令列表。");
+		return 3;
 	}
 
 	/// <summary>
