@@ -340,9 +340,7 @@ public partial class InitialCreate : Migration {
 			table: "OnlineLogs",
 			column: "LogTime");
 
-		migrationBuilder.CreateEntityAuthInfoVersionTriggers();
-
-		migrationBuilder.CreateOnlineLogDeviceSummaryTriggers();
+		migrationBuilder.CreateManagedSqliteTriggers();
 	}
 
 	/// <inheritdoc />

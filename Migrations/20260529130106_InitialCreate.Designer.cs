@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DeviceStatusBeacon.Migrations
 {
 	[DbContext(typeof(DeviceStatusBeaconContext))]
-	[Migration("20260529074752_InitialCreate")]
+	[Migration("20260529130106_InitialCreate")]
 	partial class InitialCreate
 	{
 		/// <inheritdoc />

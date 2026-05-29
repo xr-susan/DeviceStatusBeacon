@@ -12,6 +12,23 @@ namespace DeviceStatusBeacon.Database;
 internal static class SqliteTriggerMigrationBuilderExtensions {
 	extension(MigrationBuilder migrationBuilder) {
 		/// <summary>
+		/// 创建本项目统一管理的全部 SQLite 触发器
+		/// </summary>
+		/// <remarks>
+		/// 当前统一包含：
+		/// <list type="bullet">
+		/// <item><description>用于刷新 <c>EntityAuthInfoVersion</c> 的触发器组</description></item>
+		/// <item><description>用于同步 <see cref="Device"/> 最新日志摘要的触发器组</description></item>
+		/// </list>
+		/// 迁移层只暴露这一组受管入口，以便与 <see cref="DropManagedSqliteTriggers"/> 保持对称，
+		/// 同时避免在迁移脚手架结果中散落多个触发器创建调用。
+		/// </remarks>
+		public void CreateManagedSqliteTriggers() {
+			migrationBuilder.CreateEntityAuthInfoVersionTriggers();
+			migrationBuilder.CreateOnlineLogDeviceSummaryTriggers();
+		}
+
+		/// <summary>
 		/// 创建所有用于刷新 <c>EntityAuthInfoVersion</c> 的 SQLite 触发器
 		/// </summary>
 		/// <remarks>
@@ -19,7 +36,7 @@ internal static class SqliteTriggerMigrationBuilderExtensions {
 		/// <c>Device</c>、<c>ApiCredential</c> 及其直接授权关系。
 		/// 浏览器侧 Identity 用户体系不参与这组触发器，以避免不必要的模型和迁移复杂度。
 		/// </remarks>
-		public void CreateEntityAuthInfoVersionTriggers() {
+		private void CreateEntityAuthInfoVersionTriggers() {
 
 			// 这些触发器负责在鉴权相关实体被写入后刷新版本字符串，
 			// 让运行中的进程可以据此判断本地鉴权缓存是否应当失效。
@@ -67,7 +84,7 @@ internal static class SqliteTriggerMigrationBuilderExtensions {
 		/// 应用层写入日志时只需要维护 <c>OnlineLogs</c>，设备上的最新摘要由数据库统一回写。
 		/// 这样可以避免不同写入入口各自执行第二次 <c>Device</c> 更新，减少规则分散和漏同步风险。
 		/// </remarks>
-		public void CreateOnlineLogDeviceSummaryTriggers() {
+		private void CreateOnlineLogDeviceSummaryTriggers() {
 			var refreshOldDeviceSummarySql = BuildRefreshDeviceSummarySql(@"OLD.""DeviceId""");
 			var refreshNewDeviceSummarySql = BuildRefreshDeviceSummarySql(@"NEW.""DeviceId""");
 

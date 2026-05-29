@@ -5,14 +5,9 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 namespace DeviceStatusBeacon.Database;
 
 /// <summary>
-/// 标记“创建 EntityAuthInfoVersion 触发器集”的迁移操作
+/// 标记“创建本项目统一管理的全部 SQLite 触发器”的迁移操作
 /// </summary>
-internal sealed class CreateEntityAuthInfoVersionTriggersOperation : MigrationOperation;
-
-/// <summary>
-/// 标记“创建 OnlineLog 设备摘要触发器集”的迁移操作
-/// </summary>
-internal sealed class CreateOnlineLogDeviceSummaryTriggersOperation : MigrationOperation;
+internal sealed class CreateManagedSqliteTriggersOperation : MigrationOperation;
 
 /// <summary>
 /// 标记“删除本项目统一管理的全部 SQLite 触发器”的迁移操作
@@ -20,11 +15,11 @@ internal sealed class CreateOnlineLogDeviceSummaryTriggersOperation : MigrationO
 internal sealed class DropManagedSqliteTriggersOperation : MigrationOperation;
 
 /// <summary>
-/// 用于在 EF Core 生成迁移代码时自动补入本项目触发器调用的迁移代码生成器
+/// 用于在 EF Core 生成迁移代码时自动补入本项目受管触发器调用的迁移代码生成器
 /// </summary>
 /// <remarks>
 /// EF Core 自身不会根据 <c>HasTrigger</c> 或模型配置自动脚手架出 SQLite 的 <c>CREATE TRIGGER</c> SQL。
-/// 因此这里接管迁移操作列表，在识别到“初始化整库结构”的迁移时自动补入自定义触发器调用，
+/// 因此这里接管迁移操作列表，在识别到“初始化整库结构”的迁移时自动补入受管触发器调用，
 /// 再交由专门的 <see cref="ICSharpMigrationOperationGenerator"/> 生成稳定的 C# 调用。
 /// </remarks>
 internal sealed class SqliteTriggerCSharpMigrationsGenerator(
@@ -32,7 +27,7 @@ internal sealed class SqliteTriggerCSharpMigrationsGenerator(
 	CSharpMigrationsGeneratorDependencies cSharpDependencies)
 	: CSharpMigrationsGenerator(dependencies, cSharpDependencies) {
 	/// <summary>
-	/// 用于识别需要自动补入触发器调用的核心表集合
+	/// 用于识别需要自动补入受管触发器调用的核心表集合
 	/// </summary>
 	/// <remarks>
 	/// 当前策略不是按迁移名称判断，而是按是否同时创建并回滚这组核心业务表判断。
@@ -49,11 +44,11 @@ internal sealed class SqliteTriggerCSharpMigrationsGenerator(
 	// private static readonly string TriggerMigrationExtensionsNamespace = typeof(SqliteTriggerMigrationBuilderExtensions).Namespace!;
 
 	/// <summary>
-	/// 生成迁移代码，并在识别到初始结构迁移时自动补入触发器调用
+	/// 生成迁移代码，并在识别到初始结构迁移时自动补入受管触发器调用
 	/// </summary>
 	/// <remarks>
-	/// 普通增量迁移直接保持 EF Core 默认输出，只有识别为初始整库迁移时才会向操作列表追加触发器调用。
-	/// 这样可以避免把触发器调用误插入到后续只改某一个表或索引的迁移中。
+	/// 普通增量迁移直接保持 EF Core 默认输出，只有识别为初始整库迁移时才会向操作列表追加受管触发器调用。
+	/// 这样可以避免把受管触发器调用误插入到后续只改某一个表或索引的迁移中。
 	/// </remarks>
 	/// <param name="migrationNamespace">迁移命名空间</param>
 	/// <param name="migrationName">迁移名称</param>
@@ -66,16 +61,15 @@ internal sealed class SqliteTriggerCSharpMigrationsGenerator(
 		IReadOnlyList<MigrationOperation> upOperations,
 		IReadOnlyList<MigrationOperation> downOperations) {
 
-		// 只有当迁移同时创建和回滚了 TriggerDependentTableNames 中的全部核心表时，才注入触发器调用
-		// 这样可以以极高的可靠性识别出“初始化整库结构”的迁移，而不受迁移名称或时间戳变化的影响，同时避免把触发器调用误插入到普通增量迁移中
+		// 只有当迁移同时创建和回滚了 TriggerDependentTableNames 中的全部核心表时，才注入受管触发器调用
+		// 这样可以以极高的可靠性识别出“初始化整库结构”的迁移，而不受迁移名称或时间戳变化的影响，同时避免把受管触发器调用误插入到普通增量迁移中
 		if (!ShouldInjectManagedTriggerOperations(upOperations, downOperations)) {
 			return base.GenerateMigration(migrationNamespace, migrationName, upOperations, downOperations);
 		}
 
-		var upOperationsWithManagedTriggerCalls = upOperations
+		var upOperationsWithManagedTriggerCreate = upOperations
 			.Concat([
-				new CreateEntityAuthInfoVersionTriggersOperation(),
-				new CreateOnlineLogDeviceSummaryTriggersOperation()
+				new CreateManagedSqliteTriggersOperation()
 			])
 			.ToArray();
 
@@ -87,7 +81,7 @@ internal sealed class SqliteTriggerCSharpMigrationsGenerator(
 		return base.GenerateMigration(
 			migrationNamespace,
 			migrationName,
-			upOperationsWithManagedTriggerCalls,
+			upOperationsWithManagedTriggerCreate,
 			downOperationsWithManagedTriggerDrop);
 	}
 
@@ -99,8 +93,7 @@ internal sealed class SqliteTriggerCSharpMigrationsGenerator(
 
 		// 如果迁移操作列表中包含本项目的触发器相关迁移操作，则补入触发器迁移扩展方法所在的命名空间以确保生成代码能正确编译
 		if (operationArray.Any(static operation =>
-				operation is CreateEntityAuthInfoVersionTriggersOperation
-				or CreateOnlineLogDeviceSummaryTriggersOperation
+				operation is CreateManagedSqliteTriggersOperation
 				or DropManagedSqliteTriggersOperation)) {
 			namespaces.Add(TriggerMigrationExtensionsNamespace);
 		}
@@ -134,7 +127,7 @@ internal sealed class SqliteTriggerCSharpMigrationsGenerator(
 }
 
 /// <summary>
-/// 为本项目的自定义触发器调用生成稳定的 C# 代码
+/// 为本项目的受管触发器调用生成稳定的 C# 代码
 /// </summary>
 internal sealed class SqliteTriggerCSharpMigrationOperationGenerator(CSharpMigrationOperationGeneratorDependencies dependencies)
 	: CSharpMigrationOperationGenerator(dependencies) {
@@ -144,12 +137,8 @@ internal sealed class SqliteTriggerCSharpMigrationOperationGenerator(CSharpMigra
 		// EF Core 外层会负责写入 "migrationBuilder" 前缀和结尾分号
 		// 这里仅输出附着在 MigrationBuilder 实例后的调用片段
 		switch (operation) {
-			case CreateEntityAuthInfoVersionTriggersOperation:
-				builder.Append(".CreateEntityAuthInfoVersionTriggers()");
-				return;
-
-			case CreateOnlineLogDeviceSummaryTriggersOperation:
-				builder.Append(".CreateOnlineLogDeviceSummaryTriggers()");
+			case CreateManagedSqliteTriggersOperation:
+				builder.Append(".CreateManagedSqliteTriggers()");
 				return;
 
 			case DropManagedSqliteTriggersOperation:
