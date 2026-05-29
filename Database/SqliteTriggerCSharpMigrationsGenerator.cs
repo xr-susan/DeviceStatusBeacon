@@ -155,8 +155,10 @@ internal sealed class SqliteTriggerCSharpMigrationOperationGenerator(CSharpMigra
 			case DropManagedSqliteTriggersOperation:
 				builder.Append(".DropManagedSqliteTriggers()");
 				return;
-		}
 
-		base.Generate(operation, builder);
+			default:
+				base.Generate(operation, builder);
+				return;
+		}
 	}
 }
