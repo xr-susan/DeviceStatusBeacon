@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.DataProtection;
+﻿using DeviceStatusBeacon.Services;
+using Microsoft.AspNetCore.DataProtection;
 
-namespace DeviceStatusBeacon;
+namespace DeviceStatusBeacon.Extensions;
 
 /// <summary>
 /// 用于添加本项目的自定义服务和定制化的服务到 <see cref="IServiceCollection"/> 中的扩展方法组
@@ -14,7 +15,8 @@ public static class CustomServiceCollectionExtensions {
 		/// <returns>当前的 <see cref="IServiceCollection"/>，用于链式调用</returns>
 		public IServiceCollection AddCustomServices() =>
 			services.AddSingleton<IDataProtectorV1, DataProtectorV1>()
-				.AddScoped<ISecurityServiceV1, SecurityServiceV1>();
+				.AddScoped<ISecurityServiceV1, SecurityServiceV1>()
+				.AddScoped<IBackOfficeQueryService, BackOfficeQueryService>();
 
 		/// <summary>
 		/// 依据配置注册数据库上下文 <see cref="DeviceStatusBeaconContext"/> 到 <see cref="IServiceCollection"/> 中

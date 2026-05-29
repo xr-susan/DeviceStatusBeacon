@@ -20,6 +20,7 @@
 	<ItemGroup>
 		<Using Include="DeviceStatusBeacon" />
 		<Using Include="DeviceStatusBeacon.Database" />
+		<Using Include="DeviceStatusBeacon.Extensions" />
 		<Using Include="DeviceStatusBeacon.Security" />
 		<Using Include="Microsoft.EntityFrameworkCore" />
 	</ItemGroup>
