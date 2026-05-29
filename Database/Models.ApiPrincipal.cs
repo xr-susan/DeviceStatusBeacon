@@ -80,18 +80,19 @@ public class Device : IHasProtectedSecretKey {
 	/// <summary>
 	/// 该设备最新上线日志的提交时间
 	/// </summary>
-	public DateTime LatestLogTime { get; set; }
+	/// <remarks>此属性由 SQLite 触发器维护；当设备尚未有任何日志时，此值为 null</remarks>
+	public DateTime? LatestLogTime { get; set; }
 
 	/// <summary>
 	/// 该设备最新上线日志中报告的地址列表
 	/// </summary>
-	/// <remarks>EF Core 会自动处理 <see cref="List{IPAddress}"/> 的值转换</remarks>
-	public List<IPAddress> LatestReportedAddresses { get; set; } = [];
+	/// <remarks>此属性由 SQLite 触发器维护；EF Core 会自动处理 <see cref="List{IPAddress}"/> 的值转换；当设备尚未有任何日志时，此值为 null</remarks>
+	public List<IPAddress>? LatestReportedAddresses { get; set; }
 
 	/// <summary>
 	/// 该设备最新上线日志中上报者的远程地址
 	/// </summary>
-	/// <remarks>EF Core 会自动处理 <see cref="IPAddress"/> 的值转换</remarks>
+	/// <remarks>此属性由 SQLite 触发器维护；EF Core 会自动处理 <see cref="IPAddress"/> 的值转换；当设备尚未有任何日志时，此值为 null</remarks>
 	public IPAddress? LatestReporterRemoteAddress { get; set; }
 
 

@@ -111,15 +111,22 @@ public static partial class ConsoleDispatcher {
 			return 2;
 		}
 
+		var latestStatus = device.LatestReportedAddresses is null
+			? "    该设备当前暂无 IP 地址记录"
+			: $"""
+			    上报时间：{device.LatestLogTime:u}
+			    上报地址列表：[{string.Join(", ", device.LatestReportedAddresses)}]
+			    上报者远程地址：{device.LatestReporterRemoteAddress}
+			""";
+
 		Console.WriteLine($"""
-		设备信息：
-		  设备 ID：{device.DeviceId}
-		  设备名称：{device.DeviceName}
-		  显示名称：{device.DisplayName}
-		  最新日志时间：{device.LatestLogTime:u}
-		  最新上报地址列表：[{string.Join(", ", device.LatestReportedAddresses)}]
-		  最新上报者远程地址：{device.LatestReporterRemoteAddress}
-		""");
+			设备信息：
+			  设备 ID：{device.DeviceId}
+			  设备名称：{device.DeviceName}
+			  显示名称：{device.DisplayName}
+			  最新状态：
+			{latestStatus}
+			""");
 
 		return 0;
 	}
@@ -144,8 +151,8 @@ public static partial class ConsoleDispatcher {
 				.Where(d => d.DeviceName == name)
 				.Select(d => d.DeviceId)
 				.SingleOrDefault())
-			.Select(l => new { l.LogTime, l.ReportedAddresses, l.ReporterRemoteAddress, l.Message })
-			.OrderByDescending(l => l.LogTime)
+			.Select(l => new { l.OnlineLogId, l.LogTime, l.ReportedAddresses, l.ReporterRemoteAddress, l.Message })
+			.OrderByDescending(l => l.OnlineLogId)
 			.Take(count)
 			.ToListAsync();
 
@@ -201,7 +208,6 @@ public static partial class ConsoleDispatcher {
 			  操作密钥：{Convert.ToBase64String(unprotectedSecretKey)}
 			""");
 
-		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;
 	}
 
@@ -228,7 +234,6 @@ public static partial class ConsoleDispatcher {
 		Console.WriteLine($"设备 {name} 的操作密钥已重置");
 		Console.WriteLine($"新操作密钥：{Convert.ToBase64String(unprotectedSecretKey)}");
 
-		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;
 	}
 
@@ -261,7 +266,6 @@ public static partial class ConsoleDispatcher {
 
 		Console.WriteLine($"设备重命名成功：{oldName} -> {newName}");
 
-		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;
 	}
 
@@ -284,7 +288,6 @@ public static partial class ConsoleDispatcher {
 
 		Console.WriteLine($"设备 {name} 的显示名称已更新为：{displayName}");
 
-		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;
 	}
 
@@ -306,7 +309,6 @@ public static partial class ConsoleDispatcher {
 
 		Console.WriteLine($"设备 {name} 已删除");
 
-		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;
 	}
 }

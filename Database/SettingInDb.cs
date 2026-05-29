@@ -103,15 +103,4 @@ public class SettingInDb {
 	/// <returns>一个表示异步操作的任务，任务结果指示两个值是否相等</returns>
 	public static async Task<bool> CompareEntityAuthInfoVersionAsync(DeviceStatusBeaconContext context, string version) =>
 		await GetValueAsync(context, SettingInDbKey.EntityAuthInfoVersion) == version;
-
-	/// <summary>
-	/// 更新数据库中 <see cref="SettingInDbKey.EntityAuthInfoVersion"/> 设置值为新的 GUID 字符串表示，当该设置项不存在时，将会被创建并设置值
-	/// </summary>
-	/// <param name="context">数据库上下文</param>
-	/// <returns>一个表示异步操作的任务，任务结果为更新后的版本字符串</returns>
-	public static async Task<string> UpdateEntityAuthInfoVersionAsync(DeviceStatusBeaconContext context) {
-		var newVersion = Guid.NewGuid().ToString("D");
-		await SetValueAsync(context, SettingInDbKey.EntityAuthInfoVersion, newVersion);
-		return newVersion;
-	}
 }

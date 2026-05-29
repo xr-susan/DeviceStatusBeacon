@@ -31,37 +31,95 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 	protected override void OnModelCreating(ModelBuilder modelBuilder) {
 		base.OnModelCreating(modelBuilder);
 
-		// 定义设备名称为设备实体的人类管理名称唯一索引
-		modelBuilder.Entity<Device>().HasIndex(e => e.DeviceName).IsUnique();
+		// 配置 Device 实体：声明触发器、索引，以及用户到设备的授权关系
+		modelBuilder.Entity<Device>(deviceBuilder => {
+			// Device 表存在 SQLite AFTER 触发器，因此关闭 RETURNING 子句以回退到兼容触发器的更新 SQL
+			deviceBuilder.ToTable(tableBuilder => {
+				tableBuilder.HasTrigger(SqliteTriggerNames.DevicesEntityAuthInfoVersionAfterInsert);
+				tableBuilder.HasTrigger(SqliteTriggerNames.DevicesEntityAuthInfoVersionAfterAuthUpdate);
+				tableBuilder.HasTrigger(SqliteTriggerNames.DevicesEntityAuthInfoVersionAfterDelete);
+				tableBuilder.UseSqlReturningClause(false);
+			});
 
-		// 为日志时间创建索引以优化查询性能并方便过期数据的删除
-		modelBuilder.Entity<OnlineLog>().HasIndex(e => e.LogTime);
+			// 定义设备名称为设备实体的人类管理名称唯一索引
+			deviceBuilder.HasIndex(e => e.DeviceName).IsUnique();
+		});
 
-		// 为日志创建 (设备 ID, 日志时间) 复合索引以优化按设备查询日志的性能
-		modelBuilder.Entity<OnlineLog>().HasIndex(e => new { e.DeviceId, e.LogTime });
+		// 配置 OnlineLog 实体：声明摘要同步触发器，并为历史查询与摘要回写建立索引
+		modelBuilder.Entity<OnlineLog>(onlineLogBuilder => {
+			// OnlineLog 表存在 SQLite AFTER 触发器，因此关闭 RETURNING 子句以兼容触发器执行
+			onlineLogBuilder.ToTable(tableBuilder => {
+				tableBuilder.HasTrigger(SqliteTriggerNames.OnlineLogsDeviceSummaryAfterInsert);
+				tableBuilder.HasTrigger(SqliteTriggerNames.OnlineLogsDeviceSummaryAfterUpdate);
+				tableBuilder.HasTrigger(SqliteTriggerNames.OnlineLogsDeviceSummaryAfterDelete);
+				tableBuilder.UseSqlReturningClause(false);
+			});
 
-		// 定义 API 凭据的 DisplayName 在同一用户下唯一的索引，以方便管理和查询
-		// 此索引可同时作用于按 UserId 单项的查询，同样可以提升按 UserId 查询的性能
-		modelBuilder.Entity<ApiCredential>().HasIndex(e => new { e.UserId, e.DisplayName }).IsUnique();
+			// 为日志时间创建索引以优化查询性能并方便过期数据的删除
+			onlineLogBuilder.HasIndex(e => e.LogTime);
 
-		// 每个用户最多只能关联一个 Identity 角色，以匹配当前的四层权限模型
-		modelBuilder.Entity<UserRole>().HasIndex(e => e.UserId).IsUnique();
+			// 为日志创建 (设备 ID, 日志时间) 复合索引以优化按设备查询日志的性能
+			onlineLogBuilder.HasIndex(e => new { e.DeviceId, e.LogTime });
 
-		// 显式配置 UserRole 实体与 IdentityRole 实体之间的关系，确保外键约束和删除行为正确
-		modelBuilder.Entity<UserRole>()
-			.HasOne(ur => ur.Role)
-			.WithMany()
-			.HasForeignKey(ur => ur.RoleId)
-			.IsRequired()
-			.OnDelete(DeleteBehavior.Restrict);
+			// 设备摘要触发器按 OnlineLogId 倒序寻找“最后到达数据库的一条日志”
+			// 因此额外为 (设备 ID, 日志 ID) 建立复合索引以降低回写成本
+			onlineLogBuilder.HasIndex(e => new { e.DeviceId, e.OnlineLogId });
+		});
 
-		// 显式配置 UserRole 实体与 User 实体之间的关系，确保外键约束和删除行为正确
-		modelBuilder.Entity<UserRole>()
-			.HasOne(ur => ur.User)
-			.WithMany(u => u.UserRoles)
-			.HasForeignKey(ur => ur.UserId)
-			.IsRequired()
-			.OnDelete(DeleteBehavior.Cascade);
+		// 配置 ApiCredential 实体：声明触发器、索引，以及凭据到设备的授权关系
+		modelBuilder.Entity<ApiCredential>(apiCredentialBuilder => {
+			// ApiCredential 表存在 SQLite AFTER 触发器，因此关闭 RETURNING 子句以兼容触发器执行
+			apiCredentialBuilder.ToTable(tableBuilder => {
+				tableBuilder.HasTrigger(SqliteTriggerNames.ApiCredentialsEntityAuthInfoVersionAfterInsert);
+				tableBuilder.HasTrigger(SqliteTriggerNames.ApiCredentialsEntityAuthInfoVersionAfterUpdate);
+				tableBuilder.HasTrigger(SqliteTriggerNames.ApiCredentialsEntityAuthInfoVersionAfterDelete);
+				tableBuilder.UseSqlReturningClause(false);
+			});
+
+			// 定义 API 凭据的 DisplayName 在同一用户下唯一的索引，以方便管理和查询
+			// 此索引可同时作用于按 UserId 单项的查询，同样可以提升按 UserId 查询的性能
+			apiCredentialBuilder.HasIndex(e => new { e.UserId, e.DisplayName }).IsUnique();
+
+			// ApiCredentialDevice 需要挂接触发器元数据，因此这里保留最小范围的关系配置
+			apiCredentialBuilder
+				.HasMany(c => c.AuthorizedDevices)
+				.WithMany(d => d.AuthorizedApiCredentials)
+				.UsingEntity(joinBuilder =>
+					joinBuilder.ToTable(tableBuilder => {
+						tableBuilder.HasTrigger(SqliteTriggerNames.ApiCredentialDeviceEntityAuthInfoVersionAfterInsert);
+						tableBuilder.HasTrigger(SqliteTriggerNames.ApiCredentialDeviceEntityAuthInfoVersionAfterUpdate);
+						tableBuilder.HasTrigger(SqliteTriggerNames.ApiCredentialDeviceEntityAuthInfoVersionAfterDelete);
+						tableBuilder.UseSqlReturningClause(false);
+					}));
+		});
+
+		// 配置 UserRole 实体：把 Identity 的用户角色关系收紧为“一用户最多一个角色”
+		modelBuilder.Entity<UserRole>(userRoleBuilder => {
+			// 每个用户最多只能关联一个 Identity 角色，以匹配当前的四层权限模型
+			userRoleBuilder.HasIndex(e => e.UserId).IsUnique();
+
+			// 显式配置 UserRole 实体与 IdentityRole 实体之间的关系，确保外键约束和删除行为正确
+			userRoleBuilder
+				.HasOne(ur => ur.Role)
+				.WithMany()
+				.HasForeignKey(ur => ur.RoleId)
+				.IsRequired()
+				.OnDelete(DeleteBehavior.Restrict);
+
+			// 显式配置 UserRole 实体与 User 实体之间的关系，确保外键约束和删除行为正确
+			userRoleBuilder
+				.HasOne(ur => ur.User)
+				.WithMany(u => u.UserRoles)
+				.HasForeignKey(ur => ur.UserId)
+				.IsRequired()
+				.OnDelete(DeleteBehavior.Cascade);
+		});
+
+		// 预置鉴权缓存版本号设置项，供后续触发器自动刷新
+		modelBuilder.Entity<SettingInDb>().HasData(new SettingInDb {
+			Key = SettingInDbKey.EntityAuthInfoVersion.ToString(),
+			Value = "0"
+		});
 
 		// 预置固定的 Identity 角色，交由 EF Core Migration 管理
 		modelBuilder.Entity<IdentityRole<Guid>>().HasData([

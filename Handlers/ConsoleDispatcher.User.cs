@@ -138,7 +138,7 @@ public static partial class ConsoleDispatcher {
 			return PrintIdentityErrors(addRoleResult);
 		}
 
-		// 提前提交事务，不理会后续 UpdateEntityAuthInfoVersionInternalAsync 的结果
+		// 提前提交事务，确保用户与角色写入以原子方式生效
 		await transaction.CommitAsync();
 
 		Console.WriteLine($"""
@@ -148,7 +148,6 @@ public static partial class ConsoleDispatcher {
 			  角色：{role}
 			""");
 
-		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;
 	}
 
@@ -175,7 +174,6 @@ public static partial class ConsoleDispatcher {
 
 		Console.WriteLine($"用户 {userName} 的密码已重置");
 
-		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;
 	}
 
@@ -206,7 +204,6 @@ public static partial class ConsoleDispatcher {
 
 		Console.WriteLine($"用户重命名成功：{oldUserName} -> {newUserName}");
 
-		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;
 	}
 
@@ -259,12 +256,11 @@ public static partial class ConsoleDispatcher {
 			await ShrinkApiCredentialScopesAsync(db, user.Id, role);
 		}
 
-		// 提前提交事务，不理会后续 UpdateEntityAuthInfoVersionInternalAsync 的结果
+		// 提前提交事务，确保角色变更与权限范围收窄以原子方式生效
 		await transaction.CommitAsync();
 
 		Console.WriteLine($"用户 {userName} 的角色已更新为：{role}");
 
-		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;
 	}
 
@@ -289,7 +285,6 @@ public static partial class ConsoleDispatcher {
 
 		Console.WriteLine($"用户 {userName} 已删除");
 
-		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;
 	}
 

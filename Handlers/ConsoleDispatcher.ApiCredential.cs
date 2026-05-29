@@ -181,7 +181,6 @@ public static partial class ConsoleDispatcher {
 			  操作密钥：{Convert.ToBase64String(unprotectedSecretKey)}
 			""");
 
-		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;
 	}
 
@@ -213,7 +212,6 @@ public static partial class ConsoleDispatcher {
 		Console.WriteLine($"API 凭据 [{credentialIdToReset}] 的操作密钥已重置");
 		Console.WriteLine($"新操作密钥：{Convert.ToBase64String(unprotectedSecretKey)}");
 
-		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;
 	}
 
@@ -240,7 +238,6 @@ public static partial class ConsoleDispatcher {
 
 		Console.WriteLine($"API 凭据 [{credentialIdToDelete}] 已删除");
 
-		await UpdateEntityAuthInfoVersionInternalAsync(db);
 		return 0;
 	}
 }
