@@ -36,6 +36,7 @@ builder.Services.AddIdentityCore<User>(options => {
 	options.Password.RequiredUniqueChars = 8;
 })
 	.AddRoles<IdentityRole<Guid>>()
+	.AddClaimsPrincipalFactory<DisplayNameUserClaimsPrincipalFactory>()
 	.AddSignInManager()
 	.AddEntityFrameworkStores<DeviceStatusBeaconContext>()
 	.AddDefaultTokenProviders();
@@ -50,7 +51,9 @@ var authenticationBuilder = builder.Services.AddAuthentication(options => {
 			context.Request.Headers.Authorization.Count > 0 ? "BeaconAuthV1" : IdentityConstants.ApplicationScheme)
 	.AddScheme<AuthenticationSchemeOptions, AuthenticationHandlerV1>("BeaconAuthV1", null);
 
+// 配置安全戳验证和应用 Cookie 行为
 authenticationBuilder.AddIdentityCookies();
+builder.Services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.FromMinutes(5));
 
 builder.Services.ConfigureApplicationCookie(options => {
 	options.LoginPath = "/login";
@@ -73,8 +76,12 @@ builder.Services.ConfigureApplicationCookie(options => {
 });
 
 // 配置授权
+// "Device" 角色由 AuthenticationHandlerV1 直接颁发，有且仅有代表设备本身提交新日志的能力
 builder.Services.AddAuthorizationBuilder()
 	.AddPolicy("AdminOnly", policy => policy.RequireRole(nameof(PrincipalRole.Administrator)))
+	.AddPolicy("DeviceManagement", policy => policy.RequireRole(
+		nameof(PrincipalRole.DeviceManager),
+		nameof(PrincipalRole.Administrator)))
 	.AddPolicy("QueryAccess", policy => policy.RequireRole(
 		nameof(PrincipalRole.LimitedQuery),
 		nameof(PrincipalRole.FullQuery),

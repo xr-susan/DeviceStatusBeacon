@@ -208,7 +208,7 @@ public static partial class ConsoleDispatcher {
 	}
 
 	/// <summary>
-	/// 处理 user set-role <name> <role> 命令，为指定用户设置新角色，并根据新角色收窄相应的 API 凭据的权限范围
+	/// 处理 user set-role <name> <role> 命令，为指定用户设置新角色，并在需要时收窄相应 API 凭据的权限范围
 	/// </summary>
 	/// <param name="db">数据库上下文</param>
 	/// <param name="userManager">用户管理器</param>
@@ -288,6 +288,11 @@ public static partial class ConsoleDispatcher {
 		return 0;
 	}
 
+	/// <summary>
+	/// 打印 <see cref="IdentityResult"/> 中的错误并返回统一的失败退出代码。
+	/// </summary>
+	/// <param name="result">失败的 Identity 操作结果</param>
+	/// <returns>应用程序的退出代码，固定为 -1</returns>
 	private static int PrintIdentityErrors(IdentityResult result) {
 		Console.WriteLine("操作 ASP.NET Core Identity 用户失败，错误信息：");
 		Console.WriteLine(string.Join(Environment.NewLine, result.Errors.Select(e => e.Description)));

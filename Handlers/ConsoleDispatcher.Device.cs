@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using DeviceStatusBeacon.Services;
+using Microsoft.Data.Sqlite;
 
 namespace DeviceStatusBeacon.Handlers;
 
@@ -12,19 +13,21 @@ public static partial class ConsoleDispatcher {
 	/// <returns>一个表示异步操作的任务，任务结果指示应用程序的退出代码</returns>
 	private static async Task<int> HandleDeviceCommandAsync(string[] argsAfterVerb, IServiceProvider sp) {
 		await using var db = sp.GetRequiredService<DeviceStatusBeaconContext>();
+		var queryService = sp.GetRequiredService<IManagementQueryService>();
+		var querySession = queryService.CreatePrivilegedQuerySession();
 
 		return argsAfterVerb switch {
 			// device list
-			["list"] => await HandleDeviceListAsync(db),
+			["list"] => await HandleDeviceListAsync(queryService, querySession),
 
 			// device query <part-of-name>
-			["query", var partOfName] => await HandleDeviceQueryAsync(db, partOfName),
+			["query", var partOfName] => await HandleDeviceQueryAsync(queryService, querySession, partOfName),
 
 			// device show <name>
-			["show", var name] => await HandleDeviceShowAsync(db, name),
+			["show", var name] => await HandleDeviceShowAsync(queryService, querySession, name),
 
 			// device history <name> <count>
-			["history", var name, var countString] => await HandleDeviceHistoryAsync(db, name, countString),
+			["history", var name, var countString] => await HandleDeviceHistoryAsync(queryService, querySession, name, countString),
 
 			// device add <name> [display-name]
 			["add", var name, var displayName] => await HandleDeviceAddAsync(db, sp, name, displayName),
@@ -50,69 +53,63 @@ public static partial class ConsoleDispatcher {
 	/// <summary>
 	/// 处理 device list 命令
 	/// </summary>
-	/// <param name="db">数据库上下文</param>
+	/// <param name="queryService">共享管理查询服务</param>
+	/// <param name="querySession">CLI 使用的特权查询会话</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleDeviceListAsync(DeviceStatusBeaconContext db) {
-		var devices = await db.Devices
-			.AsNoTracking()
-			.Select(d => new { d.DeviceId, d.DeviceName, d.DisplayName })
-			.OrderBy(d => d.DeviceName)
-			.Take(MaxDisplayCount + 1) // 多取1个以检测数量是否过多
-			.ToListAsync();
+	private static async Task<int> HandleDeviceListAsync(IManagementQueryService queryService, ManagementQuerySession querySession) {
+		var devices = await queryService.QueryDevicesAsync(
+			querySession,
+			new DeviceQueryOptions(null, MaxDisplayCount + 1, DeviceSortMode.DeviceNameAscending));
 
 		return PrintListWithSummary(
 			devices,
 			"没有找到任何设备",
 			$"设备数量过多（超过 {MaxDisplayCount} 个），请使用 query 命令或数据库管理工具查询",
 			"设备",
-			device => Console.WriteLine($"  [{device.DeviceId}] {device.DeviceName} ({device.DisplayName})")
+			device => Console.WriteLine($"  [{device.DeviceId}] {device.DeviceName} ({device.DisplayName ?? "<NoDisplayName>"})")
 		);
 	}
 
 	/// <summary>
 	/// 处理 device query <part-of-name> 命令
 	/// </summary>
-	/// <param name="db">数据库上下文</param>
+	/// <param name="queryService">共享管理查询服务</param>
+	/// <param name="querySession">CLI 使用的特权查询会话</param>
 	/// <param name="partOfName">设备名称的一部分</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleDeviceQueryAsync(DeviceStatusBeaconContext db, string partOfName) {
-		var devices = await db.Devices
-			.AsNoTracking()
-			.Where(d => d.DeviceName.Contains(partOfName))
-			.Select(d => new { d.DeviceId, d.DeviceName, d.DisplayName })
-			.OrderBy(d => d.DeviceName)
-			.Take(MaxDisplayCount + 1) // 多取1个以检测数量是否过多
-			.ToListAsync();
+	private static async Task<int> HandleDeviceQueryAsync(IManagementQueryService queryService, ManagementQuerySession querySession, string partOfName) {
+		var devices = await queryService.QueryDevicesAsync(
+			querySession,
+			new DeviceQueryOptions(partOfName, MaxDisplayCount + 1, DeviceSortMode.DeviceNameAscending));
 
 		return PrintListWithSummary(
 			devices,
 			"没有找到匹配的设备",
 			$"匹配的设备数量过多（超过 {MaxDisplayCount} 个），请使用更精确的查询条件",
 			"设备",
-			device => Console.WriteLine($"  [{device.DeviceId}] {device.DeviceName} ({device.DisplayName})")
+			device => Console.WriteLine($"  [{device.DeviceId}] {device.DeviceName} ({device.DisplayName ?? "<NoDisplayName>"})")
 		);
 	}
 
 	/// <summary>
 	/// 处理 device show <name> 命令
 	/// </summary>
-	/// <param name="db">数据库上下文</param>
+	/// <param name="queryService">共享管理查询服务</param>
+	/// <param name="querySession">CLI 使用的特权查询会话</param>
 	/// <param name="name">要展示的设备名称</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleDeviceShowAsync(DeviceStatusBeaconContext db, string name) {
-		var device = await db.Devices
-			.AsNoTracking()
-			.Where(d => d.DeviceName == name)
-			.Select(d => new { d.DeviceId, d.DeviceName, d.DisplayName, d.LatestLogTime, d.LatestReportedAddresses, d.LatestReporterRemoteAddress })
-			.SingleOrDefaultAsync();
+	private static async Task<int> HandleDeviceShowAsync(IManagementQueryService queryService, ManagementQuerySession querySession, string name) {
+		var device = await queryService.GetDeviceByNameAsync(querySession, name);
 
 		if (device is null) {
 			Console.WriteLine("未找到指定的设备");
 			return 2;
 		}
 
-		var latestStatus = device.LatestReportedAddresses is null
-			? "    该设备当前暂无 IP 地址记录"
+		var latestStatus = device.LatestLogTime is null
+			? $"""
+			    该设备当前暂无日志记录
+			"""
 			: $"""
 			    上报时间：{device.LatestLogTime:u}
 			    上报地址列表：[{string.Join(", ", device.LatestReportedAddresses)}]
@@ -125,6 +122,7 @@ public static partial class ConsoleDispatcher {
 			  设备名称：{device.DeviceName}
 			  显示名称：{device.DisplayName}
 			  最新状态：
+			    设备状态：{(device.Enabled ? "启用" : "停用")}
 			{latestStatus}
 			""");
 
@@ -134,27 +132,18 @@ public static partial class ConsoleDispatcher {
 	/// <summary>
 	/// 处理 device history <name> <count> 命令
 	/// </summary>
-	/// <param name="db">数据库上下文</param>
+	/// <param name="queryService">共享管理查询服务</param>
+	/// <param name="querySession">CLI 使用的特权查询会话</param>
 	/// <param name="name">要查询日志的设备名称</param>
 	/// <param name="countString">要查询的日志数量字符串</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleDeviceHistoryAsync(DeviceStatusBeaconContext db, string name, string countString) {
+	private static async Task<int> HandleDeviceHistoryAsync(IManagementQueryService queryService, ManagementQuerySession querySession, string name, string countString) {
 		if (!int.TryParse(countString, out var count) || count is <= 0 or > MaxDisplayCount) {
 			Console.WriteLine($"日志数量必须在 1 到 {MaxDisplayCount} 之间");
 			return 3;
 		}
 
-		// 使用子查询获取设备 ID，通过索引提高性能
-		var logs = await db.OnlineLogs
-			.AsNoTracking()
-			.Where(l => l.DeviceId == db.Devices
-				.Where(d => d.DeviceName == name)
-				.Select(d => d.DeviceId)
-				.SingleOrDefault())
-			.Select(l => new { l.OnlineLogId, l.LogTime, l.ReportedAddresses, l.ReporterRemoteAddress, l.Message })
-			.OrderByDescending(l => l.OnlineLogId)
-			.Take(count)
-			.ToListAsync();
+		var logs = await queryService.GetDeviceLogsByNameAsync(querySession, name, count);
 
 		return PrintListWithHeader(
 			logs,

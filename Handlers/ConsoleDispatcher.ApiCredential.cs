@@ -98,7 +98,7 @@ public static partial class ConsoleDispatcher {
 	}
 
 	/// <summary>
-	/// 处理 api-credential add <owner-user-name> <role> [display-name] 命令
+	/// 处理 api-credential add <owner-user-name> <role> [display-name] 命令，在所属用户存在且角色边界合法时创建新的 API 凭据
 	/// </summary>
 	/// <param name="db">数据库上下文</param>
 	/// <param name="sp">负责依赖注入的服务提供者</param>

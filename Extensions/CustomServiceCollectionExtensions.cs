@@ -16,7 +16,7 @@ public static class CustomServiceCollectionExtensions {
 		public IServiceCollection AddCustomServices() =>
 			services.AddSingleton<IDataProtectorV1, DataProtectorV1>()
 				.AddScoped<ISecurityServiceV1, SecurityServiceV1>()
-				.AddScoped<IBackOfficeQueryService, BackOfficeQueryService>();
+				.AddScoped<IManagementQueryService, ManagementQueryService>();
 
 		/// <summary>
 		/// 依据配置注册数据库上下文 <see cref="DeviceStatusBeaconContext"/> 到 <see cref="IServiceCollection"/> 中
