@@ -110,7 +110,7 @@ public sealed partial class ManagementQueryService {
 			? devices
 			: devices.Where(device =>
 				device.DeviceName.Contains(searchTerm)
-				|| (device.DisplayName != null && device.DisplayName.Contains(searchTerm)));
+				|| (device.DisplayName != null && device.DisplayName.Contains(searchTerm))); // skipcq: CS-R1136 表达式树不支持 is 模式匹配
 
 	/// <summary>
 	/// 基于设备名称筛选设备查询。
@@ -145,14 +145,23 @@ public sealed partial class ManagementQueryService {
 	private IQueryable<Device> BuildAccessibleDeviceQuery(ManagementQuerySession session) {
 		var devices = dbContext.Devices.AsNoTracking();
 
-		// 如果当前主体完全不具备设备数据查询能力，则直接收敛为空查询。
-		return !session.Role.CanQueryAnyDevices()
-			? devices.Where(_ => false)
-			: session.Role.CanQueryAllDevices()
-			? devices
-			: session.UserId is Guid userId
-			? devices.Where(device => device.AuthorizedUsers.Any(user => user.Id == userId))
-			: devices.Where(_ => false);
+		// 无查询权限，返回空查询
+		if (!session.Role.CanQueryAnyDevices()) {
+			return devices.Where(_ => false);
+		}
+
+		// 全量查询权限，返回完整查询
+		if (session.Role.CanQueryAllDevices()) {
+			return devices;
+		}
+
+		// 具备有限查询权限，返回关联了该用户的设备的查询
+		if (session.UserId is Guid userId) {
+			return devices.Where(device => device.AuthorizedUsers.Any(user => user.Id == userId));
+		}
+
+		// 其他情况，返回空查询
+		return devices.Where(_ => false);
 	}
 
 	/// <summary>

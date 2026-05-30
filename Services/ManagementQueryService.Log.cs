@@ -107,7 +107,7 @@ public sealed partial class ManagementQueryService {
 			? logs
 			: logs.Where(log =>
 				log.Device.DeviceName.Contains(deviceKeyword)
-				|| (log.Device.DisplayName != null && log.Device.DisplayName.Contains(deviceKeyword)));
+				|| (log.Device.DisplayName != null && log.Device.DisplayName.Contains(deviceKeyword))); // skipcq: CS-R1136 表达式树不支持 is 模式匹配
 
 	/// <summary>
 	/// 基于设备名称筛选日志查询。
@@ -126,14 +126,23 @@ public sealed partial class ManagementQueryService {
 	private IQueryable<OnlineLog> BuildAccessibleLogQuery(ManagementQuerySession session) {
 		var logs = dbContext.OnlineLogs.AsNoTracking();
 
-		// 日志访问范围必须和设备访问范围保持一致，避免通过日志侧绕过设备授权。
-		return !session.Role.CanQueryAnyDevices()
-			? logs.Where(_ => false)
-			: session.Role.CanQueryAllDevices()
-			? logs
-			: session.UserId is Guid userId
-			? logs.Where(log => log.Device.AuthorizedUsers.Any(user => user.Id == userId))
-			: logs.Where(_ => false);
+		// 无查询权限，返回空查询
+		if (!session.Role.CanQueryAnyDevices()) {
+			return logs.Where(_ => false);
+		}
+
+		// 全量查询权限，返回完整查询
+		if (session.Role.CanQueryAllDevices()) {
+			return logs;
+		}
+
+		// 具备有限查询权限，返回关联了该用户的设备的日志查询
+		if (session.UserId is Guid userId) {
+			return logs.Where(log => log.Device.AuthorizedUsers.Any(user => user.Id == userId));
+		}
+
+		// 其他情况，返回空查询
+		return logs.Where(_ => false);
 	}
 
 	/// <summary>

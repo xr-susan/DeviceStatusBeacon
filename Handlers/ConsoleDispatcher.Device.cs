@@ -107,7 +107,7 @@ public static partial class ConsoleDispatcher {
 		}
 
 		var latestStatus = device.LatestLogTime is null
-			? $"""
+			? """
 			    该设备当前暂无日志记录
 			"""
 			: $"""
