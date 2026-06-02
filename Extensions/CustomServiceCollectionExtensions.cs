@@ -7,11 +7,14 @@ namespace DeviceStatusBeacon.Extensions;
 /// 用于添加本项目的自定义服务和定制化的服务到 <see cref="IServiceCollection"/> 中的扩展方法组
 /// </summary>
 public static class CustomServiceCollectionExtensions {
+	/// <summary>
+	/// 为 <see cref="IServiceCollection"/> 提供本项目服务注册相关的扩展方法组
+	/// </summary>
+	/// <param name="services">将要添加服务的 <see cref="IServiceCollection"/></param>
 	extension(IServiceCollection services) {
 		/// <summary>
 		/// 注册本项目中自定义的服务到 <see cref="IServiceCollection"/> 中
 		/// </summary>
-		/// <param name="services">将要添加服务的 <see cref="IServiceCollection"/></param>
 		/// <returns>当前的 <see cref="IServiceCollection"/>，用于链式调用</returns>
 		public IServiceCollection AddCustomServices() =>
 			services.AddSingleton<IDataProtectorV1, DataProtectorV1>()
@@ -72,6 +75,10 @@ public static class CustomServiceCollectionExtensions {
 		}
 	}
 
+	/// <summary>
+	/// 为 <see cref="IServiceProvider"/> 提供应用启动阶段所需的基础扩展方法组
+	/// </summary>
+	/// <param name="serviceProvider">当前应用的根服务提供器</param>
 	extension(IServiceProvider serviceProvider) {
 		/// <summary>
 		/// 应用数据库迁移

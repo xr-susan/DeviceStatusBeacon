@@ -31,20 +31,36 @@ public interface IManagementQueryService {
 	ManagementQuerySession CreatePrivilegedQuerySession(string userName = "CLI");
 
 	/// <summary>
-	/// 获取首页摘要数据。
+	/// 获取 Dashboard 首屏摘要数据。
 	/// </summary>
 	/// <param name="principal">当前登录主体</param>
 	/// <param name="cancellationToken">取消令牌</param>
-	/// <returns>一个表示异步操作的任务，任务结果为首页摘要数据</returns>
-	Task<DashboardData> GetDashboardAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default);
+	/// <returns>一个表示异步操作的任务，任务结果为 Dashboard 首屏摘要数据</returns>
+	Task<DashboardOverviewData> GetDashboardOverviewAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default);
 
 	/// <summary>
-	/// 获取首页摘要数据。
+	/// 获取 Dashboard 首屏摘要数据。
 	/// </summary>
 	/// <param name="session">查询会话</param>
 	/// <param name="cancellationToken">取消令牌</param>
-	/// <returns>一个表示异步操作的任务，任务结果为首页摘要数据</returns>
-	Task<DashboardData> GetDashboardAsync(ManagementQuerySession session, CancellationToken cancellationToken = default);
+	/// <returns>一个表示异步操作的任务，任务结果为 Dashboard 首屏摘要数据</returns>
+	Task<DashboardOverviewData> GetDashboardOverviewAsync(ManagementQuerySession session, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// 获取 Dashboard 中按需加载的最近活动数据。
+	/// </summary>
+	/// <param name="principal">当前登录主体</param>
+	/// <param name="cancellationToken">取消令牌</param>
+	/// <returns>一个表示异步操作的任务，任务结果为最近活动数据</returns>
+	Task<DashboardActivityData> GetDashboardActivityAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// 获取 Dashboard 中按需加载的最近活动数据。
+	/// </summary>
+	/// <param name="session">查询会话</param>
+	/// <param name="cancellationToken">取消令牌</param>
+	/// <returns>一个表示异步操作的任务，任务结果为最近活动数据</returns>
+	Task<DashboardActivityData> GetDashboardActivityAsync(ManagementQuerySession session, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// 获取设备列表页数据。

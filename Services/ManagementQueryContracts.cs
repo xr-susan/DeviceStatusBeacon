@@ -84,20 +84,26 @@ public sealed record LogQueryOptions(
 );
 
 /// <summary>
-/// 首页数据。
+/// Dashboard 首屏摘要数据。
 /// </summary>
 /// <param name="Session">当前会话信息</param>
 /// <param name="AccessibleDeviceCount">当前查询会话范围内可读取的设备总数</param>
 /// <param name="EnabledDeviceCount">当前查询会话范围内可读取且启用的设备数</param>
 /// <param name="TotalLogCount">当前查询会话范围内可读取的日志总数</param>
-/// <param name="HighlightedDevices">重点设备摘要</param>
-/// <param name="RecentLogs">最近日志摘要</param>
-public sealed record DashboardData(
+public sealed record DashboardOverviewData(
 	ManagementSessionData Session,
 	int AccessibleDeviceCount,
 	int EnabledDeviceCount,
-	int TotalLogCount,
-	IReadOnlyCollection<DeviceSummary> HighlightedDevices,
+	int TotalLogCount
+);
+
+/// <summary>
+/// Dashboard 中按需加载的最近活动数据。
+/// </summary>
+/// <param name="RecentDevices">最近活跃设备摘要</param>
+/// <param name="RecentLogs">最近日志摘要</param>
+public sealed record DashboardActivityData(
+	IReadOnlyCollection<DeviceSummary> RecentDevices,
 	IReadOnlyCollection<OnlineLogSummary> RecentLogs
 );
 
