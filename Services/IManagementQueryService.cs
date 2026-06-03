@@ -17,7 +17,7 @@ public interface IManagementQueryService {
 	/// <remarks>
 	/// 返回结果只保留角色这一份源数据。
 	/// 具体读取 / 管理能力应通过角色扩展方法即时推导，
-	/// 不再在会话记录中重复存储角色投影。
+	/// 不在会话记录中重复存储角色投影。
 	/// </remarks>
 	/// <param name="principal">当前登录主体</param>
 	/// <returns>构建完成的查询会话</returns>
@@ -47,19 +47,19 @@ public interface IManagementQueryService {
 	Task<DashboardOverviewData> GetDashboardOverviewAsync(ManagementQuerySession session, CancellationToken cancellationToken = default);
 
 	/// <summary>
-	/// 获取 Dashboard 中按需加载的最近活动数据。
+	/// 获取 Dashboard 中按需加载的补充摘要与最近活动数据。
 	/// </summary>
 	/// <param name="principal">当前登录主体</param>
 	/// <param name="cancellationToken">取消令牌</param>
-	/// <returns>一个表示异步操作的任务，任务结果为最近活动数据</returns>
+	/// <returns>一个表示异步操作的任务，任务结果为补充摘要与最近活动数据</returns>
 	Task<DashboardActivityData> GetDashboardActivityAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default);
 
 	/// <summary>
-	/// 获取 Dashboard 中按需加载的最近活动数据。
+	/// 获取 Dashboard 中按需加载的补充摘要与最近活动数据。
 	/// </summary>
 	/// <param name="session">查询会话</param>
 	/// <param name="cancellationToken">取消令牌</param>
-	/// <returns>一个表示异步操作的任务，任务结果为最近活动数据</returns>
+	/// <returns>一个表示异步操作的任务，任务结果为补充摘要与最近活动数据</returns>
 	Task<DashboardActivityData> GetDashboardActivityAsync(ManagementQuerySession session, CancellationToken cancellationToken = default);
 
 	/// <summary>

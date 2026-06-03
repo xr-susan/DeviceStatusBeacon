@@ -1,0 +1,57 @@
+﻿@page "/login"
+@model DeviceStatusBeacon.Pages.Account.LoginModel
+@{
+	ViewData["Title"] = "登录";
+}
+
+@section HeadStyles {
+	<link rel="stylesheet" href="~/css/pages/login.css" asp-append-version="true" />
+}
+
+@section HeaderActions {
+	<a asp-page="/Index" class="button button--header">返回首页</a>
+}
+
+<div class="page">
+	<header class="page-header page-header--stacked">
+		<div>
+			<h1 class="page-header__title">登录系统</h1>
+		</div>
+	</header>
+
+	<div class="auth-layout">
+		<section class="panel panel--form">
+			@if (ViewContext.ViewData.ModelState.ErrorCount > 0) {
+				<div asp-validation-summary="All" class="notice notice--error" role="alert"></div>
+			}
+
+			<form method="post" class="form-stack">
+				<input asp-for="ReturnUrl" type="hidden" />
+
+				<div class="field">
+					<label asp-for="Input.UserName" class="field__label"></label>
+					<input asp-for="Input.UserName" class="field__input" autocomplete="username" autofocus />
+				</div>
+
+				<div class="field">
+					<label asp-for="Input.Password" class="field__label"></label>
+					<input asp-for="Input.Password" class="field__input" autocomplete="current-password" />
+				</div>
+
+				<div class="button-row">
+					<button type="submit" class="button button--primary">登录</button>
+				</div>
+			</form>
+		</section>
+
+		<aside class="panel">
+			<div class="panel__header">
+				<h2 class="panel__title">使用说明</h2>
+			</div>
+			<ul class="list">
+				<li>登录成功后默认进入仪表板。</li>
+				<li>如果忘记账户或密码，请联系管理员处理。</li>
+			</ul>
+		</aside>
+	</div>
+</div>

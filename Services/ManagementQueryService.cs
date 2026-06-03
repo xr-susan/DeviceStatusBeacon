@@ -20,6 +20,11 @@ public sealed partial class ManagementQueryService(DeviceStatusBeaconContext dbC
 	private const int DashboardLogCount = 6;
 
 	/// <summary>
+	/// Dashboard 中“近期活跃设备”统计使用的时间窗口（小时）。
+	/// </summary>
+	private const int DashboardRecentActiveWindowHours = 24;
+
+	/// <summary>
 	/// 设备查询的默认分页大小。
 	/// </summary>
 	private const int DevicePageCount = 48;

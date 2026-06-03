@@ -34,6 +34,17 @@ public static class PrincipalExtensions {
 			role is PrincipalRole.DeviceManager or PrincipalRole.Administrator;
 
 		/// <summary>
+		/// 获取当前角色对应的设备查询范围文本。
+		/// </summary>
+		/// <returns>用于页面展示的设备查询范围文本</returns>
+		public string GetDeviceQueryScopeText() =>
+			role.CanQueryAllDevices()
+				? "全部设备"
+				: role.CanQueryAnyDevices()
+					? "部分设备"
+					: "无查询权限";
+
+		/// <summary>
 		/// 判断当前角色是否为管理员。
 		/// </summary>
 		/// <returns>如果角色为管理员，则返回 true；否则返回 false</returns>

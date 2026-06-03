@@ -1,0 +1,60 @@
+﻿@page "/"
+@model DeviceStatusBeacon.Pages.IndexModel
+@{
+	ViewData["Title"] = "首页";
+}
+
+@section HeadStyles {
+	<link rel="stylesheet" href="~/css/pages/index.css" asp-append-version="true" />
+}
+
+<div class="page">
+	<section class="hero-panel">
+		<div class="hero-panel__content">
+			<h1 class="hero-panel__title">设备状态信标</h1>
+			<p class="hero-panel__summary">记录设备最近上报、地址与运行状态，帮助在内网或多设备环境中快速确认设备是否在线。</p>
+			<div class="hero-panel__actions">
+				<a asp-page="/Account/Login" class="button button--primary">登录系统</a>
+			</div>
+		</div>
+		<aside class="hero-panel__aside">
+			<div class="hero-stat">
+				<span class="hero-stat__label">适用场景</span>
+				<strong class="hero-stat__value">设备值守、状态确认、短期排障</strong>
+			</div>
+			<div class="hero-stat">
+				<span class="hero-stat__label">数据重点</span>
+				<strong class="hero-stat__value">最近上报时间、地址、来源与消息</strong>
+			</div>
+			<div class="hero-stat">
+				<span class="hero-stat__label">访问方式</span>
+				<strong class="hero-stat__value">登录后台查看受控范围内的数据</strong>
+			</div>
+		</aside>
+	</section>
+
+	<section id="capabilities" class="section-block">
+		<div class="section-heading">
+			<h2 class="section-heading__title">核心能力</h2>
+			<p class="section-heading__summary">围绕设备当前状态、近期日志和可见范围组织信息。</p>
+		</div>
+		<div class="feature-list">
+			<div class="feature-row">
+				<strong>设备状态摘要</strong>
+				<span>在列表中直接查看设备是否启用、最近上报时间和最新地址。</span>
+			</div>
+			<div class="feature-row">
+				<strong>近期日志查询</strong>
+				<span>按设备关键字筛选上报记录，快速定位来源地址和附加消息。</span>
+			</div>
+			<div class="feature-row">
+				<strong>权限范围展示</strong>
+				<span>后台只展示当前账户可读取的设备与日志，减少无关信息干扰。</span>
+			</div>
+			<div class="feature-row">
+				<strong>清晰操作入口</strong>
+				<span>仪表板、设备和日志页面按日常使用顺序组织。</span>
+			</div>
+		</div>
+	</section>
+</div>

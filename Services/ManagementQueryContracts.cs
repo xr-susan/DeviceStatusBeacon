@@ -89,20 +89,22 @@ public sealed record LogQueryOptions(
 /// <param name="Session">当前会话信息</param>
 /// <param name="AccessibleDeviceCount">当前查询会话范围内可读取的设备总数</param>
 /// <param name="EnabledDeviceCount">当前查询会话范围内可读取且启用的设备数</param>
-/// <param name="TotalLogCount">当前查询会话范围内可读取的日志总数</param>
+/// <param name="RecentActiveDeviceCount">当前查询会话范围内最近 24 小时内有日志的设备数</param>
 public sealed record DashboardOverviewData(
 	ManagementSessionData Session,
 	int AccessibleDeviceCount,
 	int EnabledDeviceCount,
-	int TotalLogCount
+	int RecentActiveDeviceCount
 );
 
 /// <summary>
-/// Dashboard 中按需加载的最近活动数据。
+/// Dashboard 中按需加载的补充摘要与最近活动数据。
 /// </summary>
+/// <param name="AccessibleLogCount">当前查询会话范围内可读取的日志总数</param>
 /// <param name="RecentDevices">最近活跃设备摘要</param>
 /// <param name="RecentLogs">最近日志摘要</param>
 public sealed record DashboardActivityData(
+	int AccessibleLogCount,
 	IReadOnlyCollection<DeviceSummary> RecentDevices,
 	IReadOnlyCollection<OnlineLogSummary> RecentLogs
 );

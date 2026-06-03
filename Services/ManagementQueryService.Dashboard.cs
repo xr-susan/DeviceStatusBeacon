@@ -9,20 +9,25 @@ public sealed partial class ManagementQueryService {
 
 	/// <inheritdoc/>
 	public async Task<DashboardOverviewData> GetDashboardOverviewAsync(ManagementQuerySession session, CancellationToken cancellationToken = default) {
-		// 获取当前查询会话范围内可读取的设备和日志范围，用于后续统计数据查询
-		var accessibleDevices = BuildAccessibleDeviceQuery(session);
-		var accessibleLogs = BuildAccessibleLogQuery(session);
+		var recentActiveCutoff = DateTime.UtcNow.AddHours(-DashboardRecentActiveWindowHours);
 
-		// 统计当前查询会话范围内的设备和日志总量，作为首页摘要的核心指标
-		var accessibleDeviceCount = await accessibleDevices.CountAsync(cancellationToken);
-		var enabledDeviceCount = await accessibleDevices.CountAsync(device => device.Enabled, cancellationToken);
-		var accessibleLogCount = await accessibleLogs.CountAsync(cancellationToken);
+		// 首页首屏只同步加载设备侧的轻量统计，避免把日志总量统计放进主渲染路径
+		var deviceMetrics = await BuildAccessibleDeviceQuery(session)
+			.GroupBy(_ => 1)
+			.Select(group => new {
+				AccessibleDeviceCount = group.Count(),
+				EnabledDeviceCount = group.Count(device => device.Enabled),
+				RecentActiveDeviceCount = group.Count(device =>
+					device.LatestLogTime != null
+					&& device.LatestLogTime >= recentActiveCutoff)
+			})
+			.SingleOrDefaultAsync(cancellationToken);
 
 		return new(
 			session.ToData(),
-			accessibleDeviceCount,
-			enabledDeviceCount,
-			accessibleLogCount);
+			deviceMetrics?.AccessibleDeviceCount ?? 0,
+			deviceMetrics?.EnabledDeviceCount ?? 0,
+			deviceMetrics?.RecentActiveDeviceCount ?? 0);
 	}
 
 	/// <inheritdoc/>
@@ -34,6 +39,9 @@ public sealed partial class ManagementQueryService {
 		// 获取当前查询会话范围内可读取的设备和日志范围，用于列表数据查询
 		var accessibleDevices = BuildAccessibleDeviceQuery(session);
 		var accessibleLogs = BuildAccessibleLogQuery(session);
+
+		// 日志总量与最近活动统一延后到同源 API，避免抬高首屏页面渲染成本
+		var accessibleLogCount = await accessibleLogs.CountAsync(cancellationToken);
 
 		// 最近活动不参与首屏关键数据渲染，作为同源 API 的按需加载内容返回
 		var recentDevices = await QueryDevicesCoreAsync(
@@ -47,6 +55,6 @@ public sealed partial class ManagementQueryService {
 			DashboardLogCount,
 			cancellationToken);
 
-		return new(recentDevices, recentLogs);
+		return new(accessibleLogCount, recentDevices, recentLogs);
 	}
 }

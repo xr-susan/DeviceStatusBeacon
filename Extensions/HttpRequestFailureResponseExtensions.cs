@@ -7,14 +7,19 @@ namespace DeviceStatusBeacon.Extensions;
 /// </summary>
 internal enum FailureResponseMode {
 	/// <summary>
-	/// 输出友好 HTML 页面，或在认证挑战时允许浏览器重定向到登录页
+	/// 显式接受 HTML 文档输出
 	/// </summary>
-	Html,
+	ExplicitHtml,
 
 	/// <summary>
 	/// 输出机器可读的 JSON 错误正文
 	/// </summary>
 	Json,
+
+	/// <summary>
+	/// 未显式声明 HTML，但可以接受通用文档型 HTML 输出
+	/// </summary>
+	ImplicitHtml,
 
 	/// <summary>
 	/// 仅返回状态码，不附带正文；调用方应确保最终状态码不是 200
@@ -49,12 +54,13 @@ internal static class HttpRequestFailureResponseExtensions {
 
 			var acceptHeaders = request.GetTypedHeaders().Accept;
 
-			// 对非 API 路径，如果请求方没有声明接受 HTML 类响应，只给状态码，不返回站点页面
+			// 对非 API 路径，如果请求方没有提供 Accept 头，则视为程序化调用，只给状态码
 			if (acceptHeaders is null || acceptHeaders.Count == 0) {
 				return FailureResponseMode.Empty;
 			}
 
-			// 站点页面统一按 HTML 文档输出处理，这里只认 text/html、text/* 和 */*
+			// 站点页面统一按 HTML 文档输出处理，但区分“显式 HTML”和“隐式可接受 HTML”
+			var acceptsImplicitHtml = false;
 			foreach (var acceptedMediaType in acceptHeaders) {
 				var mediaType = acceptedMediaType.MediaType.Value;
 
@@ -64,13 +70,17 @@ internal static class HttpRequestFailureResponseExtensions {
 				}
 
 				if (mediaType.Equals(MediaTypeNames.Text.Html, StringComparison.OrdinalIgnoreCase)
-					|| mediaType.Equals("text/*", StringComparison.OrdinalIgnoreCase)
+					|| mediaType.Equals("application/xhtml+xml", StringComparison.OrdinalIgnoreCase)) {
+					return FailureResponseMode.ExplicitHtml;
+				}
+
+				if (mediaType.Equals("text/*", StringComparison.OrdinalIgnoreCase)
 					|| mediaType.Equals("*/*", StringComparison.OrdinalIgnoreCase)) {
-					return FailureResponseMode.Html;
+					acceptsImplicitHtml = true;
 				}
 			}
 
-			return FailureResponseMode.Empty;
+			return acceptsImplicitHtml ? FailureResponseMode.ImplicitHtml : FailureResponseMode.Empty;
 		}
 	}
 }

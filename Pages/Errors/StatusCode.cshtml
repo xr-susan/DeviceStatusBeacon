@@ -1,0 +1,27 @@
+﻿@page "/status-code/{statusCode:int:range(100,600)}"
+@model DeviceStatusBeacon.Pages.Errors.StatusCodeModel
+@{
+	ViewData["Title"] = Model.PageTitle;
+}
+
+<div class="page">
+	<section class="panel">
+		<div class="panel__header">
+			<h1 class="panel__title panel__title--large">@Model.PageTitle</h1>
+		</div>
+		<p class="panel__text">@Model.Description</p>
+
+		<div class="info-list">
+			@if (!string.IsNullOrWhiteSpace(Model.OriginalPathAndQuery)) {
+				<div class="info-list__row">
+					<dt>原始目标</dt>
+					<dd class="code-text">@Model.OriginalPathAndQuery</dd>
+				</div>
+			}
+			<div class="info-list__row">
+				<dt>请求标识</dt>
+				<dd class="code-text">@Model.RequestId</dd>
+			</div>
+		</div>
+	</section>
+</div>

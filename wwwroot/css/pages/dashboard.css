@@ -1,0 +1,117 @@
+.metric-card {
+    display: grid;
+    align-content: start;
+    padding: var(--space-xl);
+    border: var(--border-width) solid var(--color-border-default);
+    border-radius: var(--radius-medium);
+    background: var(--color-canvas-subtle);
+    box-shadow: var(--shadow-panel);
+}
+
+.metric-card__value {
+    display: block;
+    margin-top: var(--space-md);
+    font-size: 1.85rem;
+    line-height: 1.1;
+}
+
+.dashboard-overview {
+    display: grid;
+    grid-template-columns: minmax(0, 24rem) minmax(0, 1fr);
+    gap: var(--space-xl);
+    align-items: stretch;
+}
+
+.dashboard-overview > .panel {
+    height: 100%;
+}
+
+.dashboard-account-panel {
+    display: grid;
+}
+
+.dashboard-metrics-panel {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: var(--space-lg);
+}
+
+.dashboard-metrics-panel .panel__header {
+    margin-bottom: 0;
+}
+
+.dashboard-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-lg);
+    align-content: start;
+}
+
+.dashboard-activity {
+    display: grid;
+    gap: var(--space-xl);
+}
+
+.dashboard-activity[data-activity-state="loading"],
+.dashboard-activity[data-activity-state="error"] {
+    display: block;
+}
+
+.dashboard-activity__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: var(--space-xl);
+}
+
+.dashboard-activity__panel {
+    padding: var(--space-lg);
+    border: var(--border-width) solid var(--color-border-default);
+    border-radius: var(--radius-medium);
+    background: var(--color-canvas-inset);
+}
+
+.dashboard-activity__title {
+    display: block;
+    margin: 0 0 var(--space-lg);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.dashboard-device-list {
+    display: grid;
+    gap: var(--space-md);
+}
+
+.dashboard-device-item {
+    display: grid;
+    gap: var(--space-xs);
+    padding-bottom: var(--space-md);
+    border-bottom: var(--border-width) solid var(--color-border-muted);
+}
+
+.dashboard-device-item:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.dashboard-device-item__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+    color: var(--color-fg-muted);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 67.5em) {
+    .dashboard-overview,
+    .dashboard-activity__grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 40em) {
+    .dashboard-metric-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,26 @@
+.page-header--stacked {
+    display: grid;
+    gap: var(--space-md);
+}
+
+.auth-layout {
+    display: grid;
+    gap: var(--space-xl);
+}
+
+.form-stack {
+    display: grid;
+    gap: var(--space-xl);
+}
+
+.notice {
+    padding: var(--space-lg) var(--space-xl);
+    border: var(--border-width) solid var(--color-border-default);
+    border-radius: var(--radius-medium);
+}
+
+.notice--error {
+    border-color: rgba(207, 34, 46, 0.2);
+    background: var(--color-danger-subtle);
+    color: var(--color-danger-fg);
+}

@@ -1,0 +1,110 @@
+.hero-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1.8fr) minmax(17.5rem, 0.9fr);
+    gap: var(--space-3xl);
+    padding: var(--space-3xl);
+    border: var(--border-width) solid var(--color-border-default);
+    border-radius: var(--radius-medium);
+    background: var(--color-canvas-subtle);
+    box-shadow: var(--shadow-panel);
+}
+
+.hero-panel__content {
+    display: grid;
+    gap: var(--space-xl);
+    align-content: start;
+}
+
+.hero-panel__aside {
+    display: grid;
+    gap: 0;
+}
+
+.hero-panel__title {
+    margin: 0;
+    max-width: 18ch;
+    font-size: clamp(1.9rem, 3vw, 2.4rem);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+}
+
+.hero-stat {
+    display: grid;
+    gap: var(--space-sm);
+    padding: var(--space-lg) 0;
+    border-top: var(--border-width) solid var(--color-border-muted);
+}
+
+.hero-stat:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.hero-stat__value {
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.section-block {
+    display: grid;
+    gap: var(--space-xl);
+    padding: var(--space-xl);
+    border: var(--border-width) solid var(--color-border-default);
+    border-radius: var(--radius-medium);
+    background: var(--color-canvas-subtle);
+}
+
+.section-heading {
+    display: grid;
+    gap: var(--space-md);
+}
+
+.feature-list {
+    display: grid;
+    border: var(--border-width) solid var(--color-border-default);
+    border-radius: var(--radius-medium);
+    overflow: hidden;
+}
+
+.feature-row {
+    display: grid;
+    grid-template-columns: var(--feature-label-width) minmax(0, 1fr);
+    gap: var(--space-xl);
+    padding: var(--space-lg) var(--space-xl);
+    border-top: var(--border-width) solid var(--color-border-muted);
+    background: var(--color-canvas-subtle);
+}
+
+.feature-row:first-child {
+    border-top: 0;
+}
+
+.feature-row strong {
+    font-weight: 600;
+}
+
+.feature-row span {
+    color: var(--color-fg-muted);
+}
+
+@media (max-width: 67.5em) {
+    .hero-panel {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 45em) {
+    .hero-panel {
+        padding: var(--space-xl);
+    }
+
+    .hero-panel__title {
+        max-width: none;
+        font-size: 1.85rem;
+    }
+
+    .feature-row {
+        grid-template-columns: 1fr;
+        gap: var(--space-xs);
+    }
+}
