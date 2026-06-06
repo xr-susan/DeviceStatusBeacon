@@ -34,21 +34,27 @@ public static class PrincipalExtensions {
 			role is PrincipalRole.DeviceManager or PrincipalRole.Administrator;
 
 		/// <summary>
-		/// 获取当前角色对应的设备查询范围文本。
-		/// </summary>
-		/// <returns>用于页面展示的设备查询范围文本</returns>
-		public string GetDeviceQueryScopeText() =>
-			role.CanQueryAllDevices()
-				? "全部设备"
-				: role.CanQueryAnyDevices()
-					? "部分设备"
-					: "无查询权限";
-
-		/// <summary>
 		/// 判断当前角色是否为管理员。
 		/// </summary>
 		/// <returns>如果角色为管理员，则返回 true；否则返回 false</returns>
 		public bool IsAdministrator() => role == PrincipalRole.Administrator;
+
+		/// <summary>
+		/// 获取当前角色对应的设备查询范围枚举值。
+		/// </summary>
+		/// <returns>当前角色对应的设备查询范围枚举值</returns>
+		public PrincipalQueryScope GetDeviceQueryScope() =>
+			role switch {
+				PrincipalRole.FullQuery or PrincipalRole.DeviceManager or PrincipalRole.Administrator => PrincipalQueryScope.Full,
+				PrincipalRole.LimitedQuery => PrincipalQueryScope.Limited,
+				_ => PrincipalQueryScope.None
+			};
+
+		/// <summary>
+		/// 获取当前角色对应的设备查询范围文本。
+		/// </summary>
+		/// <returns>用于页面展示的设备查询范围文本</returns>
+		public string GetDeviceQueryScopeText() => role.GetDeviceQueryScope().GetText();
 	}
 
 	/// <summary>
@@ -65,4 +71,41 @@ public static class PrincipalExtensions {
 				identity.IsAuthenticated
 				&& string.Equals(identity.AuthenticationType, IdentityConstants.ApplicationScheme, StringComparison.Ordinal));
 	}
+
+	/// <summary>
+	/// 为 <see cref="PrincipalQueryScope"/> 提供设备查询范围文本描述的扩展方法组
+	/// </summary>
+	/// <param name="scope">当前要获取文本描述的设备查询范围枚举值</param>
+	extension(PrincipalQueryScope scope) {
+		/// <summary>
+		/// 获取当前设备查询范围对应的文本描述。
+		/// </summary>
+		/// <returns>用于页面展示的设备查询范围文本</returns>
+		public string GetText() =>
+			scope switch {
+				PrincipalQueryScope.Full => "全部设备",
+				PrincipalQueryScope.Limited => "部分设备",
+				_ => "无查询权限"
+			};
+	}
+}
+
+/// <summary>
+/// 定义设备查询范围的枚举类型，用于描述不同角色在设备数据访问方面的权限范围。
+/// </summary>
+public enum PrincipalQueryScope {
+	/// <summary>
+	/// 无设备查询权限
+	/// </summary>
+	None,
+
+	/// <summary>
+	/// 仅限查询部分设备
+	/// </summary>
+	Limited,
+
+	/// <summary>
+	/// 可查询全部设备
+	/// </summary>
+	Full
 }
