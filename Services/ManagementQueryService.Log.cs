@@ -5,79 +5,65 @@ namespace DeviceStatusBeacon.Services;
 
 public sealed partial class ManagementQueryService {
 	/// <inheritdoc/>
-	public async Task<LogListData> GetLogsAsync(ClaimsPrincipal principal, string? deviceKeyword, int take, CancellationToken cancellationToken = default) =>
-		await GetLogsAsync(CreateQuerySessionAsync(principal), deviceKeyword, take, cancellationToken);
+	public async Task<LogListData> GetLogsAsync(ClaimsPrincipal principal, string? deviceKeyword, int pageNumber, int pageSize, CancellationToken cancellationToken = default) =>
+		await GetLogsAsync(CreateQuerySessionAsync(principal), deviceKeyword, pageNumber, pageSize, cancellationToken);
 
 	/// <inheritdoc/>
-	public async Task<LogListData> GetLogsAsync(ManagementQuerySession session, string? deviceKeyword, int take, CancellationToken cancellationToken = default) {
-		// 标准化查询数量和设备关键字
-		var normalizedTake = Math.Clamp(take, 10, MaxLogQueryCount);
+	public async Task<LogListData> GetLogsAsync(ManagementQuerySession session, string? deviceKeyword, int pageNumber, int pageSize, CancellationToken cancellationToken = default) {
+		// 标准化分页选项和设备关键字
+		var normalizedPageNumber = NormalizePageNumber(pageNumber);
+		var normalizedPageSize = NormalizePageSize(pageSize, 10, MaxLogQueryCount);
 		var normalizedDeviceKeyword = NormalizeSearchTerm(deviceKeyword);
 
 		// 构建当前可读取的日志范围，并应用设备关键字筛选
 		var filteredLogs = ApplyLogDeviceKeyword(BuildAccessibleLogQuery(session), normalizedDeviceKeyword);
 
-		// 统计查询范围内的日志总量，并查询指定数量的日志列表
+		// 统计查询范围内的日志总量，并按实际总页数纠正页码
 		var totalCount = await filteredLogs.CountAsync(cancellationToken);
-		var logs = await QueryLogsCoreAsync(filteredLogs, normalizedTake, cancellationToken);
+		normalizedPageNumber = NormalizePageNumberForTotalCount(normalizedPageNumber, normalizedPageSize, totalCount);
 
-		return new(session.ToData(), totalCount, logs);
+		// 查询当前页的日志列表
+		var logs = await QueryLogsPageAsync(
+			filteredLogs,
+			CalculateSkipCount(normalizedPageNumber, normalizedPageSize),
+			normalizedPageSize,
+			cancellationToken);
+
+		return new(
+			session.ToData(),
+			new(totalCount, normalizedPageNumber, normalizedPageSize),
+			logs);
 	}
-
-	/// <inheritdoc/>
-	public async Task<IReadOnlyCollection<OnlineLogSummary>> QueryLogsAsync(ManagementQuerySession session, LogQueryOptions options, CancellationToken cancellationToken = default) =>
-		await QueryLogsCoreAsync(BuildAccessibleLogQuery(session), options, cancellationToken);
 
 	/// <inheritdoc/>
 	public Task<IReadOnlyCollection<OnlineLogSummary>> GetDeviceLogsByNameAsync(ManagementQuerySession session, string deviceName, int take, CancellationToken cancellationToken = default) {
 		// 标准化查询数量
-		var normalizedTake = NormalizeTake(take, 1, MaxLogQueryCount);
+		var normalizedTake = NormalizePageSize(take, 1, MaxLogQueryCount);
 
 		// 构建当前可读取的日志范围，并应用设备名称筛选
 		var filteredLogs = ApplyLogDeviceName(BuildAccessibleLogQuery(session), deviceName);
 
-		return QueryLogsCoreAsync(filteredLogs, normalizedTake, cancellationToken);
+		return QueryLogsPageAsync(filteredLogs, 0, normalizedTake, cancellationToken);
 	}
 
 	/// <summary>
-	/// 执行日志列表查询的核心实现。
-	/// </summary>
-	/// <param name="logs">已应用访问范围过滤的日志查询</param>
-	/// <param name="options">日志查询选项</param>
-	/// <param name="cancellationToken">取消令牌</param>
-	/// <returns>一个表示异步操作的任务，任务结果为日志列表</returns>
-	private static Task<IReadOnlyCollection<OnlineLogSummary>> QueryLogsCoreAsync(
-		IQueryable<OnlineLog> logs,
-		LogQueryOptions options,
-		CancellationToken cancellationToken) {
-		// 标准化查询数量和设备关键字
-		var normalizedDeviceKeyword = NormalizeSearchTerm(options.DeviceKeyword);
-
-		// 将设备关键字筛选应用到日志查询
-		logs = ApplyLogDeviceKeyword(logs, normalizedDeviceKeyword);
-
-		// 执行日志列表查询的核心实现
-		return QueryLogsCoreAsync(logs, options.Take, cancellationToken);
-	}
-
-	/// <summary>
-	/// 执行日志列表查询的核心实现。
+	/// 查询日志分页数据。
 	/// </summary>
 	/// <param name="logs">已应用全部过滤的日志查询</param>
-	/// <param name="take">查询数量</param>
+	/// <param name="skip">已经规范化的跳过数量</param>
+	/// <param name="take">已经规范化的查询数量</param>
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务，任务结果为日志列表</returns>
-	private static async Task<IReadOnlyCollection<OnlineLogSummary>> QueryLogsCoreAsync(
+	private static async Task<IReadOnlyCollection<OnlineLogSummary>> QueryLogsPageAsync(
 		IQueryable<OnlineLog> logs,
+		int skip,
 		int take,
 		CancellationToken cancellationToken) {
-		// 标准化查询数量
-		var normalizedTake = NormalizeTake(take, 1, MaxLogQueryCount);
-
 		// 按照日志 ID 降序排序并投影为日志列表项
 		var logRows = await logs
 			.OrderByDescending(log => log.OnlineLogId)
-			.Take(normalizedTake)
+			.Skip(skip)
+			.Take(take)
 			.Select(log => new LogProjection {
 				OnlineLogId = log.OnlineLogId,
 				DeviceId = log.DeviceId,

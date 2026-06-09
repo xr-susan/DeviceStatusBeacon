@@ -25,14 +25,9 @@ public sealed partial class ManagementQueryService(DeviceStatusBeaconContext dbC
 	private const int DashboardRecentActiveWindowHours = 24;
 
 	/// <summary>
-	/// 设备查询的默认分页大小。
-	/// </summary>
-	private const int DevicePageCount = 48;
-
-	/// <summary>
 	/// 设备查询允许的最大分页大小。
 	/// </summary>
-	private const int MaxDeviceQueryCount = 100;
+	private const int MaxDeviceQueryCount = 50;
 
 	/// <summary>
 	/// 日志查询允许的最大分页大小。

@@ -44,14 +44,16 @@ public sealed partial class ManagementQueryService {
 		var accessibleLogCount = await accessibleLogs.CountAsync(cancellationToken);
 
 		// 最近活动不参与首屏关键数据渲染，作为同源 API 的按需加载内容返回
-		var recentDevices = await QueryDevicesCoreAsync(
+		var recentDevices = await QueryDevicesPageAsync(
 			accessibleDevices,
-			DeviceSortMode.RecentActivityDescending,
+			0,
 			DashboardDeviceCount,
+			sortByDeviceName: false,
 			cancellationToken);
 
-		var recentLogs = await QueryLogsCoreAsync(
+		var recentLogs = await QueryLogsPageAsync(
 			accessibleLogs,
+			0,
 			DashboardLogCount,
 			cancellationToken);
 

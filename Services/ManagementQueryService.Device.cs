@@ -5,31 +5,53 @@ namespace DeviceStatusBeacon.Services;
 
 public sealed partial class ManagementQueryService {
 	/// <inheritdoc/>
-	public async Task<DeviceListData> GetDevicesAsync(ClaimsPrincipal principal, string? searchTerm, CancellationToken cancellationToken = default) =>
-		await GetDevicesAsync(CreateQuerySessionAsync(principal), searchTerm, cancellationToken);
+	public async Task<DeviceListData> GetDevicesAsync(ClaimsPrincipal principal, string? searchTerm, int pageNumber, int pageSize, CancellationToken cancellationToken = default) =>
+		await GetDevicesAsync(CreateQuerySessionAsync(principal), searchTerm, pageNumber, pageSize, cancellationToken);
 
 	/// <inheritdoc/>
-	public async Task<DeviceListData> GetDevicesAsync(ManagementQuerySession session, string? searchTerm, CancellationToken cancellationToken = default) {
-		// 标准化查询关键字
+	public async Task<DeviceListData> GetDevicesAsync(ManagementQuerySession session, string? searchTerm, int pageNumber, int pageSize, CancellationToken cancellationToken = default) {
+		// 标准化分页选项和查询关键字
+		var normalizedPageNumber = NormalizePageNumber(pageNumber);
+		var normalizedPageSize = NormalizePageSize(pageSize, 1, MaxDeviceQueryCount);
 		var normalizedSearchTerm = NormalizeSearchTerm(searchTerm);
 
 		// 构建当前可读取的设备范围，并应用关键字筛选
 		var filteredDevices = ApplyDeviceSearchTerm(BuildAccessibleDeviceQuery(session), normalizedSearchTerm);
 
-		// 统计查询范围内的设备总量，并查询默认数量的设备列表
+		// 统计查询范围内的设备总量，并按实际总页数纠正页码
 		var totalCount = await filteredDevices.CountAsync(cancellationToken);
-		var devices = await QueryDevicesCoreAsync(
+		normalizedPageNumber = NormalizePageNumberForTotalCount(normalizedPageNumber, normalizedPageSize, totalCount);
+
+		// 查询当前页的设备列表
+		var devices = await QueryDevicesPageAsync(
 			filteredDevices,
-			DeviceSortMode.RecentActivityDescending,
-			DevicePageCount,
+			CalculateSkipCount(normalizedPageNumber, normalizedPageSize),
+			normalizedPageSize,
+			sortByDeviceName: false,
 			cancellationToken);
 
-		return new(session.ToData(), totalCount, devices);
+		return new(
+			session.ToData(),
+			new(totalCount, normalizedPageNumber, normalizedPageSize),
+			devices);
 	}
 
 	/// <inheritdoc/>
-	public async Task<IReadOnlyCollection<DeviceSummary>> QueryDevicesAsync(ManagementQuerySession session, DeviceQueryOptions options, CancellationToken cancellationToken = default) =>
-		await QueryDevicesCoreAsync(BuildAccessibleDeviceQuery(session), options, cancellationToken);
+	public async Task<IReadOnlyCollection<DeviceSummary>> GetDeviceSliceAsync(ManagementQuerySession session, string? searchTerm, int take, bool sortByDeviceName = false, CancellationToken cancellationToken = default) {
+		// 标准化查询数量和查询关键字
+		var normalizedTake = NormalizePageSize(take, 1, MaxDeviceQueryCount);
+		var normalizedSearchTerm = NormalizeSearchTerm(searchTerm);
+
+		// 构建当前可读取的设备范围，并应用关键字筛选
+		var filteredDevices = ApplyDeviceSearchTerm(BuildAccessibleDeviceQuery(session), normalizedSearchTerm);
+
+		return await QueryDevicesPageAsync(
+			filteredDevices,
+			0,
+			normalizedTake,
+			sortByDeviceName,
+			cancellationToken);
+	}
 
 	/// <inheritdoc/>
 	public async Task<DeviceSummary?> GetDeviceByNameAsync(ManagementQuerySession session, string deviceName, CancellationToken cancellationToken = default) {
@@ -44,53 +66,31 @@ public sealed partial class ManagementQueryService {
 	}
 
 	/// <summary>
-	/// 执行设备列表查询的核心实现。
-	/// </summary>
-	/// <param name="devices">已应用访问范围过滤的设备查询</param>
-	/// <param name="options">设备查询选项</param>
-	/// <param name="cancellationToken">取消令牌</param>
-	/// <returns>一个表示异步操作的任务，任务结果为设备列表</returns>
-	private static Task<IReadOnlyCollection<DeviceSummary>> QueryDevicesCoreAsync(
-		IQueryable<Device> devices,
-		DeviceQueryOptions options,
-		CancellationToken cancellationToken) {
-		// 标准化查询关键字
-		var normalizedSearchTerm = NormalizeSearchTerm(options.SearchTerm);
-
-		// 将设备关键字筛选应用到设备查询
-		devices = ApplyDeviceSearchTerm(devices, normalizedSearchTerm);
-
-		// 执行设备列表查询的核心实现
-		return QueryDevicesCoreAsync(devices, options.SortMode, options.Take, cancellationToken);
-	}
-
-	/// <summary>
-	/// 执行设备列表查询的核心实现。
+	/// 查询设备分页数据。
 	/// </summary>
 	/// <param name="devices">已应用全部过滤的设备查询</param>
-	/// <param name="sortMode">排序方式</param>
-	/// <param name="take">查询数量</param>
+	/// <param name="skip">已经规范化的跳过数量</param>
+	/// <param name="take">已经规范化的查询数量</param>
+	/// <param name="sortByDeviceName">是否按设备名称升序排序</param>
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务，任务结果为设备列表</returns>
-	private static async Task<IReadOnlyCollection<DeviceSummary>> QueryDevicesCoreAsync(
+	private static async Task<IReadOnlyCollection<DeviceSummary>> QueryDevicesPageAsync(
 		IQueryable<Device> devices,
-		DeviceSortMode sortMode,
+		int skip,
 		int take,
+		bool sortByDeviceName,
 		CancellationToken cancellationToken) {
-		// 标准化查询数量
-		var normalizedTake = NormalizeTake(take, 1, MaxDeviceQueryCount);
-
-		// 按照指定排序方式排序并投影为设备列表项
-		devices = sortMode switch {
-			DeviceSortMode.DeviceNameAscending => devices.OrderBy(device => device.DeviceName),
-			_ => devices
+		// 按指定方式排序、投影并执行查询
+		var projectedDevices = ApplyDeviceProjection(devices);
+		projectedDevices = sortByDeviceName
+			? projectedDevices.OrderBy(device => device.DeviceName)
+			: projectedDevices
 				.OrderByDescending(device => device.LatestLogTime)
-				.ThenBy(device => device.DeviceName)
-		};
+				.ThenBy(device => device.DeviceName);
 
-		// 投影查询并执行
-		var deviceRows = await ApplyDeviceProjection(devices)
-			.Take(normalizedTake)
+		var deviceRows = await projectedDevices
+			.Skip(skip)
+			.Take(take)
 			.ToListAsync(cancellationToken);
 
 		return [.. deviceRows.Select(MapDeviceListItem)];

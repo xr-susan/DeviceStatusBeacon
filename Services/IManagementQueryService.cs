@@ -67,56 +67,55 @@ public interface IManagementQueryService {
 	/// </summary>
 	/// <param name="principal">当前登录主体</param>
 	/// <param name="searchTerm">设备筛选关键字</param>
+	/// <param name="pageNumber">页码</param>
+	/// <param name="pageSize">每页数量</param>
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务，任务结果为设备列表页数据</returns>
-	Task<DeviceListData> GetDevicesAsync(ClaimsPrincipal principal, string? searchTerm, CancellationToken cancellationToken = default);
+	Task<DeviceListData> GetDevicesAsync(ClaimsPrincipal principal, string? searchTerm, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// 获取设备列表页数据。
 	/// </summary>
 	/// <param name="session">查询会话</param>
 	/// <param name="searchTerm">设备筛选关键字</param>
+	/// <param name="pageNumber">页码</param>
+	/// <param name="pageSize">每页数量</param>
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务，任务结果为设备列表页数据</returns>
-	Task<DeviceListData> GetDevicesAsync(ManagementQuerySession session, string? searchTerm, CancellationToken cancellationToken = default);
+	Task<DeviceListData> GetDevicesAsync(ManagementQuerySession session, string? searchTerm, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// 获取日志列表页数据。
 	/// </summary>
 	/// <param name="principal">当前登录主体</param>
 	/// <param name="deviceKeyword">设备筛选关键字</param>
-	/// <param name="take">返回条数</param>
+	/// <param name="pageNumber">页码</param>
+	/// <param name="pageSize">每页数量</param>
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务，任务结果为日志列表页数据</returns>
-	Task<LogListData> GetLogsAsync(ClaimsPrincipal principal, string? deviceKeyword, int take, CancellationToken cancellationToken = default);
+	Task<LogListData> GetLogsAsync(ClaimsPrincipal principal, string? deviceKeyword, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// 获取日志列表页数据。
 	/// </summary>
 	/// <param name="session">查询会话</param>
 	/// <param name="deviceKeyword">设备筛选关键字</param>
-	/// <param name="take">返回条数</param>
+	/// <param name="pageNumber">页码</param>
+	/// <param name="pageSize">每页数量</param>
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务，任务结果为日志列表页数据</returns>
-	Task<LogListData> GetLogsAsync(ManagementQuerySession session, string? deviceKeyword, int take, CancellationToken cancellationToken = default);
+	Task<LogListData> GetLogsAsync(ManagementQuerySession session, string? deviceKeyword, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
 
 	/// <summary>
-	/// 按给定选项查询设备列表。
+	/// 查询设备列表片段。
 	/// </summary>
 	/// <param name="session">查询会话</param>
-	/// <param name="options">设备查询选项</param>
+	/// <param name="searchTerm">设备筛选关键字</param>
+	/// <param name="take">返回条数</param>
+	/// <param name="sortByDeviceName">是否按设备名称升序排序</param>
 	/// <param name="cancellationToken">取消令牌</param>
-	/// <returns>一个表示异步操作的任务，任务结果为设备列表</returns>
-	Task<IReadOnlyCollection<DeviceSummary>> QueryDevicesAsync(ManagementQuerySession session, DeviceQueryOptions options, CancellationToken cancellationToken = default);
-
-	/// <summary>
-	/// 按给定选项查询日志列表。
-	/// </summary>
-	/// <param name="session">查询会话</param>
-	/// <param name="options">日志查询选项</param>
-	/// <param name="cancellationToken">取消令牌</param>
-	/// <returns>一个表示异步操作的任务，任务结果为日志列表</returns>
-	Task<IReadOnlyCollection<OnlineLogSummary>> QueryLogsAsync(ManagementQuerySession session, LogQueryOptions options, CancellationToken cancellationToken = default);
+	/// <returns>一个表示异步操作的任务，任务结果为设备列表片段</returns>
+	Task<IReadOnlyCollection<DeviceSummary>> GetDeviceSliceAsync(ManagementQuerySession session, string? searchTerm, int take, bool sortByDeviceName = false, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// 按设备名称获取单个设备的最新摘要。

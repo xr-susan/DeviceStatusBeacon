@@ -47,41 +47,73 @@ public sealed record ManagementSessionData(
 );
 
 /// <summary>
-/// 设备排序方式。
+/// 分页数据。
 /// </summary>
-public enum DeviceSortMode {
+/// <param name="TotalCount">当前筛选条件下匹配到的数据总数</param>
+/// <param name="PageNumber">当前页码</param>
+/// <param name="PageSize">每页数量</param>
+public sealed record PaginationData {
 	/// <summary>
-	/// 按最近日志时间倒序，再按设备名称升序。
+	/// 初始化分页数据。
 	/// </summary>
-	RecentActivityDescending,
+	/// <param name="totalCount">当前筛选条件下匹配到的数据总数</param>
+	/// <param name="pageNumber">当前页码</param>
+	/// <param name="pageSize">每页数量</param>
+	public PaginationData(int totalCount, int pageNumber, int pageSize) {
+		if (pageSize <= 0) {
+			throw new ArgumentOutOfRangeException(nameof(pageSize), pageSize, "每页数量必须大于 0。");
+		}
+
+		TotalCount = totalCount;
+		PageNumber = pageNumber;
+		PageSize = pageSize;
+	}
 
 	/// <summary>
-	/// 按设备名称升序。
+	/// 当前筛选条件下匹配到的数据总数。
 	/// </summary>
-	DeviceNameAscending
+	public int TotalCount { get; init; }
+
+	/// <summary>
+	/// 当前页码。
+	/// </summary>
+	public int PageNumber { get; init; }
+
+	/// <summary>
+	/// 每页数量。
+	/// </summary>
+	public int PageSize { get; init; }
+
+	/// <summary>
+	/// 总页数。
+	/// </summary>
+	public int TotalPages => GetTotalPages(TotalCount, PageSize);
+
+	/// <summary>
+	/// 是否存在上一页。
+	/// </summary>
+	public bool HasPreviousPage => PageNumber > 1;
+
+	/// <summary>
+	/// 是否存在下一页。
+	/// </summary>
+	public bool HasNextPage => PageNumber < TotalPages;
+
+	/// <summary>
+	/// 根据数据总数和每页数量计算总页数。
+	/// </summary>
+	/// <param name="totalCount">数据总数</param>
+	/// <param name="pageSize">每页数量</param>
+	/// <returns>总页数</returns>
+	public static int GetTotalPages(int totalCount, int pageSize) {
+		if (pageSize <= 0) {
+			// 对传入的每页数量进行验证，确保其大于 0；如果不合法，则抛出异常
+			throw new ArgumentOutOfRangeException(nameof(pageSize), pageSize, "每页数量必须大于 0。");
+		}
+
+		return totalCount == 0 ? 1 : (totalCount + pageSize - 1) / pageSize;
+	}
 }
-
-/// <summary>
-/// 设备查询选项。
-/// </summary>
-/// <param name="SearchTerm">筛选关键字</param>
-/// <param name="Take">返回条数</param>
-/// <param name="SortMode">排序方式</param>
-public sealed record DeviceQueryOptions(
-	string? SearchTerm,
-	int Take,
-	DeviceSortMode SortMode
-);
-
-/// <summary>
-/// 日志查询选项。
-/// </summary>
-/// <param name="DeviceKeyword">设备筛选关键字</param>
-/// <param name="Take">返回条数</param>
-public sealed record LogQueryOptions(
-	string? DeviceKeyword,
-	int Take
-);
 
 /// <summary>
 /// Dashboard 首屏摘要数据。
@@ -113,11 +145,11 @@ public sealed record DashboardActivityData(
 /// 设备列表页数据。
 /// </summary>
 /// <param name="Session">当前会话信息</param>
-/// <param name="TotalCount">当前筛选条件下匹配到的设备总数</param>
+/// <param name="Pagination">分页数据</param>
 /// <param name="Devices">设备列表</param>
 public sealed record DeviceListData(
 	ManagementSessionData Session,
-	int TotalCount,
+	PaginationData Pagination,
 	IReadOnlyCollection<DeviceSummary> Devices
 );
 
@@ -125,11 +157,11 @@ public sealed record DeviceListData(
 /// 日志列表页数据。
 /// </summary>
 /// <param name="Session">当前会话信息</param>
-/// <param name="TotalCount">当前筛选条件下匹配到的日志总数</param>
+/// <param name="Pagination">分页数据</param>
 /// <param name="Logs">日志列表</param>
 public sealed record LogListData(
 	ManagementSessionData Session,
-	int TotalCount,
+	PaginationData Pagination,
 	IReadOnlyCollection<OnlineLogSummary> Logs
 );
 
