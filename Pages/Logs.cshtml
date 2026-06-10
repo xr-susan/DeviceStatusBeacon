@@ -1,0 +1,119 @@
+﻿@page "/logs"
+@model DeviceStatusBeacon.Pages.LogsModel
+@{
+	ViewData["Title"] = "日志";
+	var session = Model.PageData.Session;
+	var pagination = Model.PageData.Pagination;
+}
+
+<div class="page">
+	<header class="page-header">
+		<div>
+			<h1 class="page-header__title">日志总览</h1>
+			<p class="page-header__subtitle">按设备关键字筛选上报记录，快速确认最近活动和来源信息。</p>
+		</div>
+	</header>
+
+	<section class="panel panel--form">
+		<form method="get" class="filter-toolbar">
+			<input type="hidden" name="page" value="1" />
+			<div class="field field--grow">
+				<label for="log-device-filter" class="field__label">设备筛选</label>
+				<input
+					id="log-device-filter"
+					name="device"
+					value="@Model.DeviceKeyword"
+					class="field__input"
+					placeholder="设备名称或显示名称"
+					data-select-on-focus />
+			</div>
+
+			<div class="field">
+				<label for="log-page-size" class="field__label">每页数量</label>
+				<select id="log-page-size" name="pageSize" class="field__input">
+					@foreach (var option in new[] { 20, 50, 100 }) {
+						<option value="@option" selected="@(Model.PageSize == option ? "selected" : null)">@option</option>
+					}
+				</select>
+			</div>
+
+			<div class="filter-toolbar__actions">
+				<button type="submit" class="button button--primary">筛选</button>
+				<a asp-page="/Logs" class="button button--secondary">清空</a>
+			</div>
+		</form>
+
+		<div class="meta-row">
+			<span class="meta-pill">匹配 @pagination.TotalCount</span>
+			<span class="meta-pill">第 @pagination.PageNumber / @pagination.TotalPages 页</span>
+			<span class="meta-pill">每页 @pagination.PageSize</span>
+			<span class="meta-pill">当前展示 @Model.PageData.Logs.Count</span>
+			<span class="meta-pill">范围 @session.Role.GetDeviceQueryScopeText()</span>
+			@if (!string.IsNullOrWhiteSpace(Model.DeviceKeyword)) {
+				<span class="meta-pill">筛选 @Model.DeviceKeyword</span>
+			}
+		</div>
+	</section>
+
+	<section class="panel">
+		<div class="panel__header">
+			<h2 class="panel__title">最近日志</h2>
+		</div>
+
+		@if (Model.PageData.Logs.Count == 0) {
+			<div class="empty-state">@(session.Role.CanQueryAnyDevices() ? "没有找到符合条件的日志。" : "当前账户没有可读取的日志。")</div>
+		} else {
+			<div class="activity-list">
+				@foreach (var log in Model.PageData.Logs) {
+					<article class="activity-item">
+						<div class="activity-item__row">
+							<div>
+								<strong>@log.DeviceName</strong>
+								<div class="table-subtext">@(!string.IsNullOrWhiteSpace(log.DeviceDisplayName) ? log.DeviceDisplayName : "未设置显示名称")</div>
+							</div>
+							<div class="activity-item__meta">
+								<span>@log.LogTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</span>
+								<span class="code-text">#@log.OnlineLogId</span>
+							</div>
+						</div>
+						<div class="activity-item__details">
+							<div><span class="detail-label">地址</span>@(log.ReportedAddresses.Count > 0 ? string.Join(", ", log.ReportedAddresses) : "暂无地址")</div>
+							@if (!string.IsNullOrWhiteSpace(log.ReporterRemoteAddress)) {
+								<div><span class="detail-label">来源</span>@log.ReporterRemoteAddress</div>
+							}
+							@if (!string.IsNullOrWhiteSpace(log.Message)) {
+								<div><span class="detail-label">消息</span>@log.Message</div>
+							}
+						</div>
+					</article>
+				}
+			</div>
+
+			<nav class="pager" aria-label="日志分页">
+				@if (pagination.HasPreviousPage) {
+					<a
+						asp-page="/Logs"
+						asp-route-device="@Model.DeviceKeyword"
+						asp-route-page="@(pagination.PageNumber - 1)"
+						asp-route-pageSize="@pagination.PageSize"
+						class="button button--secondary">上一页</a>
+				} else {
+					<span class="button button--secondary button--disabled" aria-disabled="true">上一页</span>
+				}
+
+				<span class="pager__summary">第 @pagination.PageNumber / @pagination.TotalPages 页</span>
+
+				@if (pagination.HasNextPage) {
+					<a
+						asp-page="/Logs"
+						asp-route-device="@Model.DeviceKeyword"
+						asp-route-page="@(pagination.PageNumber + 1)"
+						asp-route-pageSize="@pagination.PageSize"
+						class="button button--secondary">下一页</a>
+				} else {
+					<span class="button button--secondary button--disabled" aria-disabled="true">下一页</span>
+				}
+			</nav>
+		}
+	</section>
+</div>

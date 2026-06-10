@@ -1,0 +1,126 @@
+﻿@page "/devices"
+@model DeviceStatusBeacon.Pages.Devices.IndexModel
+@{
+	ViewData["Title"] = "设备";
+	var session = Model.PageData.Session;
+	var pagination = Model.PageData.Pagination;
+}
+
+<div class="page">
+	<header class="page-header">
+		<div>
+			<h1 class="page-header__title">设备</h1>
+			<p class="page-header__subtitle">筛选并查看当前账户有权读取的设备。</p>
+		</div>
+	</header>
+
+	<section class="panel panel--form">
+		<form method="get" class="filter-toolbar">
+			<input type="hidden" name="page" value="1" />
+			<div class="field field--grow">
+				<label for="device-filter" class="field__label">设备名称</label>
+				<input
+					id="device-filter"
+					name="q"
+					value="@Model.SearchTerm"
+					class="field__input"
+					placeholder="设备名称或显示名称"
+					data-select-on-focus />
+			</div>
+
+			<div class="field">
+				<label for="device-page-size" class="field__label">每页数量</label>
+				<select id="device-page-size" name="pageSize" class="field__input">
+					@foreach (var option in new[] { 10, 20, 50 }) {
+						<option value="@option" selected="@(Model.PageSize == option ? "selected" : null)">@option</option>
+					}
+				</select>
+			</div>
+
+			<div class="filter-toolbar__actions">
+				<button type="submit" class="button button--primary">筛选</button>
+				<a asp-page="/Devices/Index" class="button button--secondary">清空</a>
+			</div>
+		</form>
+
+		<div class="meta-row">
+			<span class="meta-pill">匹配 @pagination.TotalCount</span>
+			<span class="meta-pill">第 @pagination.PageNumber / @pagination.TotalPages 页</span>
+			<span class="meta-pill">每页 @pagination.PageSize</span>
+			@if (Model.PageData.Devices.Count != pagination.TotalCount) {
+				<span class="meta-pill">当前展示 @Model.PageData.Devices.Count</span>
+			}
+			<span class="meta-pill">范围 @session.Role.GetDeviceQueryScopeText()</span>
+			@if (!string.IsNullOrWhiteSpace(Model.SearchTerm)) {
+				<span class="meta-pill">筛选 @Model.SearchTerm</span>
+			}
+		</div>
+	</section>
+
+	<section class="panel">
+		<div class="panel__header">
+			<h2 class="panel__title">设备列表</h2>
+		</div>
+
+		@if (Model.PageData.Devices.Count == 0) {
+			<div class="empty-state">@(session.Role.CanQueryAnyDevices() ? "没有找到符合条件的设备。" : "当前账户没有可读取的设备。")</div>
+		} else {
+			<div class="table-wrap">
+				<table class="table">
+					<thead>
+						<tr>
+							<th>设备</th>
+							<th>状态</th>
+							<th>最近上报时间</th>
+							<th>最近地址</th>
+							<th>来源地址</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var device in Model.PageData.Devices) {
+							<tr>
+								<td>
+									<strong>@device.DeviceName</strong>
+									<div class="table-subtext">@(!string.IsNullOrWhiteSpace(device.DisplayName) ? device.DisplayName : "未设置显示名称")</div>
+									<div class="table-subtext code-text">@device.DeviceId</div>
+								</td>
+								<td>
+									<span class="status-pill @(device.Enabled ? "status-pill--success" : "status-pill--muted")">@(device.Enabled ? "启用" : "停用")</span>
+								</td>
+								<td>@(device.LatestLogTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "暂无日志")</td>
+								<td>@(device.LatestReportedAddresses.Count > 0 ? string.Join(", ", device.LatestReportedAddresses) : "暂无地址")</td>
+								<td>@(!string.IsNullOrWhiteSpace(device.LatestReporterRemoteAddress) ? device.LatestReporterRemoteAddress : "未知")</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+
+			<nav class="pager" aria-label="设备分页">
+				@if (pagination.HasPreviousPage) {
+					<a
+						asp-page="/Devices/Index"
+						asp-route-q="@Model.SearchTerm"
+						asp-route-page="@(pagination.PageNumber - 1)"
+						asp-route-pageSize="@pagination.PageSize"
+						class="button button--secondary">上一页</a>
+				} else {
+					<span class="button button--secondary button--disabled" aria-disabled="true">上一页</span>
+				}
+
+				<span class="pager__summary">第 @pagination.PageNumber / @pagination.TotalPages 页</span>
+
+				@if (pagination.HasNextPage) {
+					<a
+						asp-page="/Devices/Index"
+						asp-route-q="@Model.SearchTerm"
+						asp-route-page="@(pagination.PageNumber + 1)"
+						asp-route-pageSize="@pagination.PageSize"
+						class="button button--secondary">下一页</a>
+				} else {
+					<span class="button button--secondary button--disabled" aria-disabled="true">下一页</span>
+				}
+			</nav>
+		}
+	</section>
+</div>
