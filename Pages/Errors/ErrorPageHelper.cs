@@ -8,6 +8,17 @@ namespace DeviceStatusBeacon.Pages.Errors;
 /// </summary>
 internal static class ErrorPageHelper {
 	/// <summary>
+	/// 获取未处理异常对应的 HTTP 状态码。
+	/// </summary>
+	/// <param name="exception">异常处理中间件捕获到的异常</param>
+	/// <returns>应当返回给客户端的 HTTP 状态码</returns>
+	public static int GetExceptionStatusCode(Exception? exception) =>
+		exception switch {
+			BadHttpRequestException badHttpRequestException => badHttpRequestException.StatusCode,
+			_ => StatusCodes.Status500InternalServerError
+		};
+
+	/// <summary>
 	/// 创建用于错误响应的 <see cref="ProblemDetails"/>
 	/// </summary>
 	/// <param name="context">当前 HTTP 上下文</param>
@@ -39,6 +50,7 @@ internal static class ErrorPageHelper {
 		StatusCodes.Status401Unauthorized => ("需要登录", "当前请求需要先完成登录。"),
 		StatusCodes.Status403Forbidden => ("拒绝访问", "当前账户没有权限访问该资源。"),
 		StatusCodes.Status404NotFound => ("页面不存在", "未找到请求的资源，地址可能已失效或尚未发布。"),
+		StatusCodes.Status405MethodNotAllowed => ("不允许的请求方法", "请求使用了当前终结点不允许的 HTTP 方法。"),
 		>= 500 and < 600 => ("服务暂时不可用", "服务器暂时无法完成当前请求，请稍后再试。"),
 		_ => ($"状态码 {statusCode}", "服务器返回了一个未预期的状态码。")
 	};

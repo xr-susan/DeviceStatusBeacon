@@ -1,5 +1,6 @@
 ﻿using DeviceStatusBeacon.Api;
 using DeviceStatusBeacon.Handlers;
+using DeviceStatusBeacon.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +26,7 @@ builder.Services.AddCustomServices();
 builder.Services.AddRazorPages(options => options.Conventions.AuthorizeFolder("/", AuthorizationPolicyNames.InteractiveUser));
 builder.Services.AddApplicationAuthenticationAndAuthorization();
 builder.Services.AddValidation();
+builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new IPAddressJsonConverter()));
 builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
 	context.ProblemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier);
 

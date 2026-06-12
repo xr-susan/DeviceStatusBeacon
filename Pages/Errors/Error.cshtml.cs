@@ -80,9 +80,15 @@ public class ErrorModel : PageModel {
 			return NotFound();
 		}
 
+		var statusCode = ErrorPageHelper.GetExceptionStatusCode(exceptionFeature.Error);
+		Response.StatusCode = statusCode;
+
 		RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
-		Response.StatusCode = StatusCodes.Status500InternalServerError;
 		OriginalPathAndQuery = $"{Request.PathBase}{exceptionFeature.Path}{Request.QueryString}";
+
+		var (title, detail) = ErrorPageHelper.GetStatusPresentation(statusCode);
+		PageTitle = title;
+		Description = detail;
 
 		// 根据原始失败路径和当前请求头协商失败响应输出模式。
 		var responseMode = Request.GetFailureResponseMode(exceptionFeature.Path);
@@ -91,11 +97,11 @@ public class ErrorModel : PageModel {
 		return responseMode switch {
 			FailureResponseMode.Json => new ObjectResult(ErrorPageHelper.CreateProblemDetails(
 				HttpContext,
-				StatusCodes.Status500InternalServerError,
+				statusCode,
 				PageTitle,
 				Description,
 				OriginalPathAndQuery)) {
-				StatusCode = StatusCodes.Status500InternalServerError
+				StatusCode = statusCode
 			},
 			FailureResponseMode.Empty => ErrorPageHelper.SuppressStatusCodePagesAndReturnEmptyResult(HttpContext),
 			_ => Page()
