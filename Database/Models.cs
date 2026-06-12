@@ -57,6 +57,17 @@ public class OnlineLog {
 	/// </summary>
 	public string? Message { get; set; }
 
+	/// <summary>
+	/// 代设备提交该条日志的用户唯一标识符；如果该日志由设备自身直接提交，则为 null
+	/// </summary>
+	public Guid? SubmittedByUserId { get; set; }
+
+	/// <summary>
+	/// 代设备提交该条日志的用户实体；如果该日志由设备自身直接提交，则为 null
+	/// </summary>
+	/// <remarks>此实体由 EF Core 管理</remarks>
+	public User? SubmittedByUser { get; set; }
+
 
 	/// <summary>
 	/// 该条日志关联的设备对应的唯一标识符

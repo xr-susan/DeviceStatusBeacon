@@ -2,11 +2,21 @@
 
 public sealed partial class ManagementQueryService {
 	/// <summary>
-	/// 规范化筛选关键字。
+	/// 归一化设备名称。
 	/// </summary>
-	/// <param name="value">原始输入</param>
-	/// <returns>去掉首尾空白后的关键字；如果结果为空，则返回 null</returns>
-	private static string? NormalizeSearchTerm(string? value) =>
+	/// <param name="value">原始设备名称</param>
+	/// <returns>归一化后的设备名称；如果结果为空，则返回 null</returns>
+	private string? NormalizeDeviceName(string? value) =>
+		string.IsNullOrWhiteSpace(value)
+			? null
+			: lookupNormalizer.NormalizeName(value.Trim());
+
+	/// <summary>
+	/// 规范化用于显示名称匹配的文本。
+	/// </summary>
+	/// <param name="value">原始显示名称输入</param>
+	/// <returns>去掉首尾空白后的文本；如果结果为空，则返回 null</returns>
+	private static string? NormalizeDisplayNameSearchTerm(string? value) =>
 		string.IsNullOrWhiteSpace(value)
 			? null
 			: value.Trim();

@@ -3,14 +3,17 @@ using System;
 using DeviceStatusBeacon.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
 namespace DeviceStatusBeacon.Migrations {
 	[DbContext(typeof(DeviceStatusBeaconContext))]
-	partial class DeviceStatusBeaconContextModelSnapshot : ModelSnapshot {
-		protected override void BuildModel(ModelBuilder modelBuilder) {
+	[Migration("20260612131511_InitialCreate")]
+	partial class InitialCreate {
+		/// <inheritdoc />
+		protected override void BuildTargetModel(ModelBuilder modelBuilder) {
 #pragma warning disable 612, 618
 			modelBuilder.HasAnnotation("ProductVersion", "10.0.2");
 

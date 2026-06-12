@@ -67,6 +67,11 @@ public class Device : IHasProtectedSecretKey {
 	public required string DeviceName { get; set; }
 
 	/// <summary>
+	/// 设备名称归一化结果，用于代码层面的唯一性判断和精确匹配
+	/// </summary>
+	public required string NormalizedDeviceName { get; set; }
+
+	/// <summary>
 	/// 经 ASP.NET Core 数据保护 API 保护后的设备操作密钥
 	/// </summary>
 	public required byte[] ProtectedSecretKey { get; set; }  // skipcq: CS-W1096 此处 byte[] 与 SQLite 的 BLOB 类型对应，且用于存储加密后的数据，故直接保留数组

@@ -41,8 +41,8 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 				tableBuilder.UseSqlReturningClause(false);
 			});
 
-			// 定义设备名称为设备实体的人类管理名称唯一索引
-			deviceBuilder.HasIndex(e => e.DeviceName).IsUnique();
+			// 定义设备标准化名称为设备实体的人类管理名称唯一索引
+			deviceBuilder.HasIndex(e => e.NormalizedDeviceName).IsUnique();
 		});
 
 		// 配置 OnlineLog 实体：声明摘要同步触发器，并为历史查询与摘要回写建立索引
@@ -64,6 +64,13 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 			// 设备摘要触发器按 OnlineLogId 倒序寻找“最后到达数据库的一条日志”
 			// 因此额外为 (设备 ID, 日志 ID) 建立复合索引以降低回写成本
 			onlineLogBuilder.HasIndex(e => new { e.DeviceId, e.OnlineLogId });
+
+			// 非设备主体代提交日志时记录所属用户，便于后续审计
+			onlineLogBuilder
+				.HasOne(log => log.SubmittedByUser)
+				.WithMany(user => user.SubmittedOnlineLogs)
+				.HasForeignKey(log => log.SubmittedByUserId)
+				.OnDelete(DeleteBehavior.SetNull);
 		});
 
 		// 配置 ApiCredential 实体：声明触发器、索引，以及凭据到设备的授权关系

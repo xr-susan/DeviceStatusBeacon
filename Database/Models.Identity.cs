@@ -25,6 +25,12 @@ public class User : IdentityUser<Guid> {
 	/// </summary>
 	/// <remarks>此集合由 EF Core 管理</remarks>
 	public ICollection<Device> AuthorizedDevices { get; } = [];
+
+	/// <summary>
+	/// 该用户代设备提交的日志列表
+	/// </summary>
+	/// <remarks>此集合由 EF Core 管理</remarks>
+	public ICollection<OnlineLog> SubmittedOnlineLogs { get; } = [];
 }
 
 

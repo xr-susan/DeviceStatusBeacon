@@ -64,7 +64,7 @@ internal static class SqliteTriggerMigrationBuilderExtensions {
 				END;
 
 				CREATE TRIGGER "{{SqliteTriggerNames.DevicesEntityAuthInfoVersionAfterAuthUpdate}}"
-				AFTER UPDATE OF "DeviceName", "ProtectedSecretKey", "DisplayName", "Enabled" ON "Devices"
+				AFTER UPDATE OF "DeviceName", "NormalizedDeviceName", "ProtectedSecretKey", "DisplayName", "Enabled" ON "Devices"
 				BEGIN
 				{{UpdateEntityAuthInfoVersionSql}}
 				END;

@@ -46,6 +46,7 @@ public partial class InitialCreate : Migration {
 			columns: table => new {
 				DeviceId = table.Column<Guid>(type: "TEXT", nullable: false),
 				DeviceName = table.Column<string>(type: "TEXT", nullable: false),
+				NormalizedDeviceName = table.Column<string>(type: "TEXT", nullable: false),
 				ProtectedSecretKey = table.Column<byte[]>(type: "BLOB", nullable: false),
 				DisplayName = table.Column<string>(type: "TEXT", nullable: true),
 				LatestLogTime = table.Column<DateTime>(type: "TEXT", nullable: true),
@@ -210,10 +211,17 @@ public partial class InitialCreate : Migration {
 				ReportedAddresses = table.Column<string>(type: "TEXT", nullable: false),
 				ReporterRemoteAddress = table.Column<string>(type: "TEXT", nullable: true),
 				Message = table.Column<string>(type: "TEXT", nullable: true),
+				SubmittedByUserId = table.Column<Guid>(type: "TEXT", nullable: true),
 				DeviceId = table.Column<Guid>(type: "TEXT", nullable: false)
 			},
 			constraints: table => {
 				table.PrimaryKey("PK_OnlineLogs", x => x.OnlineLogId);
+				table.ForeignKey(
+					name: "FK_OnlineLogs_AspNetUsers_SubmittedByUserId",
+					column: x => x.SubmittedByUserId,
+					principalTable: "AspNetUsers",
+					principalColumn: "Id",
+					onDelete: ReferentialAction.SetNull);
 				table.ForeignKey(
 					name: "FK_OnlineLogs_Devices_DeviceId",
 					column: x => x.DeviceId,
@@ -249,10 +257,10 @@ public partial class InitialCreate : Migration {
 			columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
 			values: new object[,]
 			{
-				{ new Guid("0e132786-0e18-4cd1-bf41-cfdd18b12d90"), "0e132786-0e18-4cd1-bf41-cfdd18b12d90", "FullQuery", "FULLQUERY" },
-				{ new Guid("3df54d97-ee56-47f1-a1c0-3044dbdb8e41"), "3df54d97-ee56-47f1-a1c0-3044dbdb8e41", "Administrator", "ADMINISTRATOR" },
-				{ new Guid("5121009f-b5bd-4ec7-95ee-edb11bca4f92"), "5121009f-b5bd-4ec7-95ee-edb11bca4f92", "LimitedQuery", "LIMITEDQUERY" },
-				{ new Guid("a8a0d700-c15d-487a-97c6-3359113d367f"), "a8a0d700-c15d-487a-97c6-3359113d367f", "DeviceManager", "DEVICEMANAGER" }
+					{ new Guid("0e132786-0e18-4cd1-bf41-cfdd18b12d90"), "0e132786-0e18-4cd1-bf41-cfdd18b12d90", "FullQuery", "FULLQUERY" },
+					{ new Guid("3df54d97-ee56-47f1-a1c0-3044dbdb8e41"), "3df54d97-ee56-47f1-a1c0-3044dbdb8e41", "Administrator", "ADMINISTRATOR" },
+					{ new Guid("5121009f-b5bd-4ec7-95ee-edb11bca4f92"), "5121009f-b5bd-4ec7-95ee-edb11bca4f92", "LimitedQuery", "LIMITEDQUERY" },
+					{ new Guid("a8a0d700-c15d-487a-97c6-3359113d367f"), "a8a0d700-c15d-487a-97c6-3359113d367f", "DeviceManager", "DEVICEMANAGER" }
 			});
 
 		migrationBuilder.InsertData(
@@ -315,9 +323,9 @@ public partial class InitialCreate : Migration {
 			unique: true);
 
 		migrationBuilder.CreateIndex(
-			name: "IX_Devices_DeviceName",
+			name: "IX_Devices_NormalizedDeviceName",
 			table: "Devices",
-			column: "DeviceName",
+			column: "NormalizedDeviceName",
 			unique: true);
 
 		migrationBuilder.CreateIndex(
@@ -339,6 +347,11 @@ public partial class InitialCreate : Migration {
 			name: "IX_OnlineLogs_LogTime",
 			table: "OnlineLogs",
 			column: "LogTime");
+
+		migrationBuilder.CreateIndex(
+			name: "IX_OnlineLogs_SubmittedByUserId",
+			table: "OnlineLogs",
+			column: "SubmittedByUserId");
 
 		migrationBuilder.CreateManagedSqliteTriggers();
 	}

@@ -103,9 +103,9 @@ public class StatusCodeModel : PageModel {
 		var originalPath = statusCodeReExecuteFeature?.OriginalPath ?? Request.Path;
 		var responseMode = Request.GetFailureResponseMode(originalPath);
 
-		// 根据协商结果返回 HTML 页面、JSON 错误详情或空响应
+		// 根据协商结果返回 HTML 页面、Problem+Json 错误详情或空响应
 		return responseMode switch {
-			FailureResponseMode.Json => new JsonResult(ErrorPageHelper.CreateProblemDetails(
+			FailureResponseMode.Json => new ObjectResult(ErrorPageHelper.CreateProblemDetails(
 				HttpContext,
 				OriginalStatusCode,
 				PageTitle,

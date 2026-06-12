@@ -8,7 +8,7 @@ public interface ISecurityServiceV1 {
 	/// <summary>
 	/// 鉴权时传入的时间戳与当前时间的最大允许偏差（单位为秒）
 	/// </summary>
-	const long MaxAllowedTimestampDriftInSeconds = 300;
+	const long MaxAllowedTimestampDriftInSeconds = 180;
 
 	/// <summary>
 	/// 鉴权时传入的随机字符串的最大长度

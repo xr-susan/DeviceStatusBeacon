@@ -13,10 +13,11 @@ public sealed partial class ManagementQueryService {
 		// 标准化分页选项和查询关键字
 		var normalizedPageNumber = NormalizePageNumber(pageNumber);
 		var normalizedPageSize = NormalizePageSize(pageSize, 1, MaxDeviceQueryCount);
-		var normalizedSearchTerm = NormalizeSearchTerm(searchTerm);
+		var normalizedDeviceNameSearchTerm = NormalizeDeviceName(searchTerm);
+		var normalizedDisplayNameSearchTerm = NormalizeDisplayNameSearchTerm(searchTerm);
 
 		// 构建当前可读取的设备范围，并应用关键字筛选
-		var filteredDevices = ApplyDeviceSearchTerm(BuildAccessibleDeviceQuery(session), normalizedSearchTerm);
+		var filteredDevices = ApplyDeviceSearchTerm(BuildAccessibleDeviceQuery(session), normalizedDeviceNameSearchTerm, normalizedDisplayNameSearchTerm);
 
 		// 统计查询范围内的设备总量，并按实际总页数纠正页码
 		var totalCount = await filteredDevices.CountAsync(cancellationToken);
@@ -40,10 +41,11 @@ public sealed partial class ManagementQueryService {
 	public async Task<IReadOnlyCollection<DeviceSummary>> GetDeviceSliceAsync(ManagementQuerySession session, string? searchTerm, int take, bool sortByDeviceName = false, CancellationToken cancellationToken = default) {
 		// 标准化查询数量和查询关键字
 		var normalizedTake = NormalizePageSize(take, 1, MaxDeviceQueryCount);
-		var normalizedSearchTerm = NormalizeSearchTerm(searchTerm);
+		var normalizedDeviceNameSearchTerm = NormalizeDeviceName(searchTerm);
+		var normalizedDisplayNameSearchTerm = NormalizeDisplayNameSearchTerm(searchTerm);
 
 		// 构建当前可读取的设备范围，并应用关键字筛选
-		var filteredDevices = ApplyDeviceSearchTerm(BuildAccessibleDeviceQuery(session), normalizedSearchTerm);
+		var filteredDevices = ApplyDeviceSearchTerm(BuildAccessibleDeviceQuery(session), normalizedDeviceNameSearchTerm, normalizedDisplayNameSearchTerm);
 
 		return await QueryDevicesPageAsync(
 			filteredDevices,
@@ -55,8 +57,13 @@ public sealed partial class ManagementQueryService {
 
 	/// <inheritdoc/>
 	public async Task<DeviceSummary?> GetDeviceByNameAsync(ManagementQuerySession session, string deviceName, CancellationToken cancellationToken = default) {
+		var normalizedDeviceName = NormalizeDeviceName(deviceName);
+		if (normalizedDeviceName is null) {
+			return null;
+		}
+
 		// 构建当前可读取的设备范围，并应用设备名称筛选
-		var filteredDevices = ApplyDeviceName(BuildAccessibleDeviceQuery(session), deviceName);
+		var filteredDevices = ApplyDeviceName(BuildAccessibleDeviceQuery(session), normalizedDeviceName);
 
 		// 显式查询单个设备
 		var deviceRow = await ApplyDeviceProjection(filteredDevices)
@@ -100,26 +107,40 @@ public sealed partial class ManagementQueryService {
 	/// 将设备关键字筛选应用到设备查询。
 	/// </summary>
 	/// <remarks>
-	/// 设备搜索使用设备名 / 显示名双字段匹配。
+	/// 设备搜索使用归一化设备名 / 显示名双字段匹配。
 	/// </remarks>
 	/// <param name="devices">设备查询</param>
-	/// <param name="searchTerm">已经规范化的筛选关键字</param>
+	/// <param name="normalizedDeviceNameSearchTerm">已经归一化的设备名称筛选关键字</param>
+	/// <param name="normalizedDisplayNameSearchTerm">去掉首尾空白后的显示名称筛选关键字</param>
 	/// <returns>应用筛选后的设备查询</returns>
-	private static IQueryable<Device> ApplyDeviceSearchTerm(IQueryable<Device> devices, string? searchTerm) =>
-		string.IsNullOrWhiteSpace(searchTerm)
-			? devices
+	private static IQueryable<Device> ApplyDeviceSearchTerm(
+		IQueryable<Device> devices,
+		string? normalizedDeviceNameSearchTerm,
+		string? normalizedDisplayNameSearchTerm) {
+		// 设备名称关键字为空，则按显示名称关键字（如果有）筛选
+		if (string.IsNullOrWhiteSpace(normalizedDeviceNameSearchTerm)) {
+			return string.IsNullOrWhiteSpace(normalizedDisplayNameSearchTerm)
+				? devices
+				: devices.Where(device => device.DisplayName != null
+					&& device.DisplayName.Contains(normalizedDisplayNameSearchTerm)); // skipcq: CS-R1136 表达式树不支持 is 模式匹配
+		}
+
+		// 设备名称关键字不为空，则按设备名称关键字和显示名称关键字任一匹配筛选
+		return string.IsNullOrWhiteSpace(normalizedDisplayNameSearchTerm)
+			? devices.Where(device => device.NormalizedDeviceName.Contains(normalizedDeviceNameSearchTerm))
 			: devices.Where(device =>
-				device.DeviceName.Contains(searchTerm)
-				|| (device.DisplayName != null && device.DisplayName.Contains(searchTerm))); // skipcq: CS-R1136 表达式树不支持 is 模式匹配
+				device.NormalizedDeviceName.Contains(normalizedDeviceNameSearchTerm)
+				|| (device.DisplayName != null && device.DisplayName.Contains(normalizedDisplayNameSearchTerm))); // skipcq: CS-R1136 表达式树不支持 is 模式匹配
+	}
 
 	/// <summary>
 	/// 基于设备名称筛选设备查询。
 	/// </summary>
 	/// <param name="devices">设备查询</param>
-	/// <param name="deviceName">设备名称</param>
+	/// <param name="normalizedDeviceName">已经归一化的设备名称</param>
 	/// <returns>应用筛选后的设备查询</returns>
-	private static IQueryable<Device> ApplyDeviceName(IQueryable<Device> devices, string deviceName) =>
-		devices.Where(device => device.DeviceName == deviceName);
+	private static IQueryable<Device> ApplyDeviceName(IQueryable<Device> devices, string normalizedDeviceName) =>
+		devices.Where(device => device.NormalizedDeviceName == normalizedDeviceName);
 
 	/// <summary>
 	/// 将设备查询投影为列表需要的字段。

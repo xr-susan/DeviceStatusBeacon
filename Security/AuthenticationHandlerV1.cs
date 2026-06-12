@@ -10,6 +10,7 @@ public class AuthenticationHandlerV1(IOptionsMonitor<AuthenticationSchemeOptions
 	ILoggerFactory logger,
 	UrlEncoder encoder,
 	ISecurityServiceV1 securityService,
+	INonceReplayProtectionService nonceReplayProtectionService,
 	DeviceStatusBeaconContext dbContext) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder) {
 
 	/// <inheritdoc/>
@@ -66,8 +67,14 @@ public class AuthenticationHandlerV1(IOptionsMonitor<AuthenticationSchemeOptions
 			return AuthenticateResult.Fail("鉴权签名验证失败");
 		}
 
+		// 在签名正确后再消费 nonce，避免无效请求占用防重放窗口；
+		// 一旦 nonce 已经被消费，则说明当前请求极有可能是重放请求
+		if (!nonceReplayProtectionService.TryReserve(authHeader)) {
+			return AuthenticateResult.Fail("鉴权 nonce 已被使用，当前请求疑似重放");
+		}
+
 		// 缓存查询到的实体
-		Context.Items[$"{Scheme.Name}.AuthenticatedEntity"] = entity;
+		Context.Items[HttpContextAuthenticationExtensions.AuthenticatedEntityItemKey] = entity;
 
 		// 构建认证票据
 		var identity = new ClaimsIdentity(claims, Scheme.Name);

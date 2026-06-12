@@ -13,10 +13,11 @@ public sealed partial class ManagementQueryService {
 		// 标准化分页选项和设备关键字
 		var normalizedPageNumber = NormalizePageNumber(pageNumber);
 		var normalizedPageSize = NormalizePageSize(pageSize, 10, MaxLogQueryCount);
-		var normalizedDeviceKeyword = NormalizeSearchTerm(deviceKeyword);
+		var normalizedDeviceNameKeyword = NormalizeDeviceName(deviceKeyword);
+		var normalizedDisplayNameKeyword = NormalizeDisplayNameSearchTerm(deviceKeyword);
 
 		// 构建当前可读取的日志范围，并应用设备关键字筛选
-		var filteredLogs = ApplyLogDeviceKeyword(BuildAccessibleLogQuery(session), normalizedDeviceKeyword);
+		var filteredLogs = ApplyLogDeviceKeyword(BuildAccessibleLogQuery(session), normalizedDeviceNameKeyword, normalizedDisplayNameKeyword);
 
 		// 统计查询范围内的日志总量，并按实际总页数纠正页码
 		var totalCount = await filteredLogs.CountAsync(cancellationToken);
@@ -37,11 +38,16 @@ public sealed partial class ManagementQueryService {
 
 	/// <inheritdoc/>
 	public Task<IReadOnlyCollection<OnlineLogSummary>> GetDeviceLogsByNameAsync(ManagementQuerySession session, string deviceName, int take, CancellationToken cancellationToken = default) {
+		var normalizedDeviceName = NormalizeDeviceName(deviceName);
+		if (normalizedDeviceName is null) {
+			return Task.FromResult<IReadOnlyCollection<OnlineLogSummary>>([]);
+		}
+
 		// 标准化查询数量
 		var normalizedTake = NormalizePageSize(take, 1, MaxLogQueryCount);
 
 		// 构建当前可读取的日志范围，并应用设备名称筛选
-		var filteredLogs = ApplyLogDeviceName(BuildAccessibleLogQuery(session), deviceName);
+		var filteredLogs = ApplyLogDeviceName(BuildAccessibleLogQuery(session), normalizedDeviceName);
 
 		return QueryLogsPageAsync(filteredLogs, 0, normalizedTake, cancellationToken);
 	}
@@ -83,26 +89,40 @@ public sealed partial class ManagementQueryService {
 	/// 将设备关键字筛选应用到日志查询。
 	/// </summary>
 	/// <remarks>
-	/// 日志搜索使用设备名 / 显示名双字段匹配。
+	/// 日志搜索使用归一化设备名 / 显示名双字段匹配。
 	/// </remarks>
 	/// <param name="logs">日志查询</param>
-	/// <param name="deviceKeyword">已经规范化的设备筛选关键字</param>
+	/// <param name="normalizedDeviceNameKeyword">已经归一化的设备名称筛选关键字</param>
+	/// <param name="normalizedDisplayNameKeyword">去掉首尾空白后的显示名称筛选关键字</param>
 	/// <returns>应用筛选后的日志查询</returns>
-	private static IQueryable<OnlineLog> ApplyLogDeviceKeyword(IQueryable<OnlineLog> logs, string? deviceKeyword) =>
-		string.IsNullOrWhiteSpace(deviceKeyword)
-			? logs
+	private static IQueryable<OnlineLog> ApplyLogDeviceKeyword(
+		IQueryable<OnlineLog> logs,
+		string? normalizedDeviceNameKeyword,
+		string? normalizedDisplayNameKeyword) {
+		// 设备名称关键字为空，则按显示名称关键字（如果有）筛选
+		if (string.IsNullOrWhiteSpace(normalizedDeviceNameKeyword)) {
+			return string.IsNullOrWhiteSpace(normalizedDisplayNameKeyword)
+				? logs
+				: logs.Where(log => log.Device.DisplayName != null
+					&& log.Device.DisplayName.Contains(normalizedDisplayNameKeyword)); // skipcq: CS-R1136 表达式树不支持 is 模式匹配
+		}
+
+		// 设备名称关键字不为空，则按设备名称关键字和显示名称关键字任一匹配筛选
+		return string.IsNullOrWhiteSpace(normalizedDisplayNameKeyword)
+			? logs.Where(log => log.Device.NormalizedDeviceName.Contains(normalizedDeviceNameKeyword))
 			: logs.Where(log =>
-				log.Device.DeviceName.Contains(deviceKeyword)
-				|| (log.Device.DisplayName != null && log.Device.DisplayName.Contains(deviceKeyword))); // skipcq: CS-R1136 表达式树不支持 is 模式匹配
+				log.Device.NormalizedDeviceName.Contains(normalizedDeviceNameKeyword)
+				|| (log.Device.DisplayName != null && log.Device.DisplayName.Contains(normalizedDisplayNameKeyword))); // skipcq: CS-R1136 表达式树不支持 is 模式匹配
+	}
 
 	/// <summary>
 	/// 基于设备名称筛选日志查询。
 	/// </summary>
 	/// <param name="logs">日志查询</param>
-	/// <param name="deviceName">设备名称</param>
+	/// <param name="normalizedDeviceName">已经归一化的设备名称</param>
 	/// <returns>应用筛选后的日志查询</returns>
-	private static IQueryable<OnlineLog> ApplyLogDeviceName(IQueryable<OnlineLog> logs, string deviceName) =>
-		logs.Where(log => log.Device.DeviceName == deviceName);
+	private static IQueryable<OnlineLog> ApplyLogDeviceName(IQueryable<OnlineLog> logs, string normalizedDeviceName) =>
+		logs.Where(log => log.Device.NormalizedDeviceName == normalizedDeviceName);
 
 	/// <summary>
 	/// 基于查询会话构建日志可读取范围查询。

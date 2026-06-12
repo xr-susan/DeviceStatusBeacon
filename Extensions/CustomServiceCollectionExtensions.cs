@@ -17,9 +17,12 @@ public static class CustomServiceCollectionExtensions {
 		/// </summary>
 		/// <returns>当前的 <see cref="IServiceCollection"/>，用于链式调用</returns>
 		public IServiceCollection AddCustomServices() =>
-			services.AddSingleton<IDataProtectorV1, DataProtectorV1>()
-				.AddScoped<ISecurityServiceV1, SecurityServiceV1>()
-				.AddScoped<IManagementQueryService, ManagementQueryService>();
+			services.AddHostedService<AuthenticationMaintenanceService>()
+				.AddSingleton<IDataProtectorV1, DataProtectorV1>()
+				.AddSingleton<INonceReplayProtectionService, NonceReplayProtectionService>()
+				.AddSingleton<ISecurityServiceV1, SecurityServiceV1>()
+				.AddScoped<IManagementQueryService, ManagementQueryService>()
+				.AddScoped<IOnlineLogCommandService, OnlineLogCommandService>();
 
 		/// <summary>
 		/// 依据配置注册数据库上下文 <see cref="DeviceStatusBeaconContext"/> 到 <see cref="IServiceCollection"/> 中

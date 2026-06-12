@@ -1,4 +1,5 @@
-﻿using DeviceStatusBeacon.Handlers;
+﻿using DeviceStatusBeacon.Api;
+using DeviceStatusBeacon.Handlers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,9 @@ try {
 builder.Services.AddCustomServices();
 builder.Services.AddRazorPages(options => options.Conventions.AuthorizeFolder("/", AuthorizationPolicyNames.InteractiveUser));
 builder.Services.AddApplicationAuthenticationAndAuthorization();
+builder.Services.AddValidation();
+builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
+	context.ProblemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier);
 
 var app = builder.Build();
 

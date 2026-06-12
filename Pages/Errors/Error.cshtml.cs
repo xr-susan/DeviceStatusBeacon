@@ -87,9 +87,9 @@ public class ErrorModel : PageModel {
 		// 根据原始失败路径和当前请求头协商失败响应输出模式。
 		var responseMode = Request.GetFailureResponseMode(exceptionFeature.Path);
 
-		// 根据协商结果返回 HTML 页面、JSON 错误详情或空响应。
+		// 根据协商结果返回 HTML 页面、Problem+Json 错误详情或空响应。
 		return responseMode switch {
-			FailureResponseMode.Json => new JsonResult(ErrorPageHelper.CreateProblemDetails(
+			FailureResponseMode.Json => new ObjectResult(ErrorPageHelper.CreateProblemDetails(
 				HttpContext,
 				StatusCodes.Status500InternalServerError,
 				PageTitle,

@@ -70,6 +70,41 @@ public static class PrincipalExtensions {
 			principal.Identities.Any(identity =>
 				identity.IsAuthenticated
 				&& string.Equals(identity.AuthenticationType, IdentityConstants.ApplicationScheme, StringComparison.Ordinal));
+
+
+		/// <summary>
+		/// 尝试从当前登录主体中读取用户 ID。
+		/// </summary>
+		/// <returns>用户 ID；如果当前主体不包含合法的用户 ID，则返回 null</returns>
+		internal Guid? TryReadUserId() {
+			var rawUserId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+			return Guid.TryParse(rawUserId, out var userId) ? userId : null;
+		}
+
+		/// <summary>
+		/// 尝试从当前登录主体中读取角色。
+		/// </summary>
+		/// <remarks>
+		/// 当前数据模型约束单个主体最多只绑定一个角色，如果存在多个角色声明，抛出异常以提前暴露数据问题。
+		/// </remarks>
+		/// <returns>角色；如果当前主体不包含合法的管理角色，默认为 <see cref="PrincipalRole.LimitedQuery"/></returns>
+		internal PrincipalRole TryReadPrincipalRole() {
+			PrincipalRole? role = null;
+
+			var roleClaims = principal.FindAll(ClaimTypes.Role);
+			foreach (var claim in roleClaims) {
+				if (!Enum.TryParse<PrincipalRole>(claim.Value, true, out var parsedRole)) {
+					continue;
+				}
+
+				if (role is not null) {
+					throw new InvalidOperationException($"当前登录主体包含多个管理角色声明，无法确定最终角色：{string.Join(", ", roleClaims.Select(claim => claim.Value))}");
+				}
+				role = parsedRole;
+			}
+
+			return role ?? PrincipalRole.LimitedQuery;
+		}
 	}
 
 	/// <summary>
