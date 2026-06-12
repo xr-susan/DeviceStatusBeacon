@@ -85,6 +85,7 @@ internal static class SqliteTriggerMigrationBuilderExtensions {
 		/// 这样可以避免不同写入入口各自执行第二次 <c>Device</c> 更新，减少规则分散和漏同步风险。
 		/// </remarks>
 		private void CreateOnlineLogDeviceSummaryTriggers() {
+			var applyInsertedDeviceSummarySql = BuildApplyInsertedDeviceSummarySql();
 			var refreshOldDeviceSummarySql = BuildRefreshDeviceSummarySql(@"OLD.""DeviceId""");
 			var refreshNewDeviceSummarySql = BuildRefreshDeviceSummarySql(@"NEW.""DeviceId""");
 
@@ -92,7 +93,7 @@ internal static class SqliteTriggerMigrationBuilderExtensions {
 				CREATE TRIGGER "{{SqliteTriggerNames.OnlineLogsDeviceSummaryAfterInsert}}"
 				AFTER INSERT ON "OnlineLogs"
 				BEGIN
-				{{refreshNewDeviceSummarySql}}
+				{{applyInsertedDeviceSummarySql}}
 				END;
 
 				CREATE TRIGGER "{{SqliteTriggerNames.OnlineLogsDeviceSummaryAfterUpdate}}"
@@ -189,6 +190,28 @@ internal static class SqliteTriggerMigrationBuilderExtensions {
 		BEGIN
 		{{bodySql}}
 		END;
+		""";
+
+	/// <summary>
+	/// 构造插入日志后直接应用新日志摘要的 SQL 片段。
+	/// </summary>
+	/// <remarks>
+	/// 插入日志时，<c>NEW</c> 行就是最后到达数据库的日志。
+	/// 直接使用触发器上下文可以避免再按 <c>DeviceId</c> 回查 <c>OnlineLogs</c>。
+	/// </remarks>
+	/// <returns>触发器内部执行的 SQL 片段</returns>
+	private static string BuildApplyInsertedDeviceSummarySql() => """
+		UPDATE "Devices"
+		SET (
+			"LatestLogTime",
+			"LatestReportedAddresses",
+			"LatestReporterRemoteAddress"
+		) = (
+			NEW."LogTime",
+			NEW."ReportedAddresses",
+			NEW."ReporterRemoteAddress"
+		)
+		WHERE "DeviceId" = NEW."DeviceId";
 		""";
 
 	/// <summary>
