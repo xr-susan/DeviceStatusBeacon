@@ -38,6 +38,32 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 				tableBuilder.HasTrigger(SqliteTriggerNames.DevicesEntityAuthInfoVersionAfterInsert);
 				tableBuilder.HasTrigger(SqliteTriggerNames.DevicesEntityAuthInfoVersionAfterAuthUpdate);
 				tableBuilder.HasTrigger(SqliteTriggerNames.DevicesEntityAuthInfoVersionAfterDelete);
+				tableBuilder.HasCheckConstraint(
+					"CK_Devices_DeviceName_IdentityFormat",
+					"""
+					"DeviceName" GLOB '[A-Za-z0-9]*'
+					AND "DeviceName" GLOB '*[A-Za-z0-9]'
+					AND length("DeviceName") BETWEEN 4 AND 64
+					AND "DeviceName" NOT GLOB '*[^A-Za-z0-9_-]*'
+					""");
+				tableBuilder.HasCheckConstraint(
+					"CK_Devices_NormalizedDeviceName_IdentityFormat",
+					"""
+					"NormalizedDeviceName" GLOB '[A-Z0-9]*'
+					AND "NormalizedDeviceName" GLOB '*[A-Z0-9]'
+					AND length("NormalizedDeviceName") BETWEEN 4 AND 64
+					AND "NormalizedDeviceName" NOT GLOB '*[^A-Z0-9_-]*'
+					""");
+				tableBuilder.HasCheckConstraint(
+					"CK_Devices_LatestReportedAddresses_JsonArrayShape",
+					"""
+					"LatestReportedAddresses" IS NULL
+					OR (
+						length("LatestReportedAddresses") >= 4
+						AND substr("LatestReportedAddresses", 1, 1) = '['
+						AND substr("LatestReportedAddresses", -1, 1) = ']'
+					)
+					""");
 				tableBuilder.UseSqlReturningClause(false);
 			});
 
@@ -52,6 +78,13 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 				tableBuilder.HasTrigger(SqliteTriggerNames.OnlineLogsDeviceSummaryAfterInsert);
 				tableBuilder.HasTrigger(SqliteTriggerNames.OnlineLogsDeviceSummaryAfterUpdate);
 				tableBuilder.HasTrigger(SqliteTriggerNames.OnlineLogsDeviceSummaryAfterDelete);
+				tableBuilder.HasCheckConstraint(
+					"CK_OnlineLogs_ReportedAddresses_JsonArrayShape",
+					"""
+					length("ReportedAddresses") >= 4
+					AND substr("ReportedAddresses", 1, 1) = '['
+					AND substr("ReportedAddresses", -1, 1) = ']'
+					""");
 				tableBuilder.UseSqlReturningClause(false);
 			});
 
@@ -80,6 +113,11 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 				tableBuilder.HasTrigger(SqliteTriggerNames.ApiCredentialsEntityAuthInfoVersionAfterInsert);
 				tableBuilder.HasTrigger(SqliteTriggerNames.ApiCredentialsEntityAuthInfoVersionAfterUpdate);
 				tableBuilder.HasTrigger(SqliteTriggerNames.ApiCredentialsEntityAuthInfoVersionAfterDelete);
+				tableBuilder.HasCheckConstraint(
+					"CK_ApiCredentials_Role_PrincipalRole",
+					"""
+					"Role" BETWEEN 0 AND 3
+					""");
 				tableBuilder.UseSqlReturningClause(false);
 			});
 
@@ -123,9 +161,16 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 		});
 
 		// 预置鉴权缓存版本号设置项，供后续触发器自动刷新
-		modelBuilder.Entity<SettingInDb>().HasData(new SettingInDb {
-			Key = SettingInDbKey.EntityAuthInfoVersion.ToString(),
-			Value = "0"
+		modelBuilder.Entity<SettingInDb>(settingBuilder => {
+			settingBuilder.ToTable(tableBuilder =>
+				tableBuilder.HasCheckConstraint(
+					"CK_Settings_Key_NotEmpty",
+					"""length("Key") > 0"""));
+
+			settingBuilder.HasData(new SettingInDb {
+				Key = SettingInDbKey.EntityAuthInfoVersion.ToString(),
+				Value = "0"
+			});
 		});
 
 		// 预置固定的 Identity 角色，交由 EF Core Migration 管理

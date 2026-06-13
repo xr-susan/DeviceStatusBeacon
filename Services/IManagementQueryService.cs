@@ -112,10 +112,10 @@ public interface IManagementQueryService {
 	/// <param name="session">查询会话</param>
 	/// <param name="searchTerm">设备筛选关键字</param>
 	/// <param name="take">返回条数</param>
-	/// <param name="sortByDeviceName">是否按设备名称升序排序</param>
+	/// <param name="sortByNormalizedDeviceName">是否按标准化设备名称升序排序</param>
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务，任务结果为设备列表片段</returns>
-	Task<IReadOnlyCollection<DeviceSummary>> GetDeviceSliceAsync(ManagementQuerySession session, string? searchTerm, int take, bool sortByDeviceName = false, CancellationToken cancellationToken = default);
+	Task<IReadOnlyCollection<DeviceSummary>> GetDeviceSliceAsync(ManagementQuerySession session, string? searchTerm, int take, bool sortByNormalizedDeviceName = false, CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// 按设备名称获取单个设备的最新摘要。

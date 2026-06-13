@@ -48,7 +48,7 @@ public sealed partial class ManagementQueryService {
 			accessibleDevices,
 			0,
 			DashboardDeviceCount,
-			sortByDeviceName: false,
+			sortByNormalizedDeviceName: false,
 			cancellationToken);
 
 		var recentLogs = await QueryLogsPageAsync(

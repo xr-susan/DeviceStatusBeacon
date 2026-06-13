@@ -28,7 +28,7 @@ public sealed partial class ManagementQueryService {
 			filteredDevices,
 			CalculateSkipCount(normalizedPageNumber, normalizedPageSize),
 			normalizedPageSize,
-			sortByDeviceName: false,
+			sortByNormalizedDeviceName: false,
 			cancellationToken);
 
 		return new(
@@ -38,7 +38,7 @@ public sealed partial class ManagementQueryService {
 	}
 
 	/// <inheritdoc/>
-	public async Task<IReadOnlyCollection<DeviceSummary>> GetDeviceSliceAsync(ManagementQuerySession session, string? searchTerm, int take, bool sortByDeviceName = false, CancellationToken cancellationToken = default) {
+	public async Task<IReadOnlyCollection<DeviceSummary>> GetDeviceSliceAsync(ManagementQuerySession session, string? searchTerm, int take, bool sortByNormalizedDeviceName = false, CancellationToken cancellationToken = default) {
 		// 标准化查询数量和查询关键字
 		var normalizedTake = NormalizePageSize(take, 1, MaxDeviceQueryCount);
 		var normalizedDeviceNameSearchTerm = NormalizeDeviceName(searchTerm);
@@ -51,7 +51,7 @@ public sealed partial class ManagementQueryService {
 			filteredDevices,
 			0,
 			normalizedTake,
-			sortByDeviceName,
+			sortByNormalizedDeviceName,
 			cancellationToken);
 	}
 
@@ -78,22 +78,22 @@ public sealed partial class ManagementQueryService {
 	/// <param name="devices">已应用全部过滤的设备查询</param>
 	/// <param name="skip">已经规范化的跳过数量</param>
 	/// <param name="take">已经规范化的查询数量</param>
-	/// <param name="sortByDeviceName">是否按设备名称升序排序</param>
+	/// <param name="sortByNormalizedDeviceName">是否按标准化设备名称升序排序</param>
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务，任务结果为设备列表</returns>
 	private static async Task<IReadOnlyCollection<DeviceSummary>> QueryDevicesPageAsync(
 		IQueryable<Device> devices,
 		int skip,
 		int take,
-		bool sortByDeviceName,
+		bool sortByNormalizedDeviceName,
 		CancellationToken cancellationToken) {
 		// 按指定方式排序、投影并执行查询
 		var projectedDevices = ApplyDeviceProjection(devices);
-		projectedDevices = sortByDeviceName
-			? projectedDevices.OrderBy(device => device.DeviceName)
+		projectedDevices = sortByNormalizedDeviceName
+			? projectedDevices.OrderBy(device => device.NormalizedDeviceName)
 			: projectedDevices
 				.OrderByDescending(device => device.LatestLogTime)
-				.ThenBy(device => device.DeviceName);
+				.ThenBy(device => device.NormalizedDeviceName);
 
 		var deviceRows = await projectedDevices
 			.Skip(skip)
@@ -151,6 +151,7 @@ public sealed partial class ManagementQueryService {
 		devices.Select(device => new DeviceProjection {
 			DeviceId = device.DeviceId,
 			DeviceName = device.DeviceName,
+			NormalizedDeviceName = device.NormalizedDeviceName,
 			DisplayName = device.DisplayName,
 			Enabled = device.Enabled,
 			LatestLogTime = device.LatestLogTime,
@@ -214,6 +215,11 @@ public sealed partial class ManagementQueryService {
 		/// 设备名称
 		/// </summary>
 		public string DeviceName { get; init; } = string.Empty;
+
+		/// <summary>
+		/// 标准化设备名称
+		/// </summary>
+		public string NormalizedDeviceName { get; init; } = string.Empty;
 
 		/// <summary>
 		/// 设备显示名称

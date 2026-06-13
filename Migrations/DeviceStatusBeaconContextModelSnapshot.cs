@@ -68,6 +68,8 @@ namespace DeviceStatusBeacon.Migrations {
 					t.HasTrigger("TR_ApiCredentials_EntityAuthInfoVersion_AfterInsert");
 
 					t.HasTrigger("TR_ApiCredentials_EntityAuthInfoVersion_AfterUpdate");
+
+					t.HasCheckConstraint("CK_ApiCredentials_Role_PrincipalRole", "\"Role\" BETWEEN 0 AND 3");
 				});
 
 				b.HasAnnotation("Sqlite:UseSqlReturningClause", false);
@@ -116,6 +118,12 @@ namespace DeviceStatusBeacon.Migrations {
 					t.HasTrigger("TR_Devices_EntityAuthInfoVersion_AfterDelete");
 
 					t.HasTrigger("TR_Devices_EntityAuthInfoVersion_AfterInsert");
+
+					t.HasCheckConstraint("CK_Devices_DeviceName_IdentityFormat", "\"DeviceName\" GLOB '[A-Za-z0-9]*'\r\nAND \"DeviceName\" GLOB '*[A-Za-z0-9]'\r\nAND length(\"DeviceName\") BETWEEN 4 AND 64\r\nAND \"DeviceName\" NOT GLOB '*[^A-Za-z0-9_-]*'");
+
+					t.HasCheckConstraint("CK_Devices_LatestReportedAddresses_JsonArrayShape", "\"LatestReportedAddresses\" IS NULL\r\nOR (\r\n	length(\"LatestReportedAddresses\") >= 4\r\n	AND substr(\"LatestReportedAddresses\", 1, 1) = '['\r\n	AND substr(\"LatestReportedAddresses\", -1, 1) = ']'\r\n)");
+
+					t.HasCheckConstraint("CK_Devices_NormalizedDeviceName_IdentityFormat", "\"NormalizedDeviceName\" GLOB '[A-Z0-9]*'\r\nAND \"NormalizedDeviceName\" GLOB '*[A-Z0-9]'\r\nAND length(\"NormalizedDeviceName\") BETWEEN 4 AND 64\r\nAND \"NormalizedDeviceName\" NOT GLOB '*[^A-Z0-9_-]*'");
 				});
 
 				b.HasAnnotation("Sqlite:UseSqlReturningClause", false);
@@ -161,6 +169,8 @@ namespace DeviceStatusBeacon.Migrations {
 					t.HasTrigger("TR_OnlineLogs_DeviceSummary_AfterInsert");
 
 					t.HasTrigger("TR_OnlineLogs_DeviceSummary_AfterUpdate");
+
+					t.HasCheckConstraint("CK_OnlineLogs_ReportedAddresses_JsonArrayShape", "length(\"ReportedAddresses\") >= 4\r\nAND substr(\"ReportedAddresses\", 1, 1) = '['\r\nAND substr(\"ReportedAddresses\", -1, 1) = ']'");
 				});
 
 				b.HasAnnotation("Sqlite:UseSqlReturningClause", false);
@@ -175,7 +185,9 @@ namespace DeviceStatusBeacon.Migrations {
 
 				b.HasKey("Key");
 
-				b.ToTable("Settings");
+				b.ToTable("Settings", t => {
+					t.HasCheckConstraint("CK_Settings_Key_NotEmpty", "length(\"Key\") > 0");
+				});
 
 				b.HasData(
 					new {

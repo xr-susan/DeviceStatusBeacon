@@ -59,7 +59,7 @@ public static partial class ConsoleDispatcher {
 	/// <param name="querySession">CLI 使用的特权查询会话</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
 	private static async Task<int> HandleDeviceListAsync(IManagementQueryService queryService, ManagementQuerySession querySession) {
-		var devices = await queryService.GetDeviceSliceAsync(querySession, null, MaxDisplayCount + 1, sortByDeviceName: true);
+		var devices = await queryService.GetDeviceSliceAsync(querySession, null, MaxDisplayCount + 1, sortByNormalizedDeviceName: true);
 
 		return PrintListWithSummary(
 			devices,
@@ -78,7 +78,7 @@ public static partial class ConsoleDispatcher {
 	/// <param name="partOfName">设备名称的一部分</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
 	private static async Task<int> HandleDeviceQueryAsync(IManagementQueryService queryService, ManagementQuerySession querySession, string partOfName) {
-		var devices = await queryService.GetDeviceSliceAsync(querySession, partOfName, MaxDisplayCount + 1, sortByDeviceName: true);
+		var devices = await queryService.GetDeviceSliceAsync(querySession, partOfName, MaxDisplayCount + 1, sortByNormalizedDeviceName: true);
 
 		return PrintListWithSummary(
 			devices,

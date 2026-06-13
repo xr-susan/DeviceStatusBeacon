@@ -54,7 +54,12 @@ public partial class InitialCreate : Migration {
 				LatestReporterRemoteAddress = table.Column<string>(type: "TEXT", nullable: true),
 				Enabled = table.Column<bool>(type: "INTEGER", nullable: false)
 			},
-			constraints: table => table.PrimaryKey("PK_Devices", x => x.DeviceId));
+			constraints: table => {
+				table.PrimaryKey("PK_Devices", x => x.DeviceId);
+				table.CheckConstraint("CK_Devices_DeviceName_IdentityFormat", "\"DeviceName\" GLOB '[A-Za-z0-9]*'\r\nAND \"DeviceName\" GLOB '*[A-Za-z0-9]'\r\nAND length(\"DeviceName\") BETWEEN 4 AND 64\r\nAND \"DeviceName\" NOT GLOB '*[^A-Za-z0-9_-]*'");
+				table.CheckConstraint("CK_Devices_LatestReportedAddresses_JsonArrayShape", "\"LatestReportedAddresses\" IS NULL\r\nOR (\r\n	length(\"LatestReportedAddresses\") >= 4\r\n	AND substr(\"LatestReportedAddresses\", 1, 1) = '['\r\n	AND substr(\"LatestReportedAddresses\", -1, 1) = ']'\r\n)");
+				table.CheckConstraint("CK_Devices_NormalizedDeviceName_IdentityFormat", "\"NormalizedDeviceName\" GLOB '[A-Z0-9]*'\r\nAND \"NormalizedDeviceName\" GLOB '*[A-Z0-9]'\r\nAND length(\"NormalizedDeviceName\") BETWEEN 4 AND 64\r\nAND \"NormalizedDeviceName\" NOT GLOB '*[^A-Z0-9_-]*'");
+			});
 
 		migrationBuilder.CreateTable(
 			name: "Settings",
@@ -62,7 +67,10 @@ public partial class InitialCreate : Migration {
 				Key = table.Column<string>(type: "TEXT", nullable: false),
 				Value = table.Column<string>(type: "TEXT", nullable: true)
 			},
-			constraints: table => table.PrimaryKey("PK_Settings", x => x.Key));
+			constraints: table => {
+				table.PrimaryKey("PK_Settings", x => x.Key);
+				table.CheckConstraint("CK_Settings_Key_NotEmpty", "length(\"Key\") > 0");
+			});
 
 		migrationBuilder.CreateTable(
 			name: "AspNetRoleClaims",
@@ -95,6 +103,7 @@ public partial class InitialCreate : Migration {
 			},
 			constraints: table => {
 				table.PrimaryKey("PK_ApiCredentials", x => x.ApiCredentialId);
+				table.CheckConstraint("CK_ApiCredentials_Role_PrincipalRole", "\"Role\" BETWEEN 0 AND 3");
 				table.ForeignKey(
 					name: "FK_ApiCredentials_AspNetUsers_UserId",
 					column: x => x.UserId,
@@ -216,6 +225,7 @@ public partial class InitialCreate : Migration {
 			},
 			constraints: table => {
 				table.PrimaryKey("PK_OnlineLogs", x => x.OnlineLogId);
+				table.CheckConstraint("CK_OnlineLogs_ReportedAddresses_JsonArrayShape", "length(\"ReportedAddresses\") >= 4\r\nAND substr(\"ReportedAddresses\", 1, 1) = '['\r\nAND substr(\"ReportedAddresses\", -1, 1) = ']'");
 				table.ForeignKey(
 					name: "FK_OnlineLogs_AspNetUsers_SubmittedByUserId",
 					column: x => x.SubmittedByUserId,
@@ -257,10 +267,10 @@ public partial class InitialCreate : Migration {
 			columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
 			values: new object[,]
 			{
-					{ new Guid("0e132786-0e18-4cd1-bf41-cfdd18b12d90"), "0e132786-0e18-4cd1-bf41-cfdd18b12d90", "FullQuery", "FULLQUERY" },
-					{ new Guid("3df54d97-ee56-47f1-a1c0-3044dbdb8e41"), "3df54d97-ee56-47f1-a1c0-3044dbdb8e41", "Administrator", "ADMINISTRATOR" },
-					{ new Guid("5121009f-b5bd-4ec7-95ee-edb11bca4f92"), "5121009f-b5bd-4ec7-95ee-edb11bca4f92", "LimitedQuery", "LIMITEDQUERY" },
-					{ new Guid("a8a0d700-c15d-487a-97c6-3359113d367f"), "a8a0d700-c15d-487a-97c6-3359113d367f", "DeviceManager", "DEVICEMANAGER" }
+				{ new Guid("0e132786-0e18-4cd1-bf41-cfdd18b12d90"), "0e132786-0e18-4cd1-bf41-cfdd18b12d90", "FullQuery", "FULLQUERY" },
+				{ new Guid("3df54d97-ee56-47f1-a1c0-3044dbdb8e41"), "3df54d97-ee56-47f1-a1c0-3044dbdb8e41", "Administrator", "ADMINISTRATOR" },
+				{ new Guid("5121009f-b5bd-4ec7-95ee-edb11bca4f92"), "5121009f-b5bd-4ec7-95ee-edb11bca4f92", "LimitedQuery", "LIMITEDQUERY" },
+				{ new Guid("a8a0d700-c15d-487a-97c6-3359113d367f"), "a8a0d700-c15d-487a-97c6-3359113d367f", "DeviceManager", "DEVICEMANAGER" }
 			});
 
 		migrationBuilder.InsertData(
