@@ -15,10 +15,15 @@ public sealed class AuthenticationMaintenanceService(
 	) : BackgroundService {
 	/// <inheritdoc/>
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-		// 启动 nonce 清理循环，并在应用停止时取消循环
-		var nonceCleanupLoopTask = RunNonceCleanupLoopAsync(stoppingToken);
+		try {
+			// 启动 nonce 清理循环，并在应用停止时取消循环
+			var nonceCleanupLoopTask = RunNonceCleanupLoopAsync(stoppingToken);
 
-		await nonceCleanupLoopTask;
+			await nonceCleanupLoopTask;
+		} catch (OperationCanceledException) {
+			// 当应用停止时，取消令牌会触发 OperationCanceledException，这里捕获并忽略它
+			return;
+		}
 	}
 
 	/// <summary>
