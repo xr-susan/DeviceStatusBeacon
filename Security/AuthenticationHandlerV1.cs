@@ -16,8 +16,13 @@ public class AuthenticationHandlerV1(IOptionsMonitor<AuthenticationSchemeOptions
 	/// <inheritdoc/>
 	protected override async Task<AuthenticateResult> HandleAuthenticateAsync() {
 		// 尝试从请求头解析出鉴权信息
-		if (!AuthenticationHeaderV1.TryParse(authorizationHeaderValues: Request.Headers.Authorization, out var authHeader)) {
-			return AuthenticateResult.Fail("鉴权信息不存在或格式不正确，无法解析");
+		var authorizationHeaderValues = Request.Headers.Authorization;
+		if (authorizationHeaderValues.Count == 0) {
+			return AuthenticateResult.NoResult();
+		}
+
+		if (!AuthenticationHeaderV1.TryParse(authorizationHeaderValues: authorizationHeaderValues, out var authHeader)) {
+			return AuthenticateResult.Fail("鉴权信息格式不正确，无法解析");
 		}
 
 		// 时间戳验证
