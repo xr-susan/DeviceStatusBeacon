@@ -1,7 +1,7 @@
 const activityTarget = document.getElementById("dashboard-activity");
 const totalLogCountTarget = document.getElementById("dashboard-total-log-count");
 
-// Dashboard 页面是单实例结构，直接按约定的元素 ID 读取即可
+// 仪表板页面是单实例结构，直接按约定的元素 ID 读取即可
 if (activityTarget instanceof HTMLElement) {
     const activityUrl = activityTarget.dataset.activityUrl;
     if (activityUrl) {
@@ -9,7 +9,7 @@ if (activityTarget instanceof HTMLElement) {
     }
 }
 
-// 加载 Dashboard 最近活动数据，并在成功后刷新对应内容区域
+// 加载仪表板最近活动数据，并在成功后刷新对应内容区域
 async function loadDashboardActivity(activityUrl, target, totalLogCountTarget) {
     try {
         const response = await fetch(activityUrl, {
@@ -33,25 +33,18 @@ async function loadDashboardActivity(activityUrl, target, totalLogCountTarget) {
     }
 }
 
-// 把最近活动响应数据渲染为设备与日志两列内容
+// 把最近活动响应数据渲染为设备活动列表
 function renderDashboardActivity(target, data, totalLogCountTarget) {
-    // 对外部 JSON 做最小结构约束，避免异常响应直接破坏页面渲染
+    // 对外部 JSON 做最小结构约束，避免异常响应直接破坏页面渲染，同时做空值回落
     const accessibleLogCount = Number.isInteger(data.accessibleLogCount) ? data.accessibleLogCount : "-";
-    const recentDevices = Array.isArray(data.recentDevices) ? data.recentDevices : [];
-    const recentLogs = Array.isArray(data.recentLogs) ? data.recentLogs : [];
+    const recentDeviceActivities = Array.isArray(data.recentDeviceActivities)
+        ? data.recentDeviceActivities
+        : [];
+
     setMetricValue(totalLogCountTarget, accessibleLogCount);
 
-    // 最近活动区域的顶层结构固定为两列面板，分别承载设备与日志数据
-    const grid = createElement("div", {
-        className: "dashboard-activity__grid",
-        children: [
-            createActivityPanel("设备", renderRecentDevices(recentDevices)),
-            createActivityPanel("日志", renderRecentLogs(recentLogs))
-        ]
-    });
-
     target.dataset.activityState = "ready";
-    target.replaceChildren(grid);
+    target.replaceChildren(renderRecentDeviceActivities(recentDeviceActivities));
 }
 
 // 把延后加载的摘要指标同步到顶部概览卡片
@@ -61,107 +54,48 @@ function setMetricValue(target, value) {
     }
 }
 
-// 渲染最近活跃设备列表
-function renderRecentDevices(devices) {
+// 渲染近期活跃设备列表
+function renderRecentDeviceActivities(devices) {
     if (devices.length === 0) {
-        return createEmptyState("暂无设备活动。");
+        return createEmptyState("近期暂无设备活动。");
     }
 
-    // 设备列表本身只是顺序容器，单项结构由 article 节点承载
-    const list = createElement("div", { className: "dashboard-device-list" });
+    const list = createElement("div", { className: "dashboard-activity-list" });
     for (const device of devices) {
         const deviceName = device.deviceName ?? "";
-        const displayName = device.displayName?.trim() || "未设置显示名称";
+        const displayName = device.displayName?.trim();
         const latestLogTime = formatLocalDateTime(device.latestLogTime);
         const enabledText = device.enabled ? "启用" : "停用";
         const enabledClass = device.enabled ? "status-pill--success" : "status-pill--muted";
+        const latestReportedAddresses = Array.isArray(device.latestReportedAddresses) && device.latestReportedAddresses.length > 0
+            ? device.latestReportedAddresses.join(", ")
+            : "暂无地址";
+        const latestReporterRemoteAddress = device.latestReporterRemoteAddress || "未知";
+        const recentLogCount = Number.isInteger(device.recentLogCount) ? device.recentLogCount : 0;
 
         // 使用 textContent 路径组装纯文本字段，避免依赖模板拼接和 HTML 转义
         const article = createElement("article", {
-            className: "dashboard-device-item",
+            className: "dashboard-activity-item",
             children: [
-                createElement("strong", { text: deviceName }),
                 createElement("div", {
-                    className: "table-subtext",
-                    text: displayName
-                }),
-                createElement("div", {
-                    className: "dashboard-device-item__meta",
+                    className: "dashboard-activity-item__main",
                     children: [
+                        createDeviceIdentity(deviceName, displayName),
                         createElement("span", {
                             className: `status-pill ${enabledClass}`,
                             text: enabledText
-                        }),
-                        createElement("span", { text: latestLogTime })
-                    ]
-                })
-            ]
-        });
-
-        list.append(article);
-    }
-
-    return list;
-}
-
-// 渲染最近日志列表
-function renderRecentLogs(logs) {
-    if (logs.length === 0) {
-        return createEmptyState("暂无日志活动。");
-    }
-
-    // 日志列表沿用站点现有 activity-item 结构，保持与日志页视觉语义一致
-    const list = createElement("div", { className: "activity-list" });
-    for (const log of logs) {
-        const deviceName = log.deviceName ?? "";
-        const deviceDisplayName = log.deviceDisplayName?.trim() || "未设置显示名称";
-        const logTime = formatLocalDateTime(log.logTime);
-        const onlineLogId = String(log.onlineLogId ?? "");
-        const addresses = Array.isArray(log.reportedAddresses) && log.reportedAddresses.length > 0
-            ? log.reportedAddresses.join(", ")
-            : "暂无地址";
-
-        // 详情区按“地址 / 来源 / 消息”逐项追加，避免条件块和字符串拼接交织
-        const details = createElement("div", { className: "activity-item__details" });
-        details.append(createLabeledDetail("地址", addresses));
-
-        if (log.reporterRemoteAddress) {
-            details.append(createLabeledDetail("来源", log.reporterRemoteAddress));
-        }
-
-        if (log.message) {
-            details.append(createLabeledDetail("消息", log.message));
-        }
-
-        // 单条日志由头部摘要和详情区组成，两部分都通过固定节点骨架拼装
-        const article = createElement("article", {
-            className: "activity-item",
-            children: [
-                createElement("div", {
-                    className: "activity-item__row",
-                    children: [
-                        createElement("div", {
-                            children: [
-                                createElement("strong", { text: deviceName }),
-                                createElement("div", {
-                                    className: "table-subtext",
-                                    text: deviceDisplayName
-                                })
-                            ]
-                        }),
-                        createElement("div", {
-                            className: "activity-item__meta",
-                            children: [
-                                createElement("span", { text: logTime }),
-                                createElement("span", {
-                                    className: "code-text",
-                                    text: `#${onlineLogId}`
-                                })
-                            ]
                         })
                     ]
                 }),
-                details
+                createElement("div", {
+                    className: "dashboard-activity-item__details",
+                    children: [
+                        createLabeledDetail("最近地址", latestReportedAddresses),
+                        createLabeledDetail("最近上报时间", latestLogTime),
+                        createLabeledDetail("来源地址", latestReporterRemoteAddress),
+                        createLabeledDetail("近期日志", recentLogCount)
+                    ]
+                })
             ]
         });
 
@@ -193,20 +127,6 @@ function formatLocalDateTime(value) {
     }).format(date);
 }
 
-// 创建最近活动两列布局中的单个面板
-function createActivityPanel(title, content) {
-    return createElement("div", {
-        className: "dashboard-activity__panel",
-        children: [
-            createElement("strong", {
-                className: "dashboard-activity__title",
-                text: title
-            }),
-            content
-        ]
-    });
-}
-
 // 创建用于“标签 + 值”结构的详情行
 function createLabeledDetail(label, value) {
     // 标签仍使用独立 span，方便复用现有 detail-label 样式
@@ -220,6 +140,25 @@ function createLabeledDetail(label, value) {
     );
 
     return row;
+}
+
+// 创建 Dashboard 和列表页共用的设备身份结构
+function createDeviceIdentity(deviceName, displayName) {
+    return createElement("div", {
+        className: "device-identity",
+        children: [
+            displayName
+                ? createElement("span", {
+                    className: "device-identity__display",
+                    text: displayName
+                })
+                : null,
+            createElement("span", {
+                className: "device-identity__name",
+                text: deviceName
+            })
+        ]
+    });
 }
 
 // 创建统一的空状态占位块

@@ -67,6 +67,12 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 				tableBuilder.UseSqlReturningClause(false);
 			});
 
+			// 设备最新日志摘要主要由 SQLite 触发器回写；SQLite DateTime 文本不保留 Kind，读出时统一补为 UTC
+			deviceBuilder.Property(e => e.LatestLogTime)
+				.HasConversion(
+					value => value.NormalizeToUtcForSQLite(),
+					value => value.NormalizeToUtcForSQLite());
+
 			// 定义设备标准化名称为设备实体的人类管理名称唯一索引
 			deviceBuilder.HasIndex(e => e.NormalizedDeviceName).IsUnique();
 		});
@@ -87,6 +93,12 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 					""");
 				tableBuilder.UseSqlReturningClause(false);
 			});
+
+			// 日志时间统一按 UTC 落库；SQLite DateTime 文本不保留 Kind，读出时统一补为 UTC
+			onlineLogBuilder.Property(e => e.LogTime)
+				.HasConversion(
+					value => value.NormalizeToUtcForSQLite(),
+					value => value.NormalizeToUtcForSQLite());
 
 			// 为日志时间创建索引以优化查询性能并方便过期数据的删除
 			onlineLogBuilder.HasIndex(e => e.LogTime);

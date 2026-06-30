@@ -10,3 +10,28 @@ for (const input of document.querySelectorAll("[data-select-on-focus]")) {
         }
     }, { once: true });
 }
+
+// 将服务端输出的 UTC 时间按浏览器时区格式化；无法解析时保留原始 UTC 文本
+const localDateTimeFormatter = new Intl.DateTimeFormat("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+});
+
+for (const timeElement of document.querySelectorAll("time[data-local-date-time]")) {
+    const dateTime = timeElement.getAttribute("datetime");
+    if (!dateTime) {
+        continue;
+    }
+
+    const date = new Date(dateTime);
+    if (Number.isNaN(date.getTime())) {
+        continue;
+    }
+
+    timeElement.textContent = localDateTimeFormatter.format(date);
+}

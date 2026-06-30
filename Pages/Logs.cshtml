@@ -9,7 +9,7 @@
 <div class="page">
 	<header class="page-header">
 		<div>
-			<h1 class="page-header__title">日志总览</h1>
+			<h1 class="page-header__title">日志</h1>
 			<p class="page-header__subtitle">按设备关键字筛选上报记录，快速确认最近活动和来源信息。</p>
 		</div>
 	</header>
@@ -58,38 +58,7 @@
 	<section class="panel">
 		<div class="panel__header">
 			<h2 class="panel__title">最近日志</h2>
-		</div>
-
-		@if (Model.PageData.Logs.Count == 0) {
-			<div class="empty-state">@(session.Role.CanQueryAnyDevices() ? "没有找到符合条件的日志。" : "当前账户没有可读取的日志。")</div>
-		} else {
-			<div class="activity-list">
-				@foreach (var log in Model.PageData.Logs) {
-					<article class="activity-item">
-						<div class="activity-item__row">
-							<div>
-								<strong>@log.DeviceName</strong>
-								<div class="table-subtext">@(!string.IsNullOrWhiteSpace(log.DeviceDisplayName) ? log.DeviceDisplayName : "未设置显示名称")</div>
-							</div>
-							<div class="activity-item__meta">
-								<span>@log.LogTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</span>
-								<span class="code-text">#@log.OnlineLogId</span>
-							</div>
-						</div>
-						<div class="activity-item__details">
-							<div><span class="detail-label">地址</span>@(log.ReportedAddresses.Count > 0 ? string.Join(", ", log.ReportedAddresses) : "暂无地址")</div>
-							@if (!string.IsNullOrWhiteSpace(log.ReporterRemoteAddress)) {
-								<div><span class="detail-label">来源</span>@log.ReporterRemoteAddress</div>
-							}
-							@if (!string.IsNullOrWhiteSpace(log.Message)) {
-								<div><span class="detail-label">消息</span>@log.Message</div>
-							}
-						</div>
-					</article>
-				}
-			</div>
-
-			<nav class="pager" aria-label="日志分页">
+			<nav class="pager pager--inline" aria-label="日志分页">
 				@if (pagination.HasPreviousPage) {
 					<a
 						asp-page="/Logs"
@@ -114,6 +83,37 @@
 					<span class="button button--secondary button--disabled" aria-disabled="true">下一页</span>
 				}
 			</nav>
+		</div>
+
+		@if (Model.PageData.Logs.Count == 0) {
+			<div class="empty-state">@(session.Role.CanQueryAnyDevices() ? "没有找到符合条件的日志。" : "当前账户没有可读取的日志。")</div>
+		} else {
+			<div class="activity-list">
+				@foreach (var log in Model.PageData.Logs) {
+					<article class="activity-item">
+						<div class="activity-item__row">
+							<div>
+								<strong>@log.DeviceName</strong>
+							</div>
+							<div class="activity-item__meta">
+								<time
+									datetime="@log.LogTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)"
+									data-local-date-time>@log.LogTime.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", System.Globalization.CultureInfo.InvariantCulture)</time>
+								<span class="code-text">#@log.OnlineLogId</span>
+							</div>
+						</div>
+						<div class="activity-item__details">
+							<div><span class="detail-label">地址</span>@(log.ReportedAddresses.Count > 0 ? string.Join(", ", log.ReportedAddresses) : "暂无地址")</div>
+							@if (!string.IsNullOrWhiteSpace(log.ReporterRemoteAddress)) {
+								<div><span class="detail-label">来源</span>@log.ReporterRemoteAddress</div>
+							}
+							@if (!string.IsNullOrWhiteSpace(log.Message)) {
+								<div><span class="detail-label">消息</span>@log.Message</div>
+							}
+						</div>
+					</article>
+				}
+			</div>
 		}
 	</section>
 </div>

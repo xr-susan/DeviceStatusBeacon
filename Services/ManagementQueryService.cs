@@ -14,12 +14,7 @@ public sealed partial class ManagementQueryService(DeviceStatusBeaconContext dbC
 	/// <summary>
 	/// 首页摘要中展示的设备数量。
 	/// </summary>
-	private const int DashboardDeviceCount = 4;
-
-	/// <summary>
-	/// 首页摘要中展示的日志数量。
-	/// </summary>
-	private const int DashboardLogCount = 6;
+	private const int DashboardDeviceActivityCount = 8;
 
 	/// <summary>
 	/// Dashboard 中“近期活跃设备”统计使用的时间窗口（小时）。

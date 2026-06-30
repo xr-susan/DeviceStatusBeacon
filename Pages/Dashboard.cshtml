@@ -75,13 +75,12 @@
 	<section class="panel">
 		<div class="panel__header">
 			<div>
-				<h2 class="panel__title">最近活动</h2>
-				<p class="panel__text">快速查看最近更新的设备和上报记录。</p>
+				<h2 class="panel__title">最近活动（近 @Model.Overview.RecentActiveWindowHours 小时）</h2>
 			</div>
 		</div>
 
 		<div class="dashboard-activity" id="dashboard-activity" data-activity-state="loading" data-activity-url="@Model.ActivityApiPath">
-			<div class="empty-state">正在加载最近设备和最近日志。</div>
+			<div class="empty-state">正在加载近期设备活动。</div>
 		</div>
 	</section>
 </div>

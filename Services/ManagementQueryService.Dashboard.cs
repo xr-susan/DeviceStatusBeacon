@@ -11,7 +11,7 @@ public sealed partial class ManagementQueryService {
 	public async Task<DashboardOverviewData> GetDashboardOverviewAsync(ManagementQuerySession session, CancellationToken cancellationToken = default) {
 		var recentActiveCutoff = DateTime.UtcNow.AddHours(-DashboardRecentActiveWindowHours);
 
-		// 首页首屏只同步加载设备侧的轻量统计，避免把日志总量统计放进主渲染路径
+		// 仪表板首屏只同步加载设备侧的轻量统计，避免把日志总量统计放进主渲染路径
 		var deviceMetrics = await BuildAccessibleDeviceQuery(session)
 			.GroupBy(_ => 1)
 			.Select(group => new {
@@ -27,7 +27,8 @@ public sealed partial class ManagementQueryService {
 			session.ToData(),
 			deviceMetrics?.AccessibleDeviceCount ?? 0,
 			deviceMetrics?.EnabledDeviceCount ?? 0,
-			deviceMetrics?.RecentActiveDeviceCount ?? 0);
+			deviceMetrics?.RecentActiveDeviceCount ?? 0,
+			DashboardRecentActiveWindowHours);
 	}
 
 	/// <inheritdoc/>
@@ -39,24 +40,27 @@ public sealed partial class ManagementQueryService {
 		// 获取当前查询会话范围内可读取的设备和日志范围，用于列表数据查询
 		var accessibleDevices = BuildAccessibleDeviceQuery(session);
 		var accessibleLogs = BuildAccessibleLogQuery(session);
+		var recentActiveCutoff = DateTime.UtcNow.AddHours(-DashboardRecentActiveWindowHours);
 
 		// 日志总量与最近活动统一延后到同源 API，避免抬高首屏页面渲染成本
 		var accessibleLogCount = await accessibleLogs.CountAsync(cancellationToken);
 
-		// 最近活动不参与首屏关键数据渲染，作为同源 API 的按需加载内容返回
-		var recentDevices = await QueryDevicesPageAsync(
-			accessibleDevices,
-			0,
-			DashboardDeviceCount,
-			sortByNormalizedDeviceName: false,
-			cancellationToken);
+		// 最近活动按设备聚合展示，避免在仪表板中混入过多原始日志明细
+		var recentDeviceActivities = await accessibleDevices
+			.Where(device => device.LatestLogTime != null && device.LatestLogTime >= recentActiveCutoff) // skipcq: CS-R1136 表达式树不支持 is 模式匹配
+			.OrderByDescending(device => device.LatestLogTime)
+			.ThenBy(device => device.NormalizedDeviceName)
+			.Take(DashboardDeviceActivityCount)
+			.Select(device => new DeviceActivitySummary(
+				device.DeviceName,
+				device.DisplayName,
+				device.Enabled,
+				device.LatestLogTime!.Value, // 上方已经通过 Where 过滤掉了 null 值
+				device.LatestReportedAddresses,
+				device.LatestReporterRemoteAddress,
+				device.OnlineLogs.Count(log => log.LogTime >= recentActiveCutoff)))
+			.ToListAsync(cancellationToken);
 
-		var recentLogs = await QueryLogsPageAsync(
-			accessibleLogs,
-			0,
-			DashboardLogCount,
-			cancellationToken);
-
-		return new(accessibleLogCount, recentDevices, recentLogs);
+		return new(accessibleLogCount, recentDeviceActivities);
 	}
 }

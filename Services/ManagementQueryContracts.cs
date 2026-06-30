@@ -1,4 +1,6 @@
-﻿namespace DeviceStatusBeacon.Services;
+﻿using System.Net;
+
+namespace DeviceStatusBeacon.Services;
 
 /// <summary>
 /// 表示一次可复用的管理查询会话。
@@ -121,24 +123,44 @@ public sealed record PaginationData {
 /// <param name="Session">当前会话信息</param>
 /// <param name="AccessibleDeviceCount">当前查询会话范围内可读取的设备总数</param>
 /// <param name="EnabledDeviceCount">当前查询会话范围内可读取且启用的设备数</param>
-/// <param name="RecentActiveDeviceCount">当前查询会话范围内最近 24 小时内有日志的设备数</param>
+/// <param name="RecentActiveDeviceCount">当前查询会话范围内近期有日志的设备数</param>
+/// <param name="RecentActiveWindowHours">近期活动统计使用的时间窗口（小时）</param>
 public sealed record DashboardOverviewData(
 	ManagementSessionData Session,
 	int AccessibleDeviceCount,
 	int EnabledDeviceCount,
-	int RecentActiveDeviceCount
+	int RecentActiveDeviceCount,
+	int RecentActiveWindowHours
 );
 
 /// <summary>
 /// Dashboard 中按需加载的补充摘要与最近活动数据。
 /// </summary>
 /// <param name="AccessibleLogCount">当前查询会话范围内可读取的日志总数</param>
-/// <param name="RecentDevices">最近活跃设备摘要</param>
-/// <param name="RecentLogs">最近日志摘要</param>
+/// <param name="RecentDeviceActivities">近期活跃设备摘要</param>
 public sealed record DashboardActivityData(
 	int AccessibleLogCount,
-	IReadOnlyCollection<DeviceSummary> RecentDevices,
-	IReadOnlyCollection<OnlineLogSummary> RecentLogs
+	IReadOnlyCollection<DeviceActivitySummary> RecentDeviceActivities
+);
+
+/// <summary>
+/// Dashboard 近期设备活动摘要。
+/// </summary>
+/// <param name="DeviceName">设备名称</param>
+/// <param name="DisplayName">设备显示名称</param>
+/// <param name="Enabled">是否启用</param>
+/// <param name="LatestLogTime">最近日志时间</param>
+/// <param name="LatestReportedAddresses">最近上报地址</param>
+/// <param name="LatestReporterRemoteAddress">最近上报来源地址</param>
+/// <param name="RecentLogCount">近期日志数</param>
+public sealed record DeviceActivitySummary(
+	string DeviceName,
+	string? DisplayName,
+	bool Enabled,
+	DateTime LatestLogTime,
+	IReadOnlyCollection<IPAddress>? LatestReportedAddresses,
+	IPAddress? LatestReporterRemoteAddress,
+	int RecentLogCount
 );
 
 /// <summary>

@@ -136,6 +136,7 @@ code {
 .button-row,
 .filter-toolbar__actions,
 .meta-row,
+.pager,
 .hero-panel__actions {
     display: flex;
     align-items: center;
@@ -241,6 +242,12 @@ code {
 .button--secondary {
     background: var(--color-canvas-subtle);
     color: var(--color-fg-default);
+}
+
+.button--disabled {
+    color: var(--color-fg-muted);
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 .button:focus-visible,
@@ -349,6 +356,20 @@ code {
 
 .panel__title {
     font-size: 1.1rem;
+}
+
+.pager {
+    gap: var(--space-md);
+}
+
+.pager--inline {
+    justify-content: flex-end;
+}
+
+.pager__summary {
+    color: var(--color-fg-muted);
+    font-size: 0.9rem;
+    white-space: nowrap;
 }
 
 .panel__title--large {
@@ -476,9 +497,21 @@ code {
     border-bottom: 0;
 }
 
-.table strong {
-    display: block;
+.device-identity {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-sm);
+    min-width: 0;
     margin-bottom: var(--space-xs);
+    flex-wrap: wrap;
+}
+
+.device-identity__display {
+    font-weight: 700;
+}
+
+.device-identity__name {
+    color: var(--color-fg-muted);
 }
 
 .activity-list {
@@ -567,5 +600,9 @@ code {
 
     .activity-item__meta {
         justify-items: start;
+    }
+
+    .pager--inline {
+        justify-content: flex-start;
     }
 }

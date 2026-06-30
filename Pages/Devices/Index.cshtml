@@ -60,43 +60,7 @@
 	<section class="panel">
 		<div class="panel__header">
 			<h2 class="panel__title">设备列表</h2>
-		</div>
-
-		@if (Model.PageData.Devices.Count == 0) {
-			<div class="empty-state">@(session.Role.CanQueryAnyDevices() ? "没有找到符合条件的设备。" : "当前账户没有可读取的设备。")</div>
-		} else {
-			<div class="table-wrap">
-				<table class="table">
-					<thead>
-						<tr>
-							<th>设备</th>
-							<th>状态</th>
-							<th>最近上报时间</th>
-							<th>最近地址</th>
-							<th>来源地址</th>
-						</tr>
-					</thead>
-					<tbody>
-						@foreach (var device in Model.PageData.Devices) {
-							<tr>
-								<td>
-									<strong>@device.DeviceName</strong>
-									<div class="table-subtext">@(!string.IsNullOrWhiteSpace(device.DisplayName) ? device.DisplayName : "未设置显示名称")</div>
-									<div class="table-subtext code-text">@device.DeviceId</div>
-								</td>
-								<td>
-									<span class="status-pill @(device.Enabled ? "status-pill--success" : "status-pill--muted")">@(device.Enabled ? "启用" : "停用")</span>
-								</td>
-								<td>@(device.LatestLogTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "暂无日志")</td>
-								<td>@(device.LatestReportedAddresses.Count > 0 ? string.Join(", ", device.LatestReportedAddresses) : "暂无地址")</td>
-								<td>@(!string.IsNullOrWhiteSpace(device.LatestReporterRemoteAddress) ? device.LatestReporterRemoteAddress : "未知")</td>
-							</tr>
-						}
-					</tbody>
-				</table>
-			</div>
-
-			<nav class="pager" aria-label="设备分页">
+			<nav class="pager pager--inline" aria-label="设备分页">
 				@if (pagination.HasPreviousPage) {
 					<a
 						asp-page="/Devices/Index"
@@ -121,6 +85,52 @@
 					<span class="button button--secondary button--disabled" aria-disabled="true">下一页</span>
 				}
 			</nav>
+		</div>
+
+		@if (Model.PageData.Devices.Count == 0) {
+			<div class="empty-state">@(session.Role.CanQueryAnyDevices() ? "没有找到符合条件的设备。" : "当前账户没有可读取的设备。")</div>
+		} else {
+			<div class="table-wrap">
+				<table class="table">
+					<thead>
+						<tr>
+							<th>设备</th>
+							<th>状态</th>
+							<th>最近上报时间</th>
+							<th>最近地址</th>
+							<th>来源地址</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var device in Model.PageData.Devices) {
+							<tr>
+								<td>
+									<div class="device-identity">
+										@if (!string.IsNullOrWhiteSpace(device.DisplayName)) {
+											<span class="device-identity__display">@device.DisplayName</span>
+										}
+										<span class="device-identity__name">@device.DeviceName</span>
+									</div>
+								</td>
+								<td>
+									<span class="status-pill @(device.Enabled ? "status-pill--success" : "status-pill--muted")">@(device.Enabled ? "启用" : "停用")</span>
+								</td>
+								<td>
+									@if (device.LatestLogTime is DateTime latestLogTime) {
+										<time
+											datetime="@latestLogTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)"
+											data-local-date-time>@latestLogTime.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", System.Globalization.CultureInfo.InvariantCulture)</time>
+									} else {
+										<span>暂无日志</span>
+									}
+								</td>
+								<td>@(device.LatestReportedAddresses.Count > 0 ? string.Join(", ", device.LatestReportedAddresses) : "暂无地址")</td>
+								<td>@(!string.IsNullOrWhiteSpace(device.LatestReporterRemoteAddress) ? device.LatestReporterRemoteAddress : "未知")</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
 		}
 	</section>
 </div>
