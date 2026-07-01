@@ -96,9 +96,9 @@
 		} else {
 			<div class="log-list">
 				@foreach (var log in Model.PageData.Logs) {
-					var reportedAddresses = log.ReportedAddresses.Count > 0 ? string.Join(", ", log.ReportedAddresses) : "暂无地址";
+					var reportedAddresses = log.ReportedAddresses?.Count > 0 ? string.Join(", ", log.ReportedAddresses) : "暂无地址";
 					var message = string.IsNullOrWhiteSpace(log.Message) ? "暂无消息" : log.Message;
-					var reporterRemoteAddress = string.IsNullOrWhiteSpace(log.ReporterRemoteAddress) ? "未知" : log.ReporterRemoteAddress;
+					var reporterRemoteAddress = log.ReporterRemoteAddress?.ToString() ?? "未知";
 
 					<article class="log-item">
 						<div class="log-item__row">

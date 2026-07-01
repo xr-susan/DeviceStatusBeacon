@@ -1,5 +1,4 @@
-﻿using System.Net;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 
 namespace DeviceStatusBeacon.Services;
 
@@ -66,10 +65,18 @@ public sealed partial class ManagementQueryService {
 		var filteredDevices = ApplyDeviceName(BuildAccessibleDeviceQuery(session), normalizedDeviceName);
 
 		// 显式查询单个设备
-		var deviceRow = await ApplyDeviceProjection(filteredDevices)
+		return await MapDevicesToSummary(filteredDevices)
 			.SingleOrDefaultAsync(cancellationToken);
+	}
 
-		return deviceRow is null ? null : MapDeviceListItem(deviceRow);
+	/// <inheritdoc/>
+	public async Task<DeviceSummary?> GetDeviceByIdAsync(ManagementQuerySession session, Guid deviceId, CancellationToken cancellationToken = default) {
+		// 构建当前可读取的设备范围，并应用设备 ID 筛选
+		var filteredDevices = ApplyDeviceId(BuildAccessibleDeviceQuery(session), deviceId);
+
+		// 显式查询单个设备
+		return await MapDevicesToSummary(filteredDevices)
+			.SingleOrDefaultAsync(cancellationToken);
 	}
 
 	/// <summary>
@@ -88,19 +95,16 @@ public sealed partial class ManagementQueryService {
 		bool sortByNormalizedDeviceName,
 		CancellationToken cancellationToken) {
 		// 按指定方式排序、投影并执行查询
-		var projectedDevices = ApplyDeviceProjection(devices);
-		projectedDevices = sortByNormalizedDeviceName
-			? projectedDevices.OrderBy(device => device.NormalizedDeviceName)
-			: projectedDevices
+		var orderedDevices = sortByNormalizedDeviceName
+			? devices.OrderBy(device => device.NormalizedDeviceName)
+			: devices
 				.OrderByDescending(device => device.LatestLogTime)
 				.ThenBy(device => device.NormalizedDeviceName);
 
-		var deviceRows = await projectedDevices
-			.Skip(skip)
-			.Take(take)
-			.ToListAsync(cancellationToken);
+		var devicesToReturn = orderedDevices.Skip(skip).Take(take);
 
-		return [.. deviceRows.Select(MapDeviceListItem)];
+		return await MapDevicesToSummary(devicesToReturn)
+			.ToListAsync(cancellationToken);
 	}
 
 	/// <summary>
@@ -143,21 +147,30 @@ public sealed partial class ManagementQueryService {
 		devices.Where(device => device.NormalizedDeviceName == normalizedDeviceName);
 
 	/// <summary>
-	/// 将设备查询投影为列表需要的字段。
+	/// 基于设备 ID 筛选设备查询。
 	/// </summary>
 	/// <param name="devices">设备查询</param>
-	/// <returns>设备投影查询</returns>
-	private static IQueryable<DeviceProjection> ApplyDeviceProjection(IQueryable<Device> devices) =>
-		devices.Select(device => new DeviceProjection {
-			DeviceId = device.DeviceId,
-			DeviceName = device.DeviceName,
-			NormalizedDeviceName = device.NormalizedDeviceName,
-			DisplayName = device.DisplayName,
-			Enabled = device.Enabled,
-			LatestLogTime = device.LatestLogTime,
-			LatestReportedAddresses = device.LatestReportedAddresses,
-			LatestReporterRemoteAddress = device.LatestReporterRemoteAddress
-		});
+	/// <param name="deviceId">设备 ID</param>
+	/// <returns>应用筛选后的设备查询</returns>
+	private static IQueryable<Device> ApplyDeviceId(IQueryable<Device> devices, Guid deviceId) =>
+		devices.Where(device => device.DeviceId == deviceId);
+
+	/// <summary>
+	/// 将设备查询投影为设备摘要查询。
+	/// </summary>
+	/// <param name="devices">设备查询</param>
+	/// <returns>设备摘要查询</returns>
+	private static IQueryable<DeviceSummary> MapDevicesToSummary(IQueryable<Device> devices) =>
+		devices.Select(device => new DeviceSummary(
+			device.DeviceId,
+			device.DeviceName,
+			device.NormalizedDeviceName,
+			device.DisplayName,
+			device.Enabled,
+			device.LatestLogTime,
+			device.LatestReportedAddresses,
+			device.LatestReporterRemoteAddress
+		));
 
 	/// <summary>
 	/// 基于查询会话构建设备可读取范围查询。
@@ -184,66 +197,5 @@ public sealed partial class ManagementQueryService {
 
 		// 其他情况，返回空查询
 		return devices.Where(_ => false);
-	}
-
-	/// <summary>
-	/// 将设备查询投影映射为设备列表项。
-	/// </summary>
-	/// <param name="device">设备查询投影</param>
-	/// <returns>设备列表项</returns>
-	private static DeviceSummary MapDeviceListItem(DeviceProjection device) => new(
-		device.DeviceId,
-		device.DeviceName,
-		device.DisplayName,
-		device.Enabled,
-		device.LatestLogTime,
-		device.LatestReportedAddresses is null
-			? []
-			: [.. device.LatestReportedAddresses.Select(address => address.ToString())],
-		device.LatestReporterRemoteAddress?.ToString());
-
-	/// <summary>
-	/// 设备查询投影。
-	/// </summary>
-	private sealed class DeviceProjection {
-		/// <summary>
-		/// 设备 ID
-		/// </summary>
-		public Guid DeviceId { get; init; }
-
-		/// <summary>
-		/// 设备名称
-		/// </summary>
-		public string DeviceName { get; init; } = string.Empty;
-
-		/// <summary>
-		/// 标准化设备名称
-		/// </summary>
-		public string NormalizedDeviceName { get; init; } = string.Empty;
-
-		/// <summary>
-		/// 设备显示名称
-		/// </summary>
-		public string? DisplayName { get; init; }
-
-		/// <summary>
-		/// 设备是否启用
-		/// </summary>
-		public bool Enabled { get; init; }
-
-		/// <summary>
-		/// 最近日志时间
-		/// </summary>
-		public DateTime? LatestLogTime { get; init; }
-
-		/// <summary>
-		/// 最近上报地址
-		/// </summary>
-		public List<IPAddress>? LatestReportedAddresses { get; init; }
-
-		/// <summary>
-		/// 最近上报来源地址
-		/// </summary>
-		public IPAddress? LatestReporterRemoteAddress { get; init; }
 	}
 }

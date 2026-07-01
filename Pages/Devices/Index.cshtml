@@ -114,8 +114,8 @@
 					</thead>
 					<tbody>
 						@foreach (var device in Model.PageData.Devices) {
-							var latestReportedAddresses = device.LatestReportedAddresses.Take(2).ToArray();
-							var hasMoreReportedAddresses = device.LatestReportedAddresses.Count > latestReportedAddresses.Length;
+							var latestReportedAddresses = device.LatestReportedAddresses?.Take(2).ToArray() ?? [];
+							var hasMoreReportedAddresses = device.LatestReportedAddresses?.Count > latestReportedAddresses.Length;
 
 							<tr>
 								<td>
@@ -148,7 +148,7 @@
 										<span>暂无地址</span>
 									}
 								</td>
-								<td>@(!string.IsNullOrWhiteSpace(device.LatestReporterRemoteAddress) ? device.LatestReporterRemoteAddress : "未知")</td>
+								<td>@(device.LatestReporterRemoteAddress?.ToString() ?? "未知")</td>
 							</tr>
 						}
 					</tbody>

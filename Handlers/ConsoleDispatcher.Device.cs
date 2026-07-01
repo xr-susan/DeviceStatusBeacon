@@ -110,7 +110,7 @@ public static partial class ConsoleDispatcher {
 			"""
 			: $"""
 			    上报时间：{device.LatestLogTime:u}
-			    上报地址列表：[{string.Join(", ", device.LatestReportedAddresses)}]
+			    上报地址列表：[{string.Join(", ", device.LatestReportedAddresses ?? [])}]
 			    上报者远程地址：{device.LatestReporterRemoteAddress}
 			""";
 
@@ -141,7 +141,7 @@ public static partial class ConsoleDispatcher {
 			return 3;
 		}
 
-		var logs = await queryService.GetDeviceLogsByNameAsync(querySession, name, count);
+		var logs = await queryService.GetLogsByDeviceNameAsync(querySession, name, count);
 
 		return PrintListWithHeader(
 			logs,
@@ -150,7 +150,7 @@ public static partial class ConsoleDispatcher {
 			$"设备 {name} 的最新 {logs.Count} 条日志：",
 			log => {
 				Console.WriteLine($"  [{log.LogTime:u}] 附加消息：{log.Message}");
-				Console.WriteLine($"    上报地址列表：[{string.Join(", ", log.ReportedAddresses)}]");
+				Console.WriteLine($"    上报地址列表：[{string.Join(", ", log.ReportedAddresses ?? [])}]");
 				Console.WriteLine($"    上报者远程地址：{log.ReporterRemoteAddress}");
 			}
 		);
