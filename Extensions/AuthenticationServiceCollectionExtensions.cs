@@ -85,6 +85,12 @@ public static class AuthenticationServiceCollectionExtensions {
 				.AddPolicy(AuthorizationPolicyNames.InteractiveAdminOnly, policy => policy
 					.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme)
 					.RequireRole(nameof(PrincipalRole.Administrator)))
+				// 仅允许交互式设备管理员和管理员进入设备管理页面
+				.AddPolicy(AuthorizationPolicyNames.InteractiveDeviceManagement, policy => policy
+					.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme)
+					.RequireRole(
+						nameof(PrincipalRole.DeviceManager),
+						nameof(PrincipalRole.Administrator)))
 				// 仅允许签名式 ApiCredential 以查询身份访问相应 API
 				// NameIdentifier 在这里用于排除未绑定具体凭据标识的异常主体
 				.AddPolicy(AuthorizationPolicyNames.ApiCredentialQueryAccess, policy => policy
@@ -108,6 +114,9 @@ public static class AuthenticationServiceCollectionExtensions {
 						nameof(PrincipalRole.FullQuery),
 						nameof(PrincipalRole.DeviceManager),
 						nameof(PrincipalRole.Administrator)))
+				/*
+				// 当前设计中 HTML 管理页只允许交互式主体，管理 API 尚未开放；
+				// 以下混合管理策略暂不注册，保留作为后续正式管理 API 的参考。
 				// 允许交互式管理员用户和签名式管理员凭据共享管理员 API
 				.AddPolicy(AuthorizationPolicyNames.UserOrApiCredentialAdminOnly, policy => policy
 					.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme, AuthenticationSchemeNames.Signature)
@@ -118,6 +127,7 @@ public static class AuthenticationServiceCollectionExtensions {
 					.RequireRole(
 						nameof(PrincipalRole.DeviceManager),
 						nameof(PrincipalRole.Administrator)))
+				*/
 				// 统一日志提交入口，不区分“设备主体直接提交”和“高权限主体代提交”两类场景。
 				// 只要主体满足管理员、设备管理员或 Device 角色之一，即可进入日志写入流程。
 				.AddPolicy(AuthorizationPolicyNames.LogSubmission, policy => policy
@@ -162,6 +172,11 @@ public static class AuthorizationPolicyNames {
 	public const string InteractiveAdminOnly = "InteractiveAdminOnly";
 
 	/// <summary>
+	/// 仅交互式设备管理员和管理员。
+	/// </summary>
+	public const string InteractiveDeviceManagement = "InteractiveDeviceManagement";
+
+	/// <summary>
 	/// 仅签名式 ApiCredential 查询主体。
 	/// </summary>
 	public const string ApiCredentialQueryAccess = "ApiCredentialQueryAccess";
@@ -176,6 +191,10 @@ public static class AuthorizationPolicyNames {
 	/// </summary>
 	public const string UserOrApiCredentialQueryAccess = "UserOrApiCredentialQueryAccess";
 
+	/*
+	 * 当前设计中 HTML 管理页只允许交互式主体，管理 API 尚未开放；
+	 * 以下混合管理策略暂不使用，保留常量作为后续正式管理 API 的命名参考。
+	 *
 	/// <summary>
 	/// 允许 User 或 ApiCredential 的管理员策略。
 	/// </summary>
@@ -185,6 +204,7 @@ public static class AuthorizationPolicyNames {
 	/// 允许 User 或 ApiCredential 的设备管理策略。
 	/// </summary>
 	public const string UserOrApiCredentialDeviceManagement = "UserOrApiCredentialDeviceManagement";
+	 */
 
 	/// <summary>
 	/// 允许设备或高权限主体提交日志。
