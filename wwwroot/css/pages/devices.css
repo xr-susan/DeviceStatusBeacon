@@ -63,3 +63,127 @@
 .table-subtext {
     color: var(--color-fg-muted);
 }
+
+.device-detail {
+    display: grid;
+    grid-template-columns: minmax(14rem, 0.8fr) minmax(0, 1.2fr);
+    gap: var(--space-2xl);
+    align-items: start;
+}
+
+.device-detail__summary {
+    display: grid;
+    gap: var(--space-lg);
+}
+
+.device-identity--detail {
+    display: grid;
+    gap: var(--space-xs);
+    margin-bottom: 0;
+}
+
+.device-identity--detail .device-identity__display {
+    font-size: 1.25rem;
+    font-weight: 650;
+}
+
+.device-identity--detail .device-identity__id {
+    color: var(--color-fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+}
+
+.device-detail__info {
+    min-width: 0;
+}
+
+.network-address {
+    font-family: var(--font-mono);
+    overflow-wrap: anywhere;
+}
+
+.address-list {
+    display: grid;
+    gap: var(--space-xs);
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.address-list li {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+}
+
+.device-log-list {
+    display: grid;
+    gap: var(--space-lg);
+}
+
+.device-log-item {
+    display: grid;
+    gap: var(--space-sm);
+    padding: var(--space-lg);
+    border: var(--border-width) solid var(--color-border-default);
+    border-radius: var(--radius-medium);
+    background: var(--color-canvas-inset);
+}
+
+.device-log-item__header,
+.device-log-item__body {
+    min-width: 0;
+}
+
+.device-log-item__header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-xl);
+    align-items: start;
+    color: var(--color-fg-muted);
+    font-size: 0.92rem;
+}
+
+.device-log-item__source {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: var(--space-md);
+    align-items: baseline;
+    justify-self: stretch;
+    min-width: 0;
+}
+
+.device-log-item__source > :not(.detail-label) {
+    color: var(--color-fg-default);
+}
+
+.device-log-item__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-sm) var(--space-xl);
+    align-items: start;
+}
+
+.device-log-item__label,
+.device-log-item__addresses,
+.device-log-item__message {
+    min-width: 0;
+}
+
+.device-log-item__message {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 45em) {
+    .device-detail {
+        grid-template-columns: 1fr;
+    }
+
+    .device-log-item__header,
+    .device-log-item__body {
+        grid-template-columns: 1fr;
+    }
+}

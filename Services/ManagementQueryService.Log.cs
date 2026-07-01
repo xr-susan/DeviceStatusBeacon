@@ -85,7 +85,6 @@ public sealed partial class ManagementQueryService {
 				log.OnlineLogId,
 				log.DeviceId,
 				log.Device.DeviceName,
-				log.Device.NormalizedDeviceName,
 				log.Device.DisplayName,
 				log.LogTime,
 				log.ReportedAddresses,

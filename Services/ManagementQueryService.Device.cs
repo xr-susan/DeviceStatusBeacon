@@ -164,7 +164,6 @@ public sealed partial class ManagementQueryService {
 		devices.Select(device => new DeviceSummary(
 			device.DeviceId,
 			device.DeviceName,
-			device.NormalizedDeviceName,
 			device.DisplayName,
 			device.Enabled,
 			device.LatestLogTime,

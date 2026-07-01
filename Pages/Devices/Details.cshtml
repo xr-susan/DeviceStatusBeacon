@@ -1,0 +1,140 @@
+﻿@page "/devices/{deviceName}"
+@model DeviceStatusBeacon.Pages.Devices.DetailsModel
+@{
+	var deviceNameToDisplay = string.IsNullOrWhiteSpace(Model.Device.DisplayName) ? Model.Device.DeviceName : Model.Device.DisplayName;
+	ViewData["Title"] = $"{deviceNameToDisplay} - 设备详情";
+	var device = Model.Device;
+	var session = Model.Session;
+}
+
+@section HeadStyles {
+	<link rel="stylesheet" href="~/css/pages/devices.css" asp-append-version="true" />
+}
+
+<div class="page">
+	<header class="page-header">
+		<div>
+			<h1 class="page-header__title">设备详情</h1>
+			<p class="page-header__subtitle">查看单个设备的状态摘要、地址和最近上报记录。</p>
+		</div>
+		<div class="button-row">
+			<a asp-page="/Devices/Index" class="button button--secondary">返回设备查询</a>
+			@if (session.Role.CanManageDevices()) {
+				<a asp-page="/Devices/Settings"
+				   asp-route-deviceName="@device.DeviceName"
+				   class="button button--primary">管理设备</a>
+			}
+		</div>
+	</header>
+
+	<section class="panel">
+		<div class="device-detail">
+			<div class="device-detail__summary">
+				<div class="device-identity device-identity--detail">
+					<span class="device-identity__id">@device.DeviceId</span>
+					@if (!string.IsNullOrWhiteSpace(device.DisplayName)) {
+						<span class="device-identity__display">@device.DisplayName</span>
+					}
+					<span class="device-identity__name">@device.DeviceName</span>
+				</div>
+				<div class="meta-row">
+					<span class="status-pill @(device.Enabled ? "status-pill--success" : "status-pill--muted")">@(device.Enabled ? "启用" : "停用")</span>
+				</div>
+			</div>
+
+			<dl class="info-list device-detail__info">
+				<div class="info-list__row">
+					<dt>最近上报时间</dt>
+					<dd>
+						@if (device.LatestLogTime is DateTime latestLogTime) {
+							<time datetime="@latestLogTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)"
+								  data-local-date-time>@latestLogTime.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", System.Globalization.CultureInfo.InvariantCulture)</time>
+						} else {
+							<span>暂无日志</span>
+						}
+					</dd>
+				</div>
+				<div class="info-list__row">
+					<dt>来源地址</dt>
+					<dd>
+						@if (device.LatestReporterRemoteAddress is not null) {
+							<span class="network-address">@device.LatestReporterRemoteAddress</span>
+						} else {
+							<span>未知</span>
+						}
+					</dd>
+				</div>
+				<div class="info-list__row">
+					<dt>最近地址</dt>
+					<dd>
+						@if (device.LatestReportedAddresses?.Count > 0) {
+							<ul class="address-list">
+								@foreach (var address in device.LatestReportedAddresses) {
+									<li>@address</li>
+								}
+							</ul>
+						} else {
+							<span>暂无地址</span>
+						}
+					</dd>
+				</div>
+			</dl>
+		</div>
+	</section>
+
+	<section class="panel">
+		<div class="panel__header">
+			<h2 class="panel__title">最近日志</h2>
+			<a asp-page="/Logs"
+			   asp-route-device="@device.DeviceName"
+			   class="button button--secondary">查看更多日志</a>
+		</div>
+
+		@if (Model.RecentLogs.Count == 0) {
+			<div class="empty-state">该设备暂无日志。</div>
+		} else {
+			<div class="device-log-list">
+				@foreach (var log in Model.RecentLogs) {
+					var message = string.IsNullOrWhiteSpace(log.Message) ? "暂无消息" : log.Message;
+
+					<article class="device-log-item">
+						<div class="device-log-item__header">
+							<time datetime="@log.LogTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)"
+								  data-local-date-time>@log.LogTime.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", System.Globalization.CultureInfo.InvariantCulture)</time>
+							<div class="device-log-item__source">
+								<span class="detail-label">来源</span>
+								@if (log.ReporterRemoteAddress is not null) {
+									<span class="network-address">@log.ReporterRemoteAddress</span>
+								} else {
+									<span>未知</span>
+								}
+							</div>
+						</div>
+						<div class="device-log-item__body">
+							<div class="device-log-item__label">
+								<span class="detail-label">地址</span>
+							</div>
+							<div class="device-log-item__label">
+								<span class="detail-label">消息</span>
+							</div>
+							<div class="device-log-item__addresses">
+								@if (log.ReportedAddresses?.Count > 0) {
+									<ul class="address-list">
+										@foreach (var address in log.ReportedAddresses) {
+											<li>@address</li>
+										}
+									</ul>
+								} else {
+									<span>暂无地址</span>
+								}
+							</div>
+							<div class="device-log-item__message">
+								<span>@message</span>
+							</div>
+						</div>
+					</article>
+				}
+			</div>
+		}
+	</section>
+</div>

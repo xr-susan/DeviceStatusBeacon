@@ -13,7 +13,7 @@
 <div class="page">
 	<header class="page-header">
 		<div>
-			<h1 class="page-header__title">日志</h1>
+			<h1 class="page-header__title">日志查询</h1>
 			<p class="page-header__subtitle">按设备关键字筛选上报记录，快速确认最近活动和来源信息。</p>
 		</div>
 	</header>
@@ -23,13 +23,12 @@
 			<input type="hidden" name="page" value="1" />
 			<div class="field field--grow">
 				<label for="log-device-filter" class="field__label">设备筛选</label>
-				<input
-					id="log-device-filter"
-					name="device"
-					value="@Model.DeviceKeyword"
-					class="field__input"
-					placeholder="设备名称或显示名称"
-					data-select-on-focus />
+				<input id="log-device-filter"
+					   name="device"
+					   value="@Model.DeviceKeyword"
+					   class="field__input"
+					   placeholder="设备名称或显示名称"
+					   data-select-on-focus />
 			</div>
 
 			<div class="field">
@@ -66,12 +65,11 @@
 			<h2 class="panel__title">最近日志</h2>
 			<nav class="pager pager--inline" aria-label="日志分页">
 				@if (pagination.HasPreviousPage) {
-					<a
-						asp-page="/Logs"
-						asp-route-device="@Model.DeviceKeyword"
-						asp-route-page="@(pagination.PageNumber - 1)"
-						asp-route-pageSize="@pagination.PageSize"
-						class="button button--secondary">上一页</a>
+					<a asp-page="/Logs"
+					   asp-route-device="@Model.DeviceKeyword"
+					   asp-route-page="@(pagination.PageNumber - 1)"
+					   asp-route-pageSize="@pagination.PageSize"
+					   class="button button--secondary">上一页</a>
 				} else {
 					<span class="button button--secondary button--disabled" aria-disabled="true">上一页</span>
 				}
@@ -79,12 +77,11 @@
 				<span class="pager__summary">第 @pagination.PageNumber / @pagination.TotalPages 页</span>
 
 				@if (pagination.HasNextPage) {
-					<a
-						asp-page="/Logs"
-						asp-route-device="@Model.DeviceKeyword"
-						asp-route-page="@(pagination.PageNumber + 1)"
-						asp-route-pageSize="@pagination.PageSize"
-						class="button button--secondary">下一页</a>
+					<a asp-page="/Logs"
+					   asp-route-device="@Model.DeviceKeyword"
+					   asp-route-page="@(pagination.PageNumber + 1)"
+					   asp-route-pageSize="@pagination.PageSize"
+					   class="button button--secondary">下一页</a>
 				} else {
 					<span class="button button--secondary button--disabled" aria-disabled="true">下一页</span>
 				}
@@ -105,15 +102,16 @@
 							<div class="log-item__identity">
 								<button type="button" class="log-item__details-button" data-log-id="@log.OnlineLogId">详情</button>
 								<div class="device-identity">
-									<span class="device-identity__name">@log.DeviceName</span>
+									<a asp-page="/Devices/Details"
+									   asp-route-deviceName="@log.DeviceName"
+									   class="device-identity__name device-identity__link">@log.DeviceName</a>
 								</div>
 							</div>
 							<div class="log-item__meta">
 								<span class="detail-label log-item__meta-label">来源</span>
 								<span class="log-item__scroll-value log-item__meta-value">@reporterRemoteAddress</span>
-								<time
-									datetime="@log.LogTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)"
-									data-local-date-time>@log.LogTime.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", System.Globalization.CultureInfo.InvariantCulture)</time>
+								<time datetime="@log.LogTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)"
+									  data-local-date-time>@log.LogTime.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", System.Globalization.CultureInfo.InvariantCulture)</time>
 							</div>
 						</div>
 						<div class="log-item__details">

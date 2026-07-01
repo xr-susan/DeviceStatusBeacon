@@ -1,0 +1,41 @@
+﻿@page "/devices/{deviceName}/settings"
+@model DeviceStatusBeacon.Pages.Devices.SettingsModel
+@{
+	ViewData["Title"] = $"设置 {Model.Device.DeviceName}";
+	var device = Model.Device;
+}
+
+@section HeadStyles {
+	<link rel="stylesheet" href="~/css/pages/devices.css" asp-append-version="true" />
+}
+
+<div class="page">
+	<header class="page-header">
+		<div>
+			<h1 class="page-header__title">设备设置</h1>
+			<p class="page-header__subtitle">预留页面，暂未实现。</p>
+		</div>
+		<div class="button-row">
+			<a asp-page="/Devices/Details"
+			   asp-route-deviceName="@device.DeviceName"
+			   class="button button--secondary">返回详情</a>
+		</div>
+	</header>
+
+	<section class="panel">
+		<div class="device-detail">
+			<div class="device-detail__summary">
+				<div class="device-identity device-identity--detail">
+					<span class="device-identity__id">@device.DeviceId</span>
+					@if (!string.IsNullOrWhiteSpace(device.DisplayName)) {
+						<span class="device-identity__display">@device.DisplayName</span>
+					}
+					<span class="device-identity__name">@device.DeviceName</span>
+				</div>
+				<div class="meta-row">
+					<span class="status-pill @(device.Enabled ? "status-pill--success" : "status-pill--muted")">@(device.Enabled ? "启用" : "停用")</span>
+				</div>
+			</div>
+		</div>
+	</section>
+</div>

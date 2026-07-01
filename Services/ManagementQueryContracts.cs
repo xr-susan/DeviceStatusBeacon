@@ -192,7 +192,6 @@ public sealed record LogListData(
 /// </summary>
 /// <param name="DeviceId">设备 ID</param>
 /// <param name="DeviceName">设备名称</param>
-/// <param name="NormalizedDeviceName">标准化设备名称</param>
 /// <param name="DisplayName">设备显示名称</param>
 /// <param name="Enabled">是否启用</param>
 /// <param name="LatestLogTime">最近日志时间</param>
@@ -201,7 +200,6 @@ public sealed record LogListData(
 public sealed record DeviceSummary(
 	Guid DeviceId,
 	string DeviceName,
-	string NormalizedDeviceName,
 	string? DisplayName,
 	bool Enabled,
 	DateTime? LatestLogTime,
@@ -215,7 +213,6 @@ public sealed record DeviceSummary(
 /// <param name="OnlineLogId">日志 ID</param>
 /// <param name="DeviceId">设备 ID</param>
 /// <param name="DeviceName">设备名称</param>
-/// <param name="NormalizedDeviceName">标准化设备名称</param>
 /// <param name="DeviceDisplayName">设备显示名称</param>
 /// <param name="LogTime">日志时间</param>
 /// <param name="ReportedAddresses">上报地址</param>
@@ -225,7 +222,6 @@ public sealed record OnlineLogSummary(
 	long OnlineLogId,
 	Guid DeviceId,
 	string DeviceName,
-	string NormalizedDeviceName,
 	string? DeviceDisplayName,
 	DateTime LogTime,
 	IReadOnlyCollection<IPAddress>? ReportedAddresses,

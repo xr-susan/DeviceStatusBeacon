@@ -464,6 +464,17 @@ code {
     color: var(--color-fg-muted);
 }
 
+.device-identity__link:hover {
+    color: var(--color-accent-fg);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+}
+
+.device-identity__link:focus-visible {
+    outline: var(--focus-width) solid var(--color-accent-emphasis);
+    outline-offset: var(--focus-width);
+}
+
 .list {
     margin: 0;
     padding-left: 1.25em;
