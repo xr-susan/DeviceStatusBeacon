@@ -1,0 +1,212 @@
+.log-list {
+    display: grid;
+    gap: var(--space-md);
+}
+
+.log-item {
+    --log-item-left-label-width: 2.4rem;
+    --log-item-meta-label-width: 2.2rem;
+    --log-item-column-gap: var(--space-md);
+
+    display: grid;
+    grid-template-columns:
+        var(--log-item-left-label-width) minmax(14rem, 1.25fr) var(--log-item-meta-label-width) minmax(14rem, 1fr) max-content;
+    column-gap: var(--log-item-column-gap);
+    row-gap: var(--space-sm);
+    align-items: start;
+    padding: var(--space-lg);
+    border: var(--border-width) solid var(--color-border-default);
+    border-radius: var(--radius-medium);
+    background: var(--color-canvas-inset);
+}
+
+.log-item__row,
+.log-item__identity {
+    display: grid;
+    align-items: center;
+    column-gap: var(--log-item-column-gap);
+}
+
+.log-item__row {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+    row-gap: var(--space-xl);
+}
+
+.log-item__identity,
+.log-item__meta {
+    min-width: 0;
+}
+
+.log-item__identity,
+.log-item__detail--addresses {
+    grid-column: 1 / 3;
+}
+
+.log-item .device-identity {
+    grid-column: 2;
+    margin-bottom: 0;
+    line-height: 1.45;
+}
+
+.log-item__details-button {
+    grid-column: 1;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-success-fg);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.45;
+    text-align: start;
+    white-space: nowrap;
+}
+
+.log-item__details-button:hover {
+    color: var(--color-accent-fg);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+}
+
+.log-item__details-button:focus-visible {
+    outline: var(--focus-width) solid var(--color-accent-emphasis);
+    outline-offset: var(--focus-width);
+}
+
+.log-item__meta {
+    display: grid;
+    grid-column: 3 / 6;
+    grid-template-columns: subgrid;
+    align-items: center;
+    column-gap: var(--log-item-column-gap);
+    justify-content: stretch;
+    justify-items: normal;
+    row-gap: var(--space-xs);
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.log-item__meta time {
+    grid-column: 3;
+    justify-self: end;
+    white-space: nowrap;
+}
+
+.log-item__meta-label {
+    grid-column: 1;
+    margin-right: 0;
+    line-height: inherit;
+}
+
+.log-item__meta-value {
+    grid-column: 2;
+    min-width: 0;
+    line-height: inherit;
+}
+
+.log-item__details {
+    display: grid;
+    grid-column: 1 / -1;
+    gap: var(--space-sm);
+    column-gap: var(--log-item-column-gap);
+    color: var(--color-fg-default);
+    row-gap: var(--space-xs);
+}
+
+.log-item__detail {
+    display: grid;
+    align-items: center;
+    column-gap: var(--log-item-column-gap);
+    line-height: 1.45;
+    min-width: 0;
+}
+
+.log-item__scroll-value {
+    display: block;
+    min-width: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+    line-height: inherit;
+}
+
+.log-item__detail--addresses .detail-label,
+.log-item__detail--message .detail-label {
+    grid-column: 1;
+}
+
+.log-item__detail--message {
+    grid-column: 3 / 5;
+}
+
+.log-item__detail--addresses .log-item__scroll-value,
+.log-item__detail--message .log-item__scroll-value {
+    grid-column: 2;
+}
+
+.log-item .detail-label {
+    margin-right: 0;
+    font-size: 0.9rem;
+    letter-spacing: 0;
+    line-height: inherit;
+    text-transform: none;
+}
+
+.log-item__row,
+.log-item__identity,
+.log-item__details,
+.log-item__detail--addresses,
+.log-item__detail--message {
+    grid-template-columns: subgrid;
+}
+
+@media (max-width: 45em) {
+    .log-item__row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .log-item__meta {
+        justify-items: start;
+    }
+
+    .log-item__details {
+        grid-template-columns: 1fr;
+        grid-column: auto;
+    }
+
+    .log-item__row {
+        grid-template-columns: 1fr;
+    }
+
+    .log-item {
+        grid-template-columns: 1fr;
+    }
+
+    .log-item__identity,
+    .log-item__detail--addresses,
+    .log-item__detail--message {
+        grid-column: auto;
+        grid-template-columns: var(--log-item-left-label-width) minmax(0, 1fr);
+    }
+
+    .log-item__meta {
+        grid-column: auto;
+        grid-template-columns: var(--log-item-left-label-width) minmax(0, 1fr);
+        justify-content: stretch;
+    }
+
+    .log-item__meta time,
+    .log-item__meta-label,
+    .log-item__meta-value,
+    .log-item .device-identity,
+    .log-item__details-button,
+    .log-item__detail--addresses .detail-label,
+    .log-item__detail--addresses .log-item__scroll-value,
+    .log-item__detail--message .detail-label,
+    .log-item__detail--message .log-item__scroll-value {
+        grid-column: auto;
+    }
+}

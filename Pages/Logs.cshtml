@@ -6,6 +6,10 @@
 	var pagination = Model.PageData.Pagination;
 }
 
+@section HeadStyles {
+	<link rel="stylesheet" href="~/css/pages/logs.css" asp-append-version="true" />
+}
+
 <div class="page">
 	<header class="page-header">
 		<div>
@@ -47,7 +51,9 @@
 			<span class="meta-pill">匹配 @pagination.TotalCount</span>
 			<span class="meta-pill">第 @pagination.PageNumber / @pagination.TotalPages 页</span>
 			<span class="meta-pill">每页 @pagination.PageSize</span>
-			<span class="meta-pill">当前展示 @Model.PageData.Logs.Count</span>
+			@if (Model.PageData.Logs.Count != pagination.TotalCount) {
+				<span class="meta-pill">当前展示 @Model.PageData.Logs.Count</span>
+			}
 			<span class="meta-pill">范围 @session.Role.GetDeviceQueryScopeText()</span>
 			@if (!string.IsNullOrWhiteSpace(Model.DeviceKeyword)) {
 				<span class="meta-pill">筛选 @Model.DeviceKeyword</span>
@@ -88,28 +94,37 @@
 		@if (Model.PageData.Logs.Count == 0) {
 			<div class="empty-state">@(session.Role.CanQueryAnyDevices() ? "没有找到符合条件的日志。" : "当前账户没有可读取的日志。")</div>
 		} else {
-			<div class="activity-list">
+			<div class="log-list">
 				@foreach (var log in Model.PageData.Logs) {
-					<article class="activity-item">
-						<div class="activity-item__row">
-							<div>
-								<strong>@log.DeviceName</strong>
+					var reportedAddresses = log.ReportedAddresses.Count > 0 ? string.Join(", ", log.ReportedAddresses) : "暂无地址";
+					var message = string.IsNullOrWhiteSpace(log.Message) ? "暂无消息" : log.Message;
+					var reporterRemoteAddress = string.IsNullOrWhiteSpace(log.ReporterRemoteAddress) ? "未知" : log.ReporterRemoteAddress;
+
+					<article class="log-item">
+						<div class="log-item__row">
+							<div class="log-item__identity">
+								<button type="button" class="log-item__details-button" data-log-id="@log.OnlineLogId">详情</button>
+								<div class="device-identity">
+									<span class="device-identity__name">@log.DeviceName</span>
+								</div>
 							</div>
-							<div class="activity-item__meta">
+							<div class="log-item__meta">
+								<span class="detail-label log-item__meta-label">来源</span>
+								<span class="log-item__scroll-value log-item__meta-value">@reporterRemoteAddress</span>
 								<time
 									datetime="@log.LogTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)"
 									data-local-date-time>@log.LogTime.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", System.Globalization.CultureInfo.InvariantCulture)</time>
-								<span class="code-text">#@log.OnlineLogId</span>
 							</div>
 						</div>
-						<div class="activity-item__details">
-							<div><span class="detail-label">地址</span>@(log.ReportedAddresses.Count > 0 ? string.Join(", ", log.ReportedAddresses) : "暂无地址")</div>
-							@if (!string.IsNullOrWhiteSpace(log.ReporterRemoteAddress)) {
-								<div><span class="detail-label">来源</span>@log.ReporterRemoteAddress</div>
-							}
-							@if (!string.IsNullOrWhiteSpace(log.Message)) {
-								<div><span class="detail-label">消息</span>@log.Message</div>
-							}
+						<div class="log-item__details">
+							<div class="log-item__detail log-item__detail--addresses">
+								<span class="detail-label">地址</span>
+								<span class="log-item__scroll-value">@reportedAddresses</span>
+							</div>
+							<div class="log-item__detail log-item__detail--message">
+								<span class="detail-label">消息</span>
+								<span class="log-item__scroll-value">@message</span>
+							</div>
 						</div>
 					</article>
 				}

@@ -12,7 +12,7 @@ public sealed partial class ManagementQueryService {
 	public async Task<LogListData> GetLogsAsync(ManagementQuerySession session, string? deviceKeyword, int pageNumber, int pageSize, CancellationToken cancellationToken = default) {
 		// 标准化分页选项和设备关键字
 		var normalizedPageNumber = NormalizePageNumber(pageNumber);
-		var normalizedPageSize = NormalizePageSize(pageSize, 10, MaxLogQueryCount);
+		var normalizedPageSize = NormalizePageSize(pageSize, 1, MaxLogQueryCount);
 		var normalizedDeviceNameKeyword = NormalizeDeviceName(deviceKeyword);
 		var normalizedDisplayNameKeyword = NormalizeDisplayNameSearchTerm(deviceKeyword);
 

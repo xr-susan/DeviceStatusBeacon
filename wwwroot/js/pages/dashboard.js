@@ -80,10 +80,22 @@ function renderRecentDeviceActivities(devices) {
                 createElement("div", {
                     className: "dashboard-activity-item__main",
                     children: [
-                        createDeviceIdentity(deviceName, displayName),
-                        createElement("span", {
-                            className: `status-pill ${enabledClass}`,
-                            text: enabledText
+                        createElement("div", {
+                            className: "dashboard-activity-item__identity",
+                            children: [
+                                createElement("span", {
+                                    className: `status-pill ${enabledClass}`,
+                                    text: enabledText
+                                }),
+                                createDeviceIdentity(deviceName, displayName)
+                            ]
+                        }),
+                        createElement("div", {
+                            className: "dashboard-activity-item__summary",
+                            children: [
+                                createLabeledDetail("近期日志", recentLogCount),
+                                createLabeledDetail("最近上报时间", latestLogTime)
+                            ]
                         })
                     ]
                 }),
@@ -91,9 +103,7 @@ function renderRecentDeviceActivities(devices) {
                     className: "dashboard-activity-item__details",
                     children: [
                         createLabeledDetail("最近地址", latestReportedAddresses),
-                        createLabeledDetail("最近上报时间", latestLogTime),
-                        createLabeledDetail("来源地址", latestReporterRemoteAddress),
-                        createLabeledDetail("近期日志", recentLogCount)
+                        createLabeledDetail("来源地址", latestReporterRemoteAddress)
                     ]
                 })
             ]
