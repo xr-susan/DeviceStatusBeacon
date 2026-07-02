@@ -101,23 +101,20 @@
 						<div class="device-log-item__header">
 							<time datetime="@log.LogTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)"
 								  data-local-date-time>@log.LogTime.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", System.Globalization.CultureInfo.InvariantCulture)</time>
-							<div class="device-log-item__source">
-								<span class="detail-label">来源</span>
+							<dl class="device-log-item__source">
+								<dt class="detail-label">来源</dt>
 								@if (log.ReporterRemoteAddress is not null) {
-									<span class="network-address">@log.ReporterRemoteAddress</span>
+									<dd class="network-address">@log.ReporterRemoteAddress</dd>
 								} else {
-									<span>未知</span>
+									<dd>未知</dd>
 								}
-							</div>
+							</dl>
 						</div>
-						<div class="device-log-item__body">
-							<div class="device-log-item__label">
+						<dl class="device-log-item__body">
+							<dt class="device-log-item__label device-log-item__label--addresses">
 								<span class="detail-label">地址</span>
-							</div>
-							<div class="device-log-item__label">
-								<span class="detail-label">消息</span>
-							</div>
-							<div class="device-log-item__addresses">
+							</dt>
+							<dd class="device-log-item__addresses">
 								@if (log.ReportedAddresses?.Count > 0) {
 									<ul class="address-list">
 										@foreach (var address in log.ReportedAddresses) {
@@ -127,11 +124,14 @@
 								} else {
 									<span>暂无地址</span>
 								}
-							</div>
-							<div class="device-log-item__message">
+							</dd>
+							<dt class="device-log-item__label device-log-item__label--message">
+								<span class="detail-label">消息</span>
+							</dt>
+							<dd class="device-log-item__message">
 								<span>@message</span>
-							</div>
-						</div>
+							</dd>
+						</dl>
 					</article>
 				}
 			</div>

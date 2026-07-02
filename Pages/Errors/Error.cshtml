@@ -11,7 +11,7 @@
 		</div>
 		<p class="panel__text">@Model.Description</p>
 
-		<div class="info-list">
+		<dl class="info-list">
 			@if (!string.IsNullOrWhiteSpace(Model.OriginalPathAndQuery)) {
 				<div class="info-list__row">
 					<dt>原始目标</dt>
@@ -22,6 +22,6 @@
 				<dt>请求标识</dt>
 				<dd class="code-text">@Model.RequestId</dd>
 			</div>
-		</div>
+		</dl>
 	</section>
 </div>

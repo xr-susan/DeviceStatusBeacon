@@ -136,9 +136,11 @@
 .device-log-item__header,
 .device-log-item__body,
 .device-log-item__source,
+.device-log-item__source dd,
 .device-log-item__label,
 .device-log-item__addresses,
 .device-log-item__message {
+    margin: 0;
     min-width: 0;
 }
 
@@ -170,7 +172,24 @@
     align-items: start;
 }
 
+.device-log-item__label--addresses {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.device-log-item__label--message {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.device-log-item__addresses {
+    grid-column: 1;
+    grid-row: 2;
+}
+
 .device-log-item__message {
+    grid-column: 2;
+    grid-row: 2;
     overflow-wrap: anywhere;
 }
 
@@ -182,5 +201,13 @@
     .device-log-item__header,
     .device-log-item__body {
         grid-template-columns: 1fr;
+    }
+
+    .device-log-item__label--addresses,
+    .device-log-item__addresses,
+    .device-log-item__label--message,
+    .device-log-item__message {
+        grid-column: auto;
+        grid-row: auto;
     }
 }

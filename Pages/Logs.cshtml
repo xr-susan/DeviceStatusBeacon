@@ -108,22 +108,24 @@
 								</div>
 							</div>
 							<div class="log-item__meta">
-								<span class="detail-label log-item__meta-label">来源</span>
-								<span class="log-item__scroll-value log-item__meta-value">@reporterRemoteAddress</span>
+								<dl class="log-item__meta-source">
+									<dt class="detail-label log-item__meta-label">来源</dt>
+									<dd class="log-item__scroll-value log-item__meta-value">@reporterRemoteAddress</dd>
+								</dl>
 								<time datetime="@log.LogTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)"
 									  data-local-date-time>@log.LogTime.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", System.Globalization.CultureInfo.InvariantCulture)</time>
 							</div>
 						</div>
-						<div class="log-item__details">
+						<dl class="log-item__details">
 							<div class="log-item__detail log-item__detail--addresses">
-								<span class="detail-label">地址</span>
-								<span class="log-item__scroll-value">@reportedAddresses</span>
+								<dt class="detail-label">地址</dt>
+								<dd class="log-item__scroll-value">@reportedAddresses</dd>
 							</div>
 							<div class="log-item__detail log-item__detail--message">
-								<span class="detail-label">消息</span>
-								<span class="log-item__scroll-value">@message</span>
+								<dt class="detail-label">消息</dt>
+								<dd class="log-item__scroll-value">@message</dd>
 							</div>
-						</div>
+						</dl>
 					</article>
 				}
 			</div>
