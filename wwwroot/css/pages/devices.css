@@ -134,7 +134,11 @@
 }
 
 .device-log-item__header,
-.device-log-item__body {
+.device-log-item__body,
+.device-log-item__source,
+.device-log-item__label,
+.device-log-item__addresses,
+.device-log-item__message {
     min-width: 0;
 }
 
@@ -153,7 +157,6 @@
     gap: var(--space-md);
     align-items: baseline;
     justify-self: stretch;
-    min-width: 0;
 }
 
 .device-log-item__source > :not(.detail-label) {
@@ -165,12 +168,6 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--space-sm) var(--space-xl);
     align-items: start;
-}
-
-.device-log-item__label,
-.device-log-item__addresses,
-.device-log-item__message {
-    min-width: 0;
 }
 
 .device-log-item__message {

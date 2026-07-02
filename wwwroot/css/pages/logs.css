@@ -164,7 +164,6 @@
 
 @media (max-width: 45em) {
     .log-item__row {
-        flex-direction: column;
         align-items: flex-start;
     }
 

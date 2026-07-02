@@ -452,10 +452,7 @@ code {
     flex-wrap: wrap;
 }
 
-.device-identity__display {
-    color: var(--color-fg-default);
-}
-
+.device-identity__display,
 .device-identity__name {
     color: var(--color-fg-default);
 }
