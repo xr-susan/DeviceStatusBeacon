@@ -62,7 +62,8 @@ public sealed partial class ManagementQueryService {
 		}
 
 		// 构建当前可读取的设备范围，并应用设备名称筛选
-		var filteredDevices = ApplyDeviceName(BuildAccessibleDeviceQuery(session), normalizedDeviceName);
+		var filteredDevices = BuildAccessibleDeviceQuery(session)
+			.WhereNormalizedDeviceName(normalizedDeviceName);
 
 		// 显式查询单个设备
 		return await MapDevicesToSummary(filteredDevices)
@@ -72,7 +73,8 @@ public sealed partial class ManagementQueryService {
 	/// <inheritdoc/>
 	public async Task<DeviceSummary?> GetDeviceByIdAsync(ManagementQuerySession session, Guid deviceId, CancellationToken cancellationToken = default) {
 		// 构建当前可读取的设备范围，并应用设备 ID 筛选
-		var filteredDevices = ApplyDeviceId(BuildAccessibleDeviceQuery(session), deviceId);
+		var filteredDevices = BuildAccessibleDeviceQuery(session)
+			.WhereDeviceId(deviceId);
 
 		// 显式查询单个设备
 		return await MapDevicesToSummary(filteredDevices)
@@ -136,24 +138,6 @@ public sealed partial class ManagementQueryService {
 				device.NormalizedDeviceName.Contains(normalizedDeviceNameSearchTerm)
 				|| (device.DisplayName != null && device.DisplayName.Contains(normalizedDisplayNameSearchTerm))); // skipcq: CS-R1136 表达式树不支持 is 模式匹配
 	}
-
-	/// <summary>
-	/// 基于设备名称筛选设备查询。
-	/// </summary>
-	/// <param name="devices">设备查询</param>
-	/// <param name="normalizedDeviceName">已经归一化的设备名称</param>
-	/// <returns>应用筛选后的设备查询</returns>
-	private static IQueryable<Device> ApplyDeviceName(IQueryable<Device> devices, string normalizedDeviceName) =>
-		devices.Where(device => device.NormalizedDeviceName == normalizedDeviceName);
-
-	/// <summary>
-	/// 基于设备 ID 筛选设备查询。
-	/// </summary>
-	/// <param name="devices">设备查询</param>
-	/// <param name="deviceId">设备 ID</param>
-	/// <returns>应用筛选后的设备查询</returns>
-	private static IQueryable<Device> ApplyDeviceId(IQueryable<Device> devices, Guid deviceId) =>
-		devices.Where(device => device.DeviceId == deviceId);
 
 	/// <summary>
 	/// 将设备查询投影为设备摘要查询。

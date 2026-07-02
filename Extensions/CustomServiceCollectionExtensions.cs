@@ -22,6 +22,7 @@ public static class CustomServiceCollectionExtensions {
 				.AddSingleton<INonceReplayProtectionService, NonceReplayProtectionService>()
 				.AddSingleton<ISecurityServiceV1, SecurityServiceV1>()
 				.AddScoped<IManagementQueryService, ManagementQueryService>()
+				.AddScoped<IDeviceManagementService, DeviceManagementService>()
 				.AddScoped<IOnlineLogCommandService, OnlineLogCommandService>();
 
 		/// <summary>
