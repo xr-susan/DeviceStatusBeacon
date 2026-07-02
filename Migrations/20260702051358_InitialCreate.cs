@@ -57,7 +57,7 @@ public partial class InitialCreate : Migration {
 			constraints: table => {
 				table.PrimaryKey("PK_Devices", x => x.DeviceId);
 				table.CheckConstraint("CK_Devices_DeviceName_IdentityFormat", "\"DeviceName\" GLOB '[A-Za-z0-9]*'\r\nAND \"DeviceName\" GLOB '*[A-Za-z0-9]'\r\nAND length(\"DeviceName\") BETWEEN 4 AND 64\r\nAND \"DeviceName\" NOT GLOB '*[^A-Za-z0-9_-]*'");
-				table.CheckConstraint("CK_Devices_LatestReportedAddresses_JsonArrayShape", "\"LatestReportedAddresses\" IS NULL\r\nOR (\r\n	length(\"LatestReportedAddresses\") >= 4\r\n	AND substr(\"LatestReportedAddresses\", 1, 1) = '['\r\n	AND substr(\"LatestReportedAddresses\", -1, 1) = ']'\r\n)");
+				table.CheckConstraint("CK_Devices_LatestReportedAddresses_JsonArrayShape", "\"LatestReportedAddresses\" IS NULL\r\nOR (\r\n	json_valid(\"LatestReportedAddresses\")\r\n	AND json_type(\"LatestReportedAddresses\") = 'array'\r\n	AND json_array_length(\"LatestReportedAddresses\") > 0\r\n)");
 				table.CheckConstraint("CK_Devices_NormalizedDeviceName_IdentityFormat", "\"NormalizedDeviceName\" GLOB '[A-Z0-9]*'\r\nAND \"NormalizedDeviceName\" GLOB '*[A-Z0-9]'\r\nAND length(\"NormalizedDeviceName\") BETWEEN 4 AND 64\r\nAND \"NormalizedDeviceName\" NOT GLOB '*[^A-Z0-9_-]*'");
 			});
 
@@ -225,7 +225,7 @@ public partial class InitialCreate : Migration {
 			},
 			constraints: table => {
 				table.PrimaryKey("PK_OnlineLogs", x => x.OnlineLogId);
-				table.CheckConstraint("CK_OnlineLogs_ReportedAddresses_JsonArrayShape", "length(\"ReportedAddresses\") >= 4\r\nAND substr(\"ReportedAddresses\", 1, 1) = '['\r\nAND substr(\"ReportedAddresses\", -1, 1) = ']'");
+				table.CheckConstraint("CK_OnlineLogs_ReportedAddresses_JsonArrayShape", "json_valid(\"ReportedAddresses\")\r\nAND json_type(\"ReportedAddresses\") = 'array'\r\nAND json_array_length(\"ReportedAddresses\") > 0");
 				table.ForeignKey(
 					name: "FK_OnlineLogs_AspNetUsers_SubmittedByUserId",
 					column: x => x.SubmittedByUserId,
@@ -331,6 +331,12 @@ public partial class InitialCreate : Migration {
 			table: "AspNetUsers",
 			column: "NormalizedUserName",
 			unique: true);
+
+		migrationBuilder.CreateIndex(
+			name: "IX_Devices_LatestLogTime_NormalizedDeviceName",
+			table: "Devices",
+			columns: new[] { "LatestLogTime", "NormalizedDeviceName" },
+			descending: new[] { true, false });
 
 		migrationBuilder.CreateIndex(
 			name: "IX_Devices_NormalizedDeviceName",

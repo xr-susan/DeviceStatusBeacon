@@ -10,12 +10,12 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DeviceStatusBeacon.Migrations {
 	[DbContext(typeof(DeviceStatusBeaconContext))]
-	[Migration("20260613071838_InitialCreate")]
+	[Migration("20260702051358_InitialCreate")]
 	partial class InitialCreate {
 		/// <inheritdoc />
 		protected override void BuildTargetModel(ModelBuilder modelBuilder) {
 #pragma warning disable 612, 618
-			modelBuilder.HasAnnotation("ProductVersion", "10.0.2");
+			modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
 
 			modelBuilder.Entity("ApiCredentialDevice", b => {
 				b.Property<Guid>("AuthorizedApiCredentialsApiCredentialId")
@@ -115,6 +115,9 @@ namespace DeviceStatusBeacon.Migrations {
 				b.HasIndex("NormalizedDeviceName")
 					.IsUnique();
 
+				b.HasIndex("LatestLogTime", "NormalizedDeviceName")
+					.IsDescending(true, false);
+
 				b.ToTable("Devices", t => {
 					t.HasTrigger("TR_Devices_EntityAuthInfoVersion_AfterAuthUpdate");
 
@@ -124,7 +127,7 @@ namespace DeviceStatusBeacon.Migrations {
 
 					t.HasCheckConstraint("CK_Devices_DeviceName_IdentityFormat", "\"DeviceName\" GLOB '[A-Za-z0-9]*'\r\nAND \"DeviceName\" GLOB '*[A-Za-z0-9]'\r\nAND length(\"DeviceName\") BETWEEN 4 AND 64\r\nAND \"DeviceName\" NOT GLOB '*[^A-Za-z0-9_-]*'");
 
-					t.HasCheckConstraint("CK_Devices_LatestReportedAddresses_JsonArrayShape", "\"LatestReportedAddresses\" IS NULL\r\nOR (\r\n	length(\"LatestReportedAddresses\") >= 4\r\n	AND substr(\"LatestReportedAddresses\", 1, 1) = '['\r\n	AND substr(\"LatestReportedAddresses\", -1, 1) = ']'\r\n)");
+					t.HasCheckConstraint("CK_Devices_LatestReportedAddresses_JsonArrayShape", "\"LatestReportedAddresses\" IS NULL\r\nOR (\r\n	json_valid(\"LatestReportedAddresses\")\r\n	AND json_type(\"LatestReportedAddresses\") = 'array'\r\n	AND json_array_length(\"LatestReportedAddresses\") > 0\r\n)");
 
 					t.HasCheckConstraint("CK_Devices_NormalizedDeviceName_IdentityFormat", "\"NormalizedDeviceName\" GLOB '[A-Z0-9]*'\r\nAND \"NormalizedDeviceName\" GLOB '*[A-Z0-9]'\r\nAND length(\"NormalizedDeviceName\") BETWEEN 4 AND 64\r\nAND \"NormalizedDeviceName\" NOT GLOB '*[^A-Z0-9_-]*'");
 				});
@@ -173,7 +176,7 @@ namespace DeviceStatusBeacon.Migrations {
 
 					t.HasTrigger("TR_OnlineLogs_DeviceSummary_AfterUpdate");
 
-					t.HasCheckConstraint("CK_OnlineLogs_ReportedAddresses_JsonArrayShape", "length(\"ReportedAddresses\") >= 4\r\nAND substr(\"ReportedAddresses\", 1, 1) = '['\r\nAND substr(\"ReportedAddresses\", -1, 1) = ']'");
+					t.HasCheckConstraint("CK_OnlineLogs_ReportedAddresses_JsonArrayShape", "json_valid(\"ReportedAddresses\")\r\nAND json_type(\"ReportedAddresses\") = 'array'\r\nAND json_array_length(\"ReportedAddresses\") > 0");
 				});
 
 				b.HasAnnotation("Sqlite:UseSqlReturningClause", false);

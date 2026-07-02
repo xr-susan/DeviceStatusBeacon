@@ -59,9 +59,9 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 					"""
 					"LatestReportedAddresses" IS NULL
 					OR (
-						length("LatestReportedAddresses") >= 4
-						AND substr("LatestReportedAddresses", 1, 1) = '['
-						AND substr("LatestReportedAddresses", -1, 1) = ']'
+						json_valid("LatestReportedAddresses")
+						AND json_type("LatestReportedAddresses") = 'array'
+						AND json_array_length("LatestReportedAddresses") > 0
 					)
 					""");
 				tableBuilder.UseSqlReturningClause(false);
@@ -75,6 +75,9 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 
 			// 定义设备标准化名称为设备实体的人类管理名称唯一索引
 			deviceBuilder.HasIndex(e => e.NormalizedDeviceName).IsUnique();
+
+			// 定义设备最新日志时间与标准化名称的复合索引，以优化查询最近活跃设备列表的性能
+			deviceBuilder.HasIndex(e => new { e.LatestLogTime, e.NormalizedDeviceName }).IsDescending(true, false);
 		});
 
 		// 配置 OnlineLog 实体：声明摘要同步触发器，并为历史查询与摘要回写建立索引
@@ -87,9 +90,9 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 				tableBuilder.HasCheckConstraint(
 					"CK_OnlineLogs_ReportedAddresses_JsonArrayShape",
 					"""
-					length("ReportedAddresses") >= 4
-					AND substr("ReportedAddresses", 1, 1) = '['
-					AND substr("ReportedAddresses", -1, 1) = ']'
+					json_valid("ReportedAddresses")
+					AND json_type("ReportedAddresses") = 'array'
+					AND json_array_length("ReportedAddresses") > 0
 					""");
 				tableBuilder.UseSqlReturningClause(false);
 			});
