@@ -88,7 +88,7 @@ public static class PrincipalExtensions {
 
 				// 如果主体是签名式 API 凭据，则读取其管理角色，设计上其不可能为 null
 				var role = signatureIdentity.ReadPrincipalRole()
-					?? throw new InvalidOperationException($"签名式 API 凭据主体缺少合法的管理角色声明。");
+					?? throw new InvalidOperationException("签名式 API 凭据主体缺少合法的管理角色声明。");
 				return (PrincipalKind.ApiCredential, principalId, role);
 			}
 
