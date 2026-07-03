@@ -32,6 +32,11 @@ public sealed partial class ManagementQueryService(DeviceStatusBeaconContext dbC
 	/// </summary>
 	private const int MaxLogQueryCount = 100;
 
+	/// <summary>
+	/// 单设备详情中返回的最近日志数量。
+	/// </summary>
+	private const int DeviceDetailsRecentLogCount = 5;
+
 	/// <inheritdoc/>
 	public ManagementQuerySession CreateQuerySessionAsync(ClaimsPrincipal principal) {
 		var (principalKind, principalId, role) = principal.GetAuthenticatedPrincipalInfo();

@@ -136,6 +136,24 @@ public interface IManagementQueryService {
 	Task<DeviceSummary?> GetDeviceByIdAsync(ManagementQuerySession session, Guid deviceId, CancellationToken cancellationToken = default);
 
 	/// <summary>
+	/// 按设备名称获取单设备详情数据。
+	/// </summary>
+	/// <param name="session">查询会话</param>
+	/// <param name="deviceName">设备名称</param>
+	/// <param name="cancellationToken">取消令牌</param>
+	/// <returns>一个表示异步操作的任务，任务结果为设备详情；如果未找到，则返回 null</returns>
+	Task<DeviceDetailsData?> GetDeviceDetailsByNameAsync(ManagementQuerySession session, string deviceName, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// 按设备 ID 获取单设备详情数据。
+	/// </summary>
+	/// <param name="session">查询会话</param>
+	/// <param name="deviceId">设备 ID</param>
+	/// <param name="cancellationToken">取消令牌</param>
+	/// <returns>一个表示异步操作的任务，任务结果为设备详情；如果未找到，则返回 null</returns>
+	Task<DeviceDetailsData?> GetDeviceDetailsByIdAsync(ManagementQuerySession session, Guid deviceId, CancellationToken cancellationToken = default);
+
+	/// <summary>
 	/// 按设备名称获取最近日志列表。
 	/// </summary>
 	/// <param name="session">查询会话</param>

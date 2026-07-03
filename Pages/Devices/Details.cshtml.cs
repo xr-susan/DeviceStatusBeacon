@@ -11,11 +11,6 @@ namespace DeviceStatusBeacon.Pages.Devices;
 [Authorize(Policy = AuthorizationPolicyNames.InteractiveUser)]
 public class DetailsModel(IManagementQueryService queryService) : PageModel {
 	/// <summary>
-	/// 页面中展示的最近日志数量
-	/// </summary>
-	private const int RecentLogCount = 5;
-
-	/// <summary>
 	/// 路由中的设备名称
 	/// </summary>
 	[BindProperty(SupportsGet = true, Name = "deviceName")]
@@ -45,18 +40,16 @@ public class DetailsModel(IManagementQueryService queryService) : PageModel {
 		var session = queryService.CreateQuerySessionAsync(User);
 		Session = session.ToData();
 
-		var device = await queryService.GetDeviceByNameAsync(session, DeviceName, cancellationToken);
-		if (device is null) {
+		var deviceDetails = await queryService.GetDeviceDetailsByNameAsync(
+			session,
+			DeviceName,
+			cancellationToken);
+		if (deviceDetails is null) {
 			return NotFound();
 		}
 
-		Device = device;
-		RecentLogs = await queryService.GetLogsByDeviceIdAsync(
-			session,
-			Device.DeviceId,
-			RecentLogCount,
-			cancellationToken);
-
+		Device = deviceDetails.Device;
+		RecentLogs = deviceDetails.RecentLogs;
 		return Page();
 	}
 }

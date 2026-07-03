@@ -203,6 +203,16 @@ public sealed record DeviceListData(
 );
 
 /// <summary>
+/// 单设备详情数据。
+/// </summary>
+/// <param name="Device">设备摘要</param>
+/// <param name="RecentLogs">最近日志</param>
+public sealed record DeviceDetailsData(
+	DeviceSummary Device,
+	IReadOnlyCollection<OnlineLogSummary> RecentLogs
+);
+
+/// <summary>
 /// 日志列表页数据。
 /// </summary>
 /// <param name="Session">当前会话信息</param>

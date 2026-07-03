@@ -81,6 +81,38 @@ public sealed partial class ManagementQueryService {
 			.SingleOrDefaultAsync(cancellationToken);
 	}
 
+	/// <inheritdoc/>
+	public async Task<DeviceDetailsData?> GetDeviceDetailsByNameAsync(ManagementQuerySession session, string deviceName, CancellationToken cancellationToken = default) {
+		var device = await GetDeviceByNameAsync(session, deviceName, cancellationToken);
+		if (device is null) {
+			return null;
+		}
+
+		var recentLogs = await GetLogsByDeviceIdAsync(
+			session,
+			device.DeviceId,
+			DeviceDetailsRecentLogCount,
+			cancellationToken);
+
+		return new(device, recentLogs);
+	}
+
+	/// <inheritdoc/>
+	public async Task<DeviceDetailsData?> GetDeviceDetailsByIdAsync(ManagementQuerySession session, Guid deviceId, CancellationToken cancellationToken = default) {
+		var device = await GetDeviceByIdAsync(session, deviceId, cancellationToken);
+		if (device is null) {
+			return null;
+		}
+
+		var recentLogs = await GetLogsByDeviceIdAsync(
+			session,
+			device.DeviceId,
+			DeviceDetailsRecentLogCount,
+			cancellationToken);
+
+		return new(device, recentLogs);
+	}
+
 	/// <summary>
 	/// 查询设备分页数据。
 	/// </summary>
