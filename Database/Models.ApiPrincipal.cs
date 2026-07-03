@@ -6,7 +6,7 @@ public interface IHasProtectedSecretKey {
 	/// <summary>
 	/// 经 ASP.NET Core 数据保护 API 保护后的操作密钥
 	/// </summary>
-	byte[] ProtectedSecretKey { get; }  // skipcq: CS-W1096 此处 byte[] 与 SQLite 的 BLOB 类型对应，且用于存储加密后的数据，故直接保留数组
+	byte[] ProtectedSecretKey { get; }
 }
 
 
@@ -35,7 +35,7 @@ public class ApiCredential : IHasProtectedSecretKey {
 	/// <summary>
 	/// 经 ASP.NET Core 数据保护 API 保护后的 API 凭据操作密钥
 	/// </summary>
-	public required byte[] ProtectedSecretKey { get; set; }  // skipcq: CS-W1096 此处 byte[] 与 SQLite 的 BLOB 类型对应，且用于存储加密后的数据，故直接保留数组
+	public required byte[] ProtectedSecretKey { get; set; }
 
 	/// <summary>
 	/// API 凭据角色
@@ -74,7 +74,7 @@ public class Device : IHasProtectedSecretKey {
 	/// <summary>
 	/// 经 ASP.NET Core 数据保护 API 保护后的设备操作密钥
 	/// </summary>
-	public required byte[] ProtectedSecretKey { get; set; }  // skipcq: CS-W1096 此处 byte[] 与 SQLite 的 BLOB 类型对应，且用于存储加密后的数据，故直接保留数组
+	public required byte[] ProtectedSecretKey { get; set; }
 
 	/// <summary>
 	/// 设备显示名称（可选）

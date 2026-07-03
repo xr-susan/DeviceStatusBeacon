@@ -127,7 +127,7 @@ public sealed partial class ManagementQueryService {
 		if (string.IsNullOrWhiteSpace(normalizedDeviceNameSearchTerm)) {
 			return string.IsNullOrWhiteSpace(normalizedDisplayNameSearchTerm)
 				? devices
-				: devices.Where(device => device.DisplayName != null // skipcq: CS-R1136 表达式树不支持 is 模式匹配
+				: devices.Where(device => device.DisplayName != null
 					&& device.DisplayName.Contains(normalizedDisplayNameSearchTerm));
 		}
 
@@ -136,7 +136,7 @@ public sealed partial class ManagementQueryService {
 			? devices.Where(device => device.NormalizedDeviceName.Contains(normalizedDeviceNameSearchTerm))
 			: devices.Where(device =>
 				device.NormalizedDeviceName.Contains(normalizedDeviceNameSearchTerm)
-				|| (device.DisplayName != null && device.DisplayName.Contains(normalizedDisplayNameSearchTerm))); // skipcq: CS-R1136 表达式树不支持 is 模式匹配
+				|| (device.DisplayName != null && device.DisplayName.Contains(normalizedDisplayNameSearchTerm)));
 	}
 
 	/// <summary>

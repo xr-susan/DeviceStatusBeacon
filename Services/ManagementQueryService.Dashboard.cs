@@ -47,7 +47,7 @@ public sealed partial class ManagementQueryService {
 
 		// 最近活动按设备聚合展示，避免在仪表板中混入过多原始日志明细
 		var recentDeviceActivities = await accessibleDevices
-			.Where(device => device.LatestLogTime != null && device.LatestLogTime >= recentActiveCutoff) // skipcq: CS-R1136 表达式树不支持 is 模式匹配
+			.Where(device => device.LatestLogTime != null && device.LatestLogTime >= recentActiveCutoff)
 			.OrderByDescending(device => device.LatestLogTime)
 			.ThenBy(device => device.NormalizedDeviceName)
 			.Take(DashboardDeviceActivityCount)

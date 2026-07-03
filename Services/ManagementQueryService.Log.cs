@@ -111,7 +111,7 @@ public sealed partial class ManagementQueryService {
 		if (string.IsNullOrWhiteSpace(normalizedDeviceNameKeyword)) {
 			return string.IsNullOrWhiteSpace(normalizedDisplayNameKeyword)
 				? logs
-				: logs.Where(log => log.Device.DisplayName != null // skipcq: CS-R1136 表达式树不支持 is 模式匹配
+				: logs.Where(log => log.Device.DisplayName != null
 					&& log.Device.DisplayName.Contains(normalizedDisplayNameKeyword));
 		}
 
@@ -120,7 +120,7 @@ public sealed partial class ManagementQueryService {
 			? logs.Where(log => log.Device.NormalizedDeviceName.Contains(normalizedDeviceNameKeyword))
 			: logs.Where(log =>
 				log.Device.NormalizedDeviceName.Contains(normalizedDeviceNameKeyword)
-				|| (log.Device.DisplayName != null && log.Device.DisplayName.Contains(normalizedDisplayNameKeyword))); // skipcq: CS-R1136 表达式树不支持 is 模式匹配
+				|| (log.Device.DisplayName != null && log.Device.DisplayName.Contains(normalizedDisplayNameKeyword)));
 	}
 
 	/// <summary>

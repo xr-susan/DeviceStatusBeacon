@@ -81,7 +81,7 @@ public static partial class ConsoleDispatcher {
 
 		var users = await db.Users
 			.AsNoTracking()
-			.Where(u => u.NormalizedUserName != null // skipcq: CS-R1136 表达式树不支持 is 模式匹配
+			.Where(u => u.NormalizedUserName != null
 				&& u.NormalizedUserName.Contains(normalizedPartOfName))
 			.OrderBy(u => u.NormalizedUserName)
 			.Select(u => new {
