@@ -73,11 +73,15 @@ public static partial class ConsoleDispatcher {
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
 	private static async Task<int> HandleApiCredentialQueryByUserAsync(DeviceStatusBeaconContext db, IServiceProvider sp, string ownerUserName) {
 		var normalizer = sp.GetRequiredService<ILookupNormalizer>();
-		var normalizedOwnerUserName = normalizer.NormalizeName(ownerUserName);
+		var ownerNameLookup = IdentityNameLookup.TryCreate(ownerUserName, normalizer);
+		if (ownerNameLookup is null) {
+			Console.WriteLine("没有找到匹配的 API 凭据");
+			return 2;
+		}
 
 		var apiCredentials = await db.ApiCredentials
 			.AsNoTracking()
-			.Where(c => c.User.NormalizedUserName == normalizedOwnerUserName)
+			.Where(c => c.User.NormalizedUserName == ownerNameLookup.NormalizedName)
 			.Select(c => new {
 				c.ApiCredentialId,
 				c.DisplayName,
@@ -119,17 +123,17 @@ public static partial class ConsoleDispatcher {
 			return 5;
 		}
 
-		if (!GeneratedRegex.IdentityNameRegex().IsMatch(ownerUserName)) {
+		if (!IdentityNameRules.IsValid(ownerUserName)) {
 			Console.WriteLine("所属用户名不符合身份标识格式");
 			return 3;
 		}
 
 		var normalizer = sp.GetRequiredService<ILookupNormalizer>();
-		var normalizedOwnerUserName = normalizer.NormalizeName(ownerUserName);
+		var ownerNameLookup = IdentityNameLookup.CreateFromValidName(ownerUserName, normalizer);
 
 		var owner = await db.Users
 			.AsNoTracking()
-			.Where(u => u.NormalizedUserName == normalizedOwnerUserName)
+			.Where(u => u.NormalizedUserName == ownerNameLookup.NormalizedName)
 			.Select(u => new {
 				u.Id,
 				RoleName = u.UserRoles.Select(ur => ur.Role.Name).SingleOrDefault()

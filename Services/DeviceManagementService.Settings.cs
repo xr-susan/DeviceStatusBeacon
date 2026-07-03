@@ -9,10 +9,10 @@ public sealed partial class DeviceManagementService {
 
 	/// <inheritdoc/>
 	public async Task<ResetDeviceSecretKeyCommandResult> ResetSecretKeyAsync(string deviceName, CancellationToken cancellationToken = default) {
-		var normalizedDeviceName = NormalizeDeviceName(deviceName);
+		var deviceNameLookup = CreateDeviceNameLookup(deviceName);
 
 		return await ResetSecretKeyAsync(
-			dbContext.Devices.WhereNormalizedDeviceName(normalizedDeviceName),
+			dbContext.Devices.WhereDeviceName(deviceNameLookup),
 			cancellationToken);
 	}
 
@@ -30,10 +30,10 @@ public sealed partial class DeviceManagementService {
 	public async Task SetDisplayNameAsync(string deviceName, SetDeviceDisplayNameCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
 
-		var normalizedDeviceName = NormalizeDeviceName(deviceName);
+		var deviceNameLookup = CreateDeviceNameLookup(deviceName);
 
 		await SetDisplayNameAsync(
-			dbContext.Devices.WhereNormalizedDeviceName(normalizedDeviceName),
+			dbContext.Devices.WhereDeviceName(deviceNameLookup),
 			command.DisplayName,
 			cancellationToken);
 	}
@@ -52,10 +52,10 @@ public sealed partial class DeviceManagementService {
 	public async Task SetEnabledAsync(string deviceName, SetDeviceEnabledCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
 
-		var normalizedDeviceName = NormalizeDeviceName(deviceName);
+		var deviceNameLookup = CreateDeviceNameLookup(deviceName);
 
 		await SetEnabledAsync(
-			dbContext.Devices.WhereNormalizedDeviceName(normalizedDeviceName),
+			dbContext.Devices.WhereDeviceName(deviceNameLookup),
 			command.Enabled,
 			cancellationToken);
 	}

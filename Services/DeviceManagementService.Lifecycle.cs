@@ -12,7 +12,7 @@ public sealed partial class DeviceManagementService {
 		var unprotectedSecretKey = ISecurityServiceV1.GenerateRandomBytes();
 		var newDevice = new Device {
 			DeviceName = command.DeviceName,
-			NormalizedDeviceName = NormalizeDeviceName(command.DeviceName),
+			NormalizedDeviceName = IdentityNameLookup.CreateFromValidName(command.DeviceName, lookupNormalizer).NormalizedName,
 			DisplayName = command.DisplayName,
 			ProtectedSecretKey = dataProtector.ProtectKey(unprotectedSecretKey)
 		};
@@ -49,10 +49,10 @@ public sealed partial class DeviceManagementService {
 
 		EnsureValidDeviceName(command.NewDeviceName, "新设备名称不符合身份标识格式");
 
-		var normalizedOldDeviceName = NormalizeDeviceName(oldDeviceName);
+		var oldDeviceNameLookup = CreateDeviceNameLookup(oldDeviceName);
 
 		await RenameAsync(
-			dbContext.Devices.WhereNormalizedDeviceName(normalizedOldDeviceName),
+			dbContext.Devices.WhereDeviceName(oldDeviceNameLookup),
 			command.NewDeviceName,
 			cancellationToken);
 	}
@@ -65,10 +65,10 @@ public sealed partial class DeviceManagementService {
 
 	/// <inheritdoc/>
 	public async Task DeleteAsync(string deviceName, CancellationToken cancellationToken = default) {
-		var normalizedDeviceName = NormalizeDeviceName(deviceName);
+		var deviceNameLookup = CreateDeviceNameLookup(deviceName);
 
 		await DeleteAsync(
-			dbContext.Devices.WhereNormalizedDeviceName(normalizedDeviceName),
+			dbContext.Devices.WhereDeviceName(deviceNameLookup),
 			cancellationToken);
 	}
 
@@ -80,13 +80,13 @@ public sealed partial class DeviceManagementService {
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务</returns>
 	private async Task RenameAsync(IQueryable<Device> devices, string newDeviceName, CancellationToken cancellationToken) {
-		var normalizedNewDeviceName = NormalizeDeviceName(newDeviceName);
+		var newDeviceNameLookup = IdentityNameLookup.CreateFromValidName(newDeviceName, lookupNormalizer);
 
 		try {
 			var updatedCount = await devices.ExecuteUpdateAsync(
 				device => device
 					.SetProperty(entity => entity.DeviceName, newDeviceName)
-					.SetProperty(entity => entity.NormalizedDeviceName, normalizedNewDeviceName),
+					.SetProperty(entity => entity.NormalizedDeviceName, newDeviceNameLookup.NormalizedName),
 				cancellationToken);
 
 			EnsureDeviceFound(updatedCount);

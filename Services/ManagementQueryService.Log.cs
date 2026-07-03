@@ -9,14 +9,14 @@ public sealed partial class ManagementQueryService {
 
 	/// <inheritdoc/>
 	public async Task<LogListData> GetLogsAsync(ManagementQuerySession session, string? deviceKeyword, int pageNumber, int pageSize, CancellationToken cancellationToken = default) {
-		// 标准化分页选项和设备关键字
+		// 标准化分页选项
 		var normalizedPageNumber = NormalizePageNumber(pageNumber);
 		var normalizedPageSize = NormalizePageSize(pageSize, 1, MaxLogQueryCount);
-		var normalizedDeviceNameKeyword = NormalizeDeviceName(deviceKeyword);
-		var normalizedDisplayNameKeyword = NormalizeDisplayNameSearchTerm(deviceKeyword);
 
 		// 构建当前可读取的日志范围，并应用设备关键字筛选
-		var filteredLogs = ApplyLogDeviceKeyword(BuildAccessibleLogQuery(session), normalizedDeviceNameKeyword, normalizedDisplayNameKeyword);
+		var deviceSearchTerm = DeviceSearchTerm.Create(deviceKeyword, lookupNormalizer);
+		var filteredLogs = BuildAccessibleLogQuery(session)
+			.WhereDeviceMatches(deviceSearchTerm);
 
 		// 统计查询范围内的日志总量，并按实际总页数纠正页码
 		var totalCount = await filteredLogs.CountAsync(cancellationToken);
@@ -37,8 +37,8 @@ public sealed partial class ManagementQueryService {
 
 	/// <inheritdoc/>
 	public Task<IReadOnlyCollection<OnlineLogSummary>> GetLogsByDeviceNameAsync(ManagementQuerySession session, string deviceName, int take, CancellationToken cancellationToken = default) {
-		var normalizedDeviceName = NormalizeDeviceName(deviceName);
-		if (normalizedDeviceName is null) {
+		var deviceNameLookup = IdentityNameLookup.TryCreate(deviceName, lookupNormalizer);
+		if (deviceNameLookup is null) {
 			return Task.FromResult<IReadOnlyCollection<OnlineLogSummary>>([]);
 		}
 
@@ -47,7 +47,7 @@ public sealed partial class ManagementQueryService {
 
 		// 构建当前可读取的日志范围，并应用设备名称筛选
 		var filteredLogs = BuildAccessibleLogQuery(session)
-			.WhereDeviceNormalizedDeviceName(normalizedDeviceName);
+			.WhereDeviceName(deviceNameLookup);
 
 		return QueryLogsPageAsync(filteredLogs, 0, normalizedTake, cancellationToken);
 	}
@@ -92,36 +92,6 @@ public sealed partial class ManagementQueryService {
 				log.ReporterRemoteAddress,
 				log.Message))
 			.ToListAsync(cancellationToken);
-
-	/// <summary>
-	/// 将设备关键字筛选应用到日志查询。
-	/// </summary>
-	/// <remarks>
-	/// 日志搜索使用归一化设备名 / 显示名双字段匹配。
-	/// </remarks>
-	/// <param name="logs">日志查询</param>
-	/// <param name="normalizedDeviceNameKeyword">已经归一化的设备名称筛选关键字</param>
-	/// <param name="normalizedDisplayNameKeyword">去掉首尾空白后的显示名称筛选关键字</param>
-	/// <returns>应用筛选后的日志查询</returns>
-	private static IQueryable<OnlineLog> ApplyLogDeviceKeyword(
-		IQueryable<OnlineLog> logs,
-		string? normalizedDeviceNameKeyword,
-		string? normalizedDisplayNameKeyword) {
-		// 设备名称关键字为空，则按显示名称关键字（如果有）筛选
-		if (string.IsNullOrWhiteSpace(normalizedDeviceNameKeyword)) {
-			return string.IsNullOrWhiteSpace(normalizedDisplayNameKeyword)
-				? logs
-				: logs.Where(log => log.Device.DisplayName != null
-					&& log.Device.DisplayName.Contains(normalizedDisplayNameKeyword));
-		}
-
-		// 设备名称关键字不为空，则按设备名称关键字和显示名称关键字任一匹配筛选
-		return string.IsNullOrWhiteSpace(normalizedDisplayNameKeyword)
-			? logs.Where(log => log.Device.NormalizedDeviceName.Contains(normalizedDeviceNameKeyword))
-			: logs.Where(log =>
-				log.Device.NormalizedDeviceName.Contains(normalizedDeviceNameKeyword)
-				|| (log.Device.DisplayName != null && log.Device.DisplayName.Contains(normalizedDisplayNameKeyword)));
-	}
 
 	/// <summary>
 	/// 基于查询会话构建日志可读取范围查询。

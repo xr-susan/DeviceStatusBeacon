@@ -18,12 +18,41 @@ public static class IQueryableExtensions {
 			devices.Where(device => device.DeviceId == deviceId);
 
 		/// <summary>
-		/// 按标准化设备名称筛选设备查询。
+		/// 按设备名称筛选设备查询。
 		/// </summary>
-		/// <param name="normalizedDeviceName">标准化设备名称</param>
+		/// <param name="deviceName">设备名称查找条件</param>
 		/// <returns>应用筛选后的设备查询</returns>
-		public IQueryable<Device> WhereNormalizedDeviceName(string normalizedDeviceName) =>
-			devices.Where(device => device.NormalizedDeviceName == normalizedDeviceName);
+		public IQueryable<Device> WhereDeviceName(IdentityNameLookup deviceName) {
+			ArgumentNullException.ThrowIfNull(deviceName);
+
+			return devices.Where(device => device.NormalizedDeviceName == deviceName.NormalizedName);
+		}
+
+		/// <summary>
+		/// 按设备搜索条件筛选设备查询。
+		/// </summary>
+		/// <param name="searchTerm">设备搜索条件</param>
+		/// <returns>应用筛选后的设备查询</returns>
+		public IQueryable<Device> WhereMatches(DeviceSearchTerm searchTerm) {
+			ArgumentNullException.ThrowIfNull(searchTerm);
+
+			var normalizedDeviceName = searchTerm.NormalizedDeviceName;
+			var displayName = searchTerm.DisplayName;
+
+			if (normalizedDeviceName is null) {
+				// 如果没有指定设备名称，则只按显示名称筛选
+				return displayName is null
+					? devices
+					: devices.Where(device => device.DisplayName != null
+						&& device.DisplayName.Contains(displayName));
+			}
+
+			return displayName is null
+				? devices.Where(device => device.NormalizedDeviceName.Contains(normalizedDeviceName))
+				: devices.Where(device =>
+					device.NormalizedDeviceName.Contains(normalizedDeviceName)
+					|| (device.DisplayName != null && device.DisplayName.Contains(displayName)));
+		}
 	}
 
 	/// <summary>
@@ -40,11 +69,38 @@ public static class IQueryableExtensions {
 			logs.Where(log => log.DeviceId == deviceId);
 
 		/// <summary>
-		/// 按关联设备的标准化设备名称筛选日志查询。
+		/// 按关联设备的设备名称筛选日志查询。
 		/// </summary>
-		/// <param name="normalizedDeviceName">标准化设备名称</param>
+		/// <param name="deviceName">设备名称查找条件</param>
 		/// <returns>应用筛选后的日志查询</returns>
-		public IQueryable<OnlineLog> WhereDeviceNormalizedDeviceName(string normalizedDeviceName) =>
-			logs.Where(log => log.Device.NormalizedDeviceName == normalizedDeviceName);
+		public IQueryable<OnlineLog> WhereDeviceName(IdentityNameLookup deviceName) {
+			ArgumentNullException.ThrowIfNull(deviceName);
+
+			return logs.Where(log => log.Device.NormalizedDeviceName == deviceName.NormalizedName);
+		}
+
+		/// <summary>
+		/// 按关联设备搜索条件筛选日志查询。
+		/// </summary>
+		/// <param name="searchTerm">设备搜索条件</param>
+		/// <returns>应用筛选后的日志查询</returns>
+		public IQueryable<OnlineLog> WhereDeviceMatches(DeviceSearchTerm searchTerm) {
+			ArgumentNullException.ThrowIfNull(searchTerm);
+
+			var normalizedDeviceName = searchTerm.NormalizedDeviceName;
+			var displayName = searchTerm.DisplayName;
+			if (normalizedDeviceName is null) {
+				return displayName is null
+					? logs
+					: logs.Where(log => log.Device.DisplayName != null
+						&& log.Device.DisplayName.Contains(displayName));
+			}
+
+			return displayName is null
+				? logs.Where(log => log.Device.NormalizedDeviceName.Contains(normalizedDeviceName))
+				: logs.Where(log =>
+					log.Device.NormalizedDeviceName.Contains(normalizedDeviceName)
+					|| (log.Device.DisplayName != null && log.Device.DisplayName.Contains(displayName)));
+		}
 	}
 }
