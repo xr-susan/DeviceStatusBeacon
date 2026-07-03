@@ -24,6 +24,15 @@ try {
 
 // 注册自定义服务
 builder.Services.AddCustomServices();
+try {
+	builder.Services.AddReverseProxyForwardedHeaders(builder.Configuration);
+} catch (InvalidOperationException e) {
+	Console.Error.WriteLine(e.Message);
+	return -1;
+} catch (FormatException e) {
+	Console.Error.WriteLine(e.Message);
+	return -1;
+}
 
 // 配置路由约束
 builder.Services.Configure<RouteOptions>(options =>
@@ -55,6 +64,8 @@ try {
 	Console.Error.WriteLine("Failed to dispatch console command: " + e.Message);
 	return -1;
 }
+
+app.UseReverseProxyForwardedHeaders();
 
 // 异常和空响应状态码交给  Error / StatusCode 页面处理
 app.UseExceptionHandler("/error");
