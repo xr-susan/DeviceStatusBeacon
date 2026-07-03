@@ -65,10 +65,29 @@ public class LoginModel(SignInManager<User> signInManager) : PageModel {
 			? LocalRedirect(ReturnUrl)
 			: RedirectToPage("/Dashboard");
 
-	private string? NormalizeReturnUrl(string? returnUrl) =>
-		!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+	private string? NormalizeReturnUrl(string? returnUrl) {
+		if (string.IsNullOrWhiteSpace(returnUrl) || !Url.IsLocalUrl(returnUrl)) {
+			return null;
+		}
+
+		if (!returnUrl.StartsWith('/')) {
+			return null;
+		}
+
+		var pathBase = Request.PathBase;
+		if (!pathBase.HasValue) {
+			return returnUrl;
+		}
+
+		var pathLength = returnUrl.AsSpan().IndexOfAny('?', '#');
+		var path = pathLength >= 0
+			? returnUrl[..pathLength]
+			: returnUrl;
+
+		return PathString.FromUriComponent(path).StartsWithSegments(pathBase, StringComparison.OrdinalIgnoreCase)
 			? returnUrl
 			: null;
+	}
 
 	/// <summary>
 	/// 登录表单输入模型
