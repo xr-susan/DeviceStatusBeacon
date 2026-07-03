@@ -163,22 +163,26 @@ public sealed partial class ManagementQueryService {
 	private IQueryable<Device> BuildAccessibleDeviceQuery(ManagementQuerySession session) {
 		var devices = dbContext.Devices.AsNoTracking();
 
-		// 无查询权限，返回空查询
-		if (!session.Role.CanQueryAnyDevices()) {
-			return devices.Where(_ => false);
-		}
+		return session.Role.GetDeviceQueryScope() switch {
+			// 全量查询权限，返回完整查询
+			PrincipalQueryScope.Full => devices,
 
-		// 全量查询权限，返回完整查询
-		if (session.Role.CanQueryAllDevices()) {
-			return devices;
-		}
+			// 具备有限查询权限时，根据授权主体类型应用对应的设备授权关系
+			PrincipalQueryScope.Limited => session.PrincipalKind switch {
+				// 用户主体，返回已授权给该用户的设备
+				ManagementQueryPrincipalKind.User =>
+					devices.Where(device => device.AuthorizedUsers.Any(user => user.Id == session.PrincipalId)),
 
-		// 具备有限查询权限，返回关联了该用户的设备的查询
-		if (session.UserId is Guid userId) {
-			return devices.Where(device => device.AuthorizedUsers.Any(user => user.Id == userId));
-		}
+				// API 凭据主体，返回已授权给该 API 凭据的设备
+				ManagementQueryPrincipalKind.ApiCredential =>
+					devices.Where(device => device.AuthorizedApiCredentials.Any(credential => credential.ApiCredentialId == session.PrincipalId)),
 
-		// 其他情况，返回空查询
-		return devices.Where(_ => false);
+				// 其他主体类型不具备有限查询权限，返回空查询
+				_ => devices.Where(_ => false)
+			},
+
+			// 无查询权限，返回空查询
+			_ => devices.Where(_ => false)
+		};
 	}
 }

@@ -12,12 +12,14 @@ namespace DeviceStatusBeacon.Services;
 /// 会话本身只保留角色这一份源数据；
 /// 读取与管理能力都通过角色扩展方法按需推导，避免在记录中重复存储角色投影。
 /// </remarks>
-/// <param name="UserId">用户 ID</param>
-/// <param name="UserName">用户名或会话显示名</param>
-/// <param name="DisplayName">显示名称</param>
+/// <param name="PrincipalId">参与授权范围判断的主体 ID；特权查询会话不需要具体主体 ID</param>
+/// <param name="PrincipalKind">参与授权范围判断的主体类型</param>
+/// <param name="UserName">用户名或会话显示名，仅适用于交互式会话</param>
+/// <param name="DisplayName">显示名称，仅适用于交互式会话</param>
 /// <param name="Role">当前主体绑定的全局角色；具体读取与管理能力应通过角色扩展方法推导</param>
 public sealed record ManagementQuerySession(
-	Guid? UserId,
+	Guid? PrincipalId,
+	ManagementQueryPrincipalKind PrincipalKind,
 	string UserName,
 	string? DisplayName,
 	PrincipalRole? Role
@@ -30,6 +32,31 @@ public sealed record ManagementQuerySession(
 		UserName,
 		DisplayName,
 		Role);
+}
+
+/// <summary>
+/// 管理查询会话的授权主体类型。
+/// </summary>
+public enum ManagementQueryPrincipalKind {
+	/// <summary>
+	/// 未识别或不支持管理查询的主体。
+	/// </summary>
+	Unknown,
+
+	/// <summary>
+	/// 交互式后台用户。
+	/// </summary>
+	User,
+
+	/// <summary>
+	/// 签名式 API 凭据。
+	/// </summary>
+	ApiCredential,
+
+	/// <summary>
+	/// 内部特权查询会话。
+	/// </summary>
+	Privileged
 }
 
 /// <summary>

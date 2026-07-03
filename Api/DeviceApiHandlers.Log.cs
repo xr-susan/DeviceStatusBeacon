@@ -1,12 +1,11 @@
-﻿using DeviceStatusBeacon.Pages.Errors;
-using DeviceStatusBeacon.Services;
+﻿using DeviceStatusBeacon.Services;
 
 namespace DeviceStatusBeacon.Api;
 
 /// <summary>
 /// Device 相关 Minimal API 处理逻辑。
 /// </summary>
-internal static class DeviceApiHandlers {
+internal static partial class DeviceApiHandlers {
 	/// <summary>
 	/// 为指定设备创建在线日志。
 	/// </summary>
@@ -22,11 +21,18 @@ internal static class DeviceApiHandlers {
 		CreateOnlineLogCommand request,
 		IOnlineLogCommandService onlineLogCommandService,
 		CancellationToken cancellationToken) {
-		// 从当前请求的认证信息中尝试获取已认证的设备实体或提交用户 ID
+		// 尝试获取已认证的设备实体
 		var authenticatedDevice = context.GetAuthenticatedSignatureEntity<Device>();
-		var submittedByUserId = authenticatedDevice is null
-			? context.GetAuthenticatedSignatureEntity<ApiCredential>()?.UserId ?? context.User.TryReadUserId() // 兼容通过 Identity Cookie 认证的用户主体
-			: null;
+
+		// 签名式 API 凭据记录其绑定用户；交互式用户则从 ClaimsPrincipal 读取用户 ID
+		Guid? submittedByUserId = null;
+		if (authenticatedDevice is null) {
+			submittedByUserId = context.GetAuthenticatedSignatureEntity<ApiCredential>()?.UserId
+				?? context.User.GetAuthenticatedPrincipalInfo() switch {
+					(PrincipalKind.User, var userId, _) => userId,
+					_ => null
+				};
+		}
 
 		try {
 			var commandResult = await onlineLogCommandService.CreateAsync(
@@ -41,24 +47,7 @@ internal static class DeviceApiHandlers {
 		} catch (OnlineLogCommandException e) {
 			// 在线日志命令服务会把常见业务失败统一转成带状态码的异常；
 			// Minimal API 终结点在这里再将其转换为一致的 ProblemDetails JSON 响应。
-			return Results.Problem(ErrorPageHelper.CreateProblemDetails(
-				context,
-				e.StatusCode,
-				GetCreateOnlineLogErrorTitle(e.StatusCode),
-				e.Message,
-				$"{context.Request.Path}{context.Request.QueryString}"));
+			return ApiProblemResults.FromServiceCommandException(context, e);
 		}
 	}
-
-	/// <summary>
-	/// 获取在线日志创建失败对应的错误标题。
-	/// </summary>
-	/// <param name="statusCode">HTTP 状态码</param>
-	/// <returns>用于 ProblemDetails 的错误标题</returns>
-	private static string GetCreateOnlineLogErrorTitle(int statusCode) => statusCode switch {
-		StatusCodes.Status400BadRequest => "设备日志请求无效",
-		StatusCodes.Status403Forbidden => "不允许写入日志",
-		StatusCodes.Status404NotFound => "目标设备不存在",
-		_ => "日志写入失败"
-	};
 }

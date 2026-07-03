@@ -1,5 +1,4 @@
 ﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Identity;
 
 namespace DeviceStatusBeacon.Extensions;
 
@@ -69,29 +68,61 @@ public static class PrincipalExtensions {
 		public bool HasInteractiveUserSession() =>
 			principal.Identities.Any(identity =>
 				identity.IsAuthenticated
-				&& string.Equals(identity.AuthenticationType, IdentityConstants.ApplicationScheme, StringComparison.Ordinal));
-
+				&& string.Equals(identity.AuthenticationType, AuthenticationSchemeNames.IdentityCookie, StringComparison.Ordinal));
 
 		/// <summary>
-		/// 尝试从当前登录主体中读取用户 ID。
+		/// 获取当前已认证主体的业务类型、主体 ID 与管理角色。
 		/// </summary>
-		/// <returns>用户 ID；如果当前主体不包含合法的用户 ID，则返回 null</returns>
-		internal Guid? TryReadUserId() {
-			var rawUserId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
-			return Guid.TryParse(rawUserId, out var userId) ? userId : null;
+		/// <returns>当前已认证主体的业务类型、主体 ID 与管理角色</returns>
+		public (PrincipalKind Kind, Guid? PrincipalId, PrincipalRole? Role) GetAuthenticatedPrincipalInfo() {
+			var signatureIdentity = principal.Identities.FirstOrDefault(identity =>
+				identity.IsAuthenticated
+				&& string.Equals(identity.AuthenticationType, AuthenticationSchemeNames.Signature, StringComparison.Ordinal));
+
+			if (signatureIdentity is not null) {
+				var principalId = signatureIdentity.ReadPrincipalId();
+				var roleClaims = signatureIdentity.FindAll(ClaimTypes.Role);
+				if (roleClaims.Any(claim => string.Equals(claim.Value, "Device", StringComparison.Ordinal))) {
+					return (PrincipalKind.Device, principalId, null);
+				}
+
+				// 如果主体是签名式 API 凭据，则读取其管理角色，设计上其不可能为 null
+				var role = signatureIdentity.ReadPrincipalRole()
+					?? throw new InvalidOperationException($"签名式 API 凭据主体缺少合法的管理角色声明。");
+				return (PrincipalKind.ApiCredential, principalId, role);
+			}
+
+			var userIdentity = principal.Identities.FirstOrDefault(identity =>
+				identity.IsAuthenticated
+				&& string.Equals(identity.AuthenticationType, AuthenticationSchemeNames.IdentityCookie, StringComparison.Ordinal));
+
+			return userIdentity is null
+				? (PrincipalKind.Unknown, null, null)
+				: (PrincipalKind.User, userIdentity.ReadPrincipalId(), userIdentity.ReadPrincipalRole(PrincipalRole.LimitedQuery));
+		}
+	}
+
+	extension(ClaimsIdentity identity) {
+		/// <summary>
+		/// 从认证身份中读取主体 ID。
+		/// </summary>
+		/// <param name="identity">认证身份</param>
+		/// <returns>主体 ID；如果身份中不包含合法主体 ID，则返回 null</returns>
+		private Guid? ReadPrincipalId() {
+			var rawPrincipalId = identity.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			return Guid.TryParse(rawPrincipalId, out var principalId) ? principalId : null;
 		}
 
 		/// <summary>
-		/// 尝试从当前登录主体中读取角色。
+		/// 从认证身份中读取管理角色。
 		/// </summary>
-		/// <remarks>
-		/// 当前数据模型约束单个主体最多只绑定一个角色，如果存在多个角色声明，抛出异常以提前暴露数据问题。
-		/// </remarks>
-		/// <returns>角色；如果当前主体不包含合法的管理角色，默认为 <see cref="PrincipalRole.LimitedQuery"/></returns>
-		internal PrincipalRole TryReadPrincipalRole() {
+		/// <param name="identity">认证身份</param>
+		/// <param name="defaultRole">未找到合法管理角色时使用的默认角色，默认为 null</param>
+		/// <returns>管理角色；如果未找到合法管理角色，则返回默认角色</returns>
+		private PrincipalRole? ReadPrincipalRole(PrincipalRole? defaultRole = null) {
 			PrincipalRole? role = null;
 
-			var roleClaims = principal.FindAll(ClaimTypes.Role);
+			var roleClaims = identity.FindAll(ClaimTypes.Role);
 			foreach (var claim in roleClaims) {
 				if (!Enum.TryParse<PrincipalRole>(claim.Value, true, out var parsedRole)) {
 					continue;
@@ -103,7 +134,7 @@ public static class PrincipalExtensions {
 				role = parsedRole;
 			}
 
-			return role ?? PrincipalRole.LimitedQuery;
+			return role ?? defaultRole;
 		}
 	}
 
@@ -123,6 +154,31 @@ public static class PrincipalExtensions {
 				_ => "无查询权限"
 			};
 	}
+}
+
+/// <summary>
+/// 主体类型。
+/// </summary>
+public enum PrincipalKind {
+	/// <summary>
+	/// 交互式后台用户。
+	/// </summary>
+	User,
+
+	/// <summary>
+	/// 签名式 API 凭据。
+	/// </summary>
+	ApiCredential,
+
+	/// <summary>
+	/// 签名式设备主体。
+	/// </summary>
+	Device,
+
+	/// <summary>
+	/// 未识别的认证主体。
+	/// </summary>
+	Unknown
 }
 
 /// <summary>

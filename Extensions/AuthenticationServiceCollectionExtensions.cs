@@ -41,12 +41,12 @@ public static class AuthenticationServiceCollectionExtensions {
 				options.DefaultScheme = AuthenticationSchemeNames.Hybrid;
 				options.DefaultAuthenticateScheme = AuthenticationSchemeNames.Hybrid;
 				// 认证挑战默认交回 Identity Cookie，这样页面未登录时才能进入登录跳转分流
-				options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+				options.DefaultChallengeScheme = AuthenticationSchemeNames.IdentityCookie;
 			})
 				.AddPolicyScheme(AuthenticationSchemeNames.Hybrid, null, options => options.ForwardDefaultSelector = context =>
 					context.Request.Headers.Authorization.Count > 0
 						? AuthenticationSchemeNames.Signature
-						: IdentityConstants.ApplicationScheme)
+						: AuthenticationSchemeNames.IdentityCookie)
 				.AddScheme<AuthenticationSchemeOptions, AuthenticationHandlerV1>(AuthenticationSchemeNames.Signature, null);
 
 			// 挂接 Identity Cookie，并收紧安全戳校验间隔，避免角色或账户状态变更长期滞后
@@ -79,15 +79,15 @@ public static class AuthenticationServiceCollectionExtensions {
 			services.AddAuthorizationBuilder()
 				// 任意已登录后台用户都可进入受保护页面的基础层
 				.AddPolicy(AuthorizationPolicyNames.InteractiveUser, policy => policy
-					.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme)
+					.AddAuthenticationSchemes(AuthenticationSchemeNames.IdentityCookie)
 					.RequireAuthenticatedUser())
 				// 仅允许交互式后台管理员进入管理员页面
 				.AddPolicy(AuthorizationPolicyNames.InteractiveAdminOnly, policy => policy
-					.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme)
+					.AddAuthenticationSchemes(AuthenticationSchemeNames.IdentityCookie)
 					.RequireRole(nameof(PrincipalRole.Administrator)))
 				// 仅允许交互式设备管理员和管理员进入设备管理页面
 				.AddPolicy(AuthorizationPolicyNames.InteractiveDeviceManagement, policy => policy
-					.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme)
+					.AddAuthenticationSchemes(AuthenticationSchemeNames.IdentityCookie)
 					.RequireRole(
 						nameof(PrincipalRole.DeviceManager),
 						nameof(PrincipalRole.Administrator)))
@@ -108,7 +108,7 @@ public static class AuthenticationServiceCollectionExtensions {
 					.RequireRole(nameof(PrincipalRole.Administrator)))
 				// 允许交互式用户和签名式 ApiCredential 共享查询类 API
 				.AddPolicy(AuthorizationPolicyNames.UserOrApiCredentialQueryAccess, policy => policy
-					.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme, AuthenticationSchemeNames.Signature)
+					.AddAuthenticationSchemes(AuthenticationSchemeNames.Hybrid)
 					.RequireRole(
 						nameof(PrincipalRole.LimitedQuery),
 						nameof(PrincipalRole.FullQuery),
@@ -116,18 +116,18 @@ public static class AuthenticationServiceCollectionExtensions {
 						nameof(PrincipalRole.Administrator)))
 				// 允许交互式管理员用户和签名式管理员凭据共享管理员 API
 				.AddPolicy(AuthorizationPolicyNames.UserOrApiCredentialAdminOnly, policy => policy
-					.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme, AuthenticationSchemeNames.Signature)
+					.AddAuthenticationSchemes(AuthenticationSchemeNames.Hybrid)
 					.RequireRole(nameof(PrincipalRole.Administrator)))
 				// 允许交互式设备管理员 / 管理员与对应的签名式凭据共享设备管理 API
 				.AddPolicy(AuthorizationPolicyNames.UserOrApiCredentialDeviceManagement, policy => policy
-					.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme, AuthenticationSchemeNames.Signature)
+					.AddAuthenticationSchemes(AuthenticationSchemeNames.Hybrid)
 					.RequireRole(
 						nameof(PrincipalRole.DeviceManager),
 						nameof(PrincipalRole.Administrator)))
 				// 统一日志提交入口，不区分“设备主体直接提交”和“高权限主体代提交”两类场景。
 				// 只要主体满足管理员、设备管理员或 Device 角色之一，即可进入日志写入流程。
 				.AddPolicy(AuthorizationPolicyNames.LogSubmission, policy => policy
-					.AddAuthenticationSchemes(IdentityConstants.ApplicationScheme, AuthenticationSchemeNames.Signature)
+					.AddAuthenticationSchemes(AuthenticationSchemeNames.Hybrid)
 					.RequireRole(
 						nameof(PrincipalRole.Administrator),
 						nameof(PrincipalRole.DeviceManager),
@@ -146,6 +146,11 @@ public static class AuthenticationSchemeNames {
 	/// 应用默认混合认证入口。
 	/// </summary>
 	public const string Hybrid = "BeaconOrIdentity";
+
+	/// <summary>
+	/// Identity Cookie 认证方案。
+	/// </summary>
+	public static readonly string IdentityCookie = IdentityConstants.ApplicationScheme;
 
 	/// <summary>
 	/// 自定义签名认证方案。

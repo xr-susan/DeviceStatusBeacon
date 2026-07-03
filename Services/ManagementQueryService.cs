@@ -34,18 +34,29 @@ public sealed partial class ManagementQueryService(DeviceStatusBeaconContext dbC
 
 	/// <inheritdoc/>
 	public ManagementQuerySession CreateQuerySessionAsync(ClaimsPrincipal principal) {
-		var userId = principal.TryReadUserId();
+		var (principalKind, principalId, role) = principal.GetAuthenticatedPrincipalInfo();
+		var queryPrincipalKind = principalKind switch {
+			PrincipalKind.User => ManagementQueryPrincipalKind.User,
+			PrincipalKind.ApiCredential => ManagementQueryPrincipalKind.ApiCredential,
+			_ => ManagementQueryPrincipalKind.Unknown
+		};
+
 		var userName = principal.Identity?.Name ?? string.Empty;
 		var displayName = principal.FindFirstValue(ClaimTypes.GivenName);
-		var role = principal.TryReadPrincipalRole();
 
-		return new(userId, userName, displayName, role);
+		return new(
+			PrincipalId: principalId,
+			PrincipalKind: queryPrincipalKind,
+			UserName: userName,
+			DisplayName: displayName,
+			Role: role);
 	}
 
 	/// <inheritdoc/>
 	public ManagementQuerySession CreatePrivilegedQuerySession(string userName = "CLI") =>
 		new(
-			UserId: null,
+			PrincipalId: null,
+			PrincipalKind: ManagementQueryPrincipalKind.Privileged,
 			UserName: userName,
 			DisplayName: null,
 			Role: PrincipalRole.Administrator);

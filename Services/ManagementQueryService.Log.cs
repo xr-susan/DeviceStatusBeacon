@@ -46,7 +46,8 @@ public sealed partial class ManagementQueryService {
 		var normalizedTake = NormalizePageSize(take, 1, MaxLogQueryCount);
 
 		// 构建当前可读取的日志范围，并应用设备名称筛选
-		var filteredLogs = ApplyLogDeviceName(BuildAccessibleLogQuery(session), normalizedDeviceName);
+		var filteredLogs = BuildAccessibleLogQuery(session)
+			.WhereDeviceNormalizedDeviceName(normalizedDeviceName);
 
 		return QueryLogsPageAsync(filteredLogs, 0, normalizedTake, cancellationToken);
 	}
@@ -57,7 +58,8 @@ public sealed partial class ManagementQueryService {
 		var normalizedTake = NormalizePageSize(take, 1, MaxLogQueryCount);
 
 		// 构建当前可读取的日志范围，并应用设备 ID 筛选
-		var filteredLogs = ApplyLogDeviceId(BuildAccessibleLogQuery(session), deviceId);
+		var filteredLogs = BuildAccessibleLogQuery(session)
+			.WhereDeviceId(deviceId);
 
 		return QueryLogsPageAsync(filteredLogs, 0, normalizedTake, cancellationToken);
 	}
@@ -122,24 +124,6 @@ public sealed partial class ManagementQueryService {
 	}
 
 	/// <summary>
-	/// 基于设备名称筛选日志查询。
-	/// </summary>
-	/// <param name="logs">日志查询</param>
-	/// <param name="normalizedDeviceName">已经归一化的设备名称</param>
-	/// <returns>应用筛选后的日志查询</returns>
-	private static IQueryable<OnlineLog> ApplyLogDeviceName(IQueryable<OnlineLog> logs, string normalizedDeviceName) =>
-		logs.Where(log => log.Device.NormalizedDeviceName == normalizedDeviceName);
-
-	/// <summary>
-	/// 基于设备 ID 筛选日志查询。
-	/// </summary>
-	/// <param name="logs">日志查询</param>
-	/// <param name="deviceId">设备 ID</param>
-	/// <returns>应用筛选后的日志查询</returns>
-	private static IQueryable<OnlineLog> ApplyLogDeviceId(IQueryable<OnlineLog> logs, Guid deviceId) =>
-		logs.Where(log => log.DeviceId == deviceId);
-
-	/// <summary>
 	/// 基于查询会话构建日志可读取范围查询。
 	/// </summary>
 	/// <param name="session">查询会话</param>
@@ -147,22 +131,26 @@ public sealed partial class ManagementQueryService {
 	private IQueryable<OnlineLog> BuildAccessibleLogQuery(ManagementQuerySession session) {
 		var logs = dbContext.OnlineLogs.AsNoTracking();
 
-		// 无查询权限，返回空查询
-		if (!session.Role.CanQueryAnyDevices()) {
-			return logs.Where(_ => false);
-		}
+		return session.Role.GetDeviceQueryScope() switch {
+			// 全量查询权限，返回完整查询
+			PrincipalQueryScope.Full => logs,
 
-		// 全量查询权限，返回完整查询
-		if (session.Role.CanQueryAllDevices()) {
-			return logs;
-		}
+			// 具备有限查询权限时，根据授权主体类型应用对应的设备授权关系
+			PrincipalQueryScope.Limited => session.PrincipalKind switch {
+				// 用户主体，返回已授权给该用户的设备日志
+				ManagementQueryPrincipalKind.User =>
+					logs.Where(log => log.Device.AuthorizedUsers.Any(user => user.Id == session.PrincipalId)),
 
-		// 具备有限查询权限，返回关联了该用户的设备的日志查询
-		if (session.UserId is Guid userId) {
-			return logs.Where(log => log.Device.AuthorizedUsers.Any(user => user.Id == userId));
-		}
+				// API 凭据主体，返回已授权给该 API 凭据的设备日志
+				ManagementQueryPrincipalKind.ApiCredential =>
+					logs.Where(log => log.Device.AuthorizedApiCredentials.Any(credential => credential.ApiCredentialId == session.PrincipalId)),
 
-		// 其他情况，返回空查询
-		return logs.Where(_ => false);
+				// 其他主体类型不具备有限查询权限，返回空查询
+				_ => logs.Where(_ => false)
+			},
+
+			// 无查询权限，返回空查询
+			_ => logs.Where(_ => false)
+		};
 	}
 }

@@ -76,9 +76,18 @@ public sealed record ResetDeviceSecretKeyCommandResult(
 /// <summary>
 /// 表示设备管理命令执行过程中出现的业务失败。
 /// </summary>
-public sealed class DeviceManagementCommandException(int statusCode, string message) : Exception(message) {
+public sealed class DeviceManagementCommandException(int statusCode, string message)
+	: ServiceCommandException(statusCode, GetProblemTitle(statusCode), message) {
 	/// <summary>
-	/// 对应的 HTTP 状态码。
+	/// 获取设备管理失败对应的错误标题。
 	/// </summary>
-	public int StatusCode { get; } = statusCode;
+	/// <param name="statusCode">HTTP 状态码</param>
+	/// <returns>用于 ProblemDetails 的错误标题</returns>
+	private static string GetProblemTitle(int statusCode) => statusCode switch {
+		StatusCodes.Status400BadRequest => "设备管理请求无效",
+		StatusCodes.Status404NotFound => "目标设备不存在",
+		StatusCodes.Status409Conflict => "设备管理状态冲突",
+		StatusCodes.Status422UnprocessableEntity => "设备管理请求语义无效",
+		_ => "设备管理失败"
+	};
 }

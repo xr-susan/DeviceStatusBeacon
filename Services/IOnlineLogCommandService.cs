@@ -88,9 +88,17 @@ public sealed record CreateOnlineLogCommandResult(
 /// <summary>
 /// 表示在线日志命令执行过程中出现的业务失败。
 /// </summary>
-public sealed class OnlineLogCommandException(int statusCode, string message) : Exception(message) {
+public sealed class OnlineLogCommandException(int statusCode, string message)
+	: ServiceCommandException(statusCode, GetProblemTitle(statusCode), message) {
 	/// <summary>
-	/// 对应的 HTTP 状态码。
+	/// 获取在线日志创建失败对应的错误标题。
 	/// </summary>
-	public int StatusCode { get; } = statusCode;
+	/// <param name="statusCode">HTTP 状态码</param>
+	/// <returns>用于 ProblemDetails 的错误标题</returns>
+	private static string GetProblemTitle(int statusCode) => statusCode switch {
+		StatusCodes.Status400BadRequest => "设备日志请求无效",
+		StatusCodes.Status403Forbidden => "不允许写入日志",
+		StatusCodes.Status404NotFound => "目标设备不存在",
+		_ => "日志写入失败"
+	};
 }
