@@ -112,7 +112,7 @@ public static partial class ConsoleDispatcher {
 	/// <param name="password">用户的密码</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
 	private static async Task<int> HandleUserAddAsync(DeviceStatusBeaconContext db, UserManager<User> userManager, string userName, string roleString, string password) {
-		if (!GeneratedRegex.IdentityRegex().IsMatch(userName)) {
+		if (!GeneratedRegex.IdentityNameRegex().IsMatch(userName)) {
 			Console.WriteLine("用户名不符合身份标识格式");
 			return 3;
 		}
@@ -186,7 +186,7 @@ public static partial class ConsoleDispatcher {
 	/// <param name="newUserName">新的用户名</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
 	private static async Task<int> HandleUserRenameAsync(DeviceStatusBeaconContext db, UserManager<User> userManager, string oldUserName, string newUserName) {
-		if (!GeneratedRegex.IdentityRegex().IsMatch(newUserName)) {
+		if (!GeneratedRegex.IdentityNameRegex().IsMatch(newUserName)) {
 			Console.WriteLine("新用户名不符合身份标识格式");
 			return 3;
 		}

@@ -45,7 +45,7 @@ public sealed partial class DeviceManagementService(
 	/// <param name="deviceName">设备名称</param>
 	/// <param name="message">格式错误时使用的错误消息</param>
 	private static void EnsureValidDeviceName(string deviceName, string message) {
-		if (!GeneratedRegex.IdentityRegex().IsMatch(deviceName)) {
+		if (!GeneratedRegex.IdentityNameRegex().IsMatch(deviceName)) {
 			throw new DeviceManagementCommandException(StatusCodes.Status422UnprocessableEntity, message);
 		}
 	}

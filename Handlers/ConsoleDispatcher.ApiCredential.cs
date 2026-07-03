@@ -119,7 +119,7 @@ public static partial class ConsoleDispatcher {
 			return 5;
 		}
 
-		if (!GeneratedRegex.IdentityRegex().IsMatch(ownerUserName)) {
+		if (!GeneratedRegex.IdentityNameRegex().IsMatch(ownerUserName)) {
 			Console.WriteLine("所属用户名不符合身份标识格式");
 			return 3;
 		}
