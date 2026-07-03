@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using Microsoft.Data.Sqlite;
 
 namespace DeviceStatusBeacon.Services;
 
@@ -50,8 +51,12 @@ public sealed class OnlineLogCommandService(DeviceStatusBeaconContext dbContext)
 			Message = command.Message?.Trim() // Message 可能为 null，但不会是空白字符串，直接 ?.Trim() 即可
 		};
 
-		dbContext.OnlineLogs.Add(newLog);
-		await dbContext.SaveChangesAsync(cancellationToken);
+		try {
+			dbContext.OnlineLogs.Add(newLog);
+			await dbContext.SaveChangesAsync(cancellationToken);
+		} catch (DbUpdateException e) when (e.InnerException is SqliteException { SqliteExtendedErrorCode: 787 }) {
+			throw new OnlineLogCommandException(StatusCodes.Status404NotFound, "目标设备或提交用户已不存在。");
+		}
 
 		return new(
 			newLog.OnlineLogId,
