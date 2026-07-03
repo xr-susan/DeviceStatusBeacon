@@ -1,6 +1,4 @@
 ﻿using DeviceStatusBeacon.Services;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Data.Sqlite;
 
 namespace DeviceStatusBeacon.Handlers;
 
@@ -13,10 +11,9 @@ public static partial class ConsoleDispatcher {
 	/// <param name="sp">负责依赖注入的服务提供者</param>
 	/// <returns>一个表示异步操作的任务，任务结果指示应用程序的退出代码</returns>
 	private static async Task<int> HandleDeviceCommandAsync(string[] argsAfterVerb, IServiceProvider sp) {
-		await using var db = sp.GetRequiredService<DeviceStatusBeaconContext>();
 		var queryService = sp.GetRequiredService<IManagementQueryService>();
 		var querySession = queryService.CreatePrivilegedQuerySession();
-		var normalizer = sp.GetRequiredService<ILookupNormalizer>();
+		var deviceManagementService = sp.GetRequiredService<IDeviceManagementService>();
 
 		return argsAfterVerb switch {
 			// device list
@@ -32,20 +29,20 @@ public static partial class ConsoleDispatcher {
 			["history", var name, var countString] => await HandleDeviceHistoryAsync(queryService, querySession, name, countString),
 
 			// device add <name> [display-name]
-			["add", var name, var displayName] => await HandleDeviceAddAsync(db, normalizer, sp, name, displayName),
-			["add", var name] => await HandleDeviceAddAsync(db, normalizer, sp, name),
+			["add", var name, var displayName] => await HandleDeviceAddAsync(deviceManagementService, name, displayName),
+			["add", var name] => await HandleDeviceAddAsync(deviceManagementService, name),
 
 			// device reset-key <name>
-			["reset-key", var name] => await HandleDeviceResetKeyAsync(db, normalizer, sp, name),
+			["reset-key", var name] => await HandleDeviceResetKeyAsync(deviceManagementService, name),
 
 			// device rename <old-name> <new-name>
-			["rename", var oldName, var newName] => await HandleDeviceRenameAsync(db, normalizer, oldName, newName),
+			["rename", var oldName, var newName] => await HandleDeviceRenameAsync(deviceManagementService, oldName, newName),
 
 			// device set-display-name <name> <display-name>
-			["set-display-name", var name, var displayName] => await HandleDeviceSetDisplayNameAsync(db, normalizer, name, displayName),
+			["set-display-name", var name, var displayName] => await HandleDeviceSetDisplayNameAsync(deviceManagementService, name, displayName),
 
 			// device delete <name>
-			["delete", var name] => await HandleDeviceDeleteAsync(db, normalizer, name),
+			["delete", var name] => await HandleDeviceDeleteAsync(deviceManagementService, name),
 
 			// 无效的 device 命令参数
 			_ => ExitWithInvalidCommandMessage("device")
@@ -159,159 +156,123 @@ public static partial class ConsoleDispatcher {
 	/// <summary>
 	/// 处理 device add <name> [display-name] 命令
 	/// </summary>
-	/// <param name="db">数据库上下文</param>
-	/// <param name="normalizer">设备名称归一化器</param>
-	/// <param name="sp">负责依赖注入的服务提供者</param>
+	/// <param name="deviceManagementService">设备管理服务</param>
 	/// <param name="name">设备名称</param>
 	/// <param name="displayName">设备显示名称（可选）</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleDeviceAddAsync(DeviceStatusBeaconContext db, ILookupNormalizer normalizer, IServiceProvider sp, string name, string? displayName = null) {
-		if (!GeneratedRegex.IdentityRegex().IsMatch(name)) {
-			Console.WriteLine("设备名称不符合身份标识格式");
-			return 3;
-		}
-
-		var dataProtector = sp.GetRequiredService<IDataProtectorV1>();
-		var unprotectedSecretKey = ISecurityServiceV1.GenerateRandomBytes();
-
-		var newDevice = new Device {
-			DeviceName = name,
-			NormalizedDeviceName = normalizer.NormalizeName(name.Trim()),
-			DisplayName = displayName,
-			ProtectedSecretKey = dataProtector.ProtectKey(unprotectedSecretKey)
-		};
-
+	private static async Task<int> HandleDeviceAddAsync(IDeviceManagementService deviceManagementService, string name, string? displayName = null) {
 		try {
-			db.Devices.Add(newDevice);
-			await db.SaveChangesAsync();
-		} catch (DbUpdateException e) when (e.InnerException is SqliteException { SqliteExtendedErrorCode: 2067 }) {
-			Console.WriteLine("指定的设备名称已被使用");
-			return 1;
+			var commandResult = await deviceManagementService.CreateAsync(new() {
+				DeviceName = name,
+				DisplayName = displayName
+			});
+
+			Console.WriteLine($"""
+				设备添加成功：
+				  设备 ID：{commandResult.DeviceId}
+				  设备名称：{commandResult.DeviceName}
+				  显示名称：{commandResult.DisplayName}
+				  操作密钥：{commandResult.SecretKey}
+				""");
+
+			return 0;
+		} catch (DeviceManagementCommandException e) {
+			return ExitWithDeviceManagementError(e);
 		}
-
-		Console.WriteLine($"""
-			设备添加成功：
-			  设备 ID：{newDevice.DeviceId}
-			  设备名称：{newDevice.DeviceName}
-			  显示名称：{newDevice.DisplayName}
-			  操作密钥：{Convert.ToBase64String(unprotectedSecretKey)}
-			""");
-
-		return 0;
 	}
 
 	/// <summary>
 	/// 处理 device reset-key <name> 命令
 	/// </summary>
-	/// <param name="db">数据库上下文</param>
-	/// <param name="normalizer">设备名称归一化器</param>
-	/// <param name="sp">负责依赖注入的服务提供者</param>
+	/// <param name="deviceManagementService">设备管理服务</param>
 	/// <param name="name">要重置操作密钥的设备名称</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleDeviceResetKeyAsync(DeviceStatusBeaconContext db, ILookupNormalizer normalizer, IServiceProvider sp, string name) {
-		var dataProtector = sp.GetRequiredService<IDataProtectorV1>();
-		var unprotectedSecretKey = ISecurityServiceV1.GenerateRandomBytes();
-		var normalizedDeviceName = normalizer.NormalizeName(name.Trim());
+	private static async Task<int> HandleDeviceResetKeyAsync(IDeviceManagementService deviceManagementService, string name) {
+		try {
+			var commandResult = await deviceManagementService.ResetSecretKeyAsync(name);
 
-		var updatedCount = await db.Devices
-			.Where(d => d.NormalizedDeviceName == normalizedDeviceName)
-			.ExecuteUpdateAsync(d => d.SetProperty(dev => dev.ProtectedSecretKey, dataProtector.ProtectKey(unprotectedSecretKey)));
+			Console.WriteLine($"设备 {name} 的操作密钥已重置");
+			Console.WriteLine($"新操作密钥：{commandResult.SecretKey}");
 
-		if (updatedCount == 0) {
-			Console.WriteLine("未找到指定的设备");
-			return 2;
+			return 0;
+		} catch (DeviceManagementCommandException e) {
+			return ExitWithDeviceManagementError(e);
 		}
-
-		Console.WriteLine($"设备 {name} 的操作密钥已重置");
-		Console.WriteLine($"新操作密钥：{Convert.ToBase64String(unprotectedSecretKey)}");
-
-		return 0;
 	}
 
 	/// <summary>
 	/// 处理 device rename <old-name> <new-name> 命令
 	/// </summary>
-	/// <param name="db">数据库上下文</param>
-	/// <param name="normalizer">设备名称归一化器</param>
+	/// <param name="deviceManagementService">设备管理服务</param>
 	/// <param name="oldName">旧设备名称</param>
 	/// <param name="newName">新设备名称</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleDeviceRenameAsync(DeviceStatusBeaconContext db, ILookupNormalizer normalizer, string oldName, string newName) {
-		if (!GeneratedRegex.IdentityRegex().IsMatch(newName)) {
-			Console.WriteLine("新设备名称不符合身份标识格式");
-			return 3;
-		}
-
-		var normalizedOldDeviceName = normalizer.NormalizeName(oldName.Trim());
-		var normalizedNewDeviceName = normalizer.NormalizeName(newName.Trim());
-
+	private static async Task<int> HandleDeviceRenameAsync(IDeviceManagementService deviceManagementService, string oldName, string newName) {
 		try {
-			var updatedCount = await db.Devices
-				.Where(d => d.NormalizedDeviceName == normalizedOldDeviceName)
-				.ExecuteUpdateAsync(d => d
-					.SetProperty(dev => dev.DeviceName, newName)
-					.SetProperty(dev => dev.NormalizedDeviceName, normalizedNewDeviceName));
+			await deviceManagementService.RenameAsync(oldName, new() {
+				NewDeviceName = newName
+			});
 
-			if (updatedCount == 0) {
-				Console.WriteLine("未找到指定的设备");
-				return 2;
-			}
-		} catch (DbUpdateException e) when (e.InnerException is SqliteException { SqliteExtendedErrorCode: 2067 }) {
-			Console.WriteLine("指定的新设备名称已被使用");
-			return 1;
+			Console.WriteLine($"设备重命名成功：{oldName} -> {newName}");
+
+			return 0;
+		} catch (DeviceManagementCommandException e) {
+			return ExitWithDeviceManagementError(e);
 		}
-
-		Console.WriteLine($"设备重命名成功：{oldName} -> {newName}");
-
-		return 0;
 	}
 
 	/// <summary>
 	/// 处理 device set-display-name <name> <display-name> 命令
 	/// </summary>
-	/// <param name="db">数据库上下文</param>
-	/// <param name="normalizer">设备名称归一化器</param>
+	/// <param name="deviceManagementService">设备管理服务</param>
 	/// <param name="name">要设置显示名称的设备名称</param>
 	/// <param name="displayName">新的显示名称</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleDeviceSetDisplayNameAsync(DeviceStatusBeaconContext db, ILookupNormalizer normalizer, string name, string displayName) {
-		var normalizedDeviceName = normalizer.NormalizeName(name.Trim());
+	private static async Task<int> HandleDeviceSetDisplayNameAsync(IDeviceManagementService deviceManagementService, string name, string displayName) {
+		try {
+			await deviceManagementService.SetDisplayNameAsync(name, new() {
+				DisplayName = displayName
+			});
 
-		var updatedCount = await db.Devices
-			.Where(d => d.NormalizedDeviceName == normalizedDeviceName)
-			.ExecuteUpdateAsync(d => d.SetProperty(dev => dev.DisplayName, displayName));
+			Console.WriteLine($"设备 {name} 的显示名称已更新为：{displayName}");
 
-		if (updatedCount == 0) {
-			Console.WriteLine("未找到指定的设备");
-			return 2;
+			return 0;
+		} catch (DeviceManagementCommandException e) {
+			return ExitWithDeviceManagementError(e);
 		}
-
-		Console.WriteLine($"设备 {name} 的显示名称已更新为：{displayName}");
-
-		return 0;
 	}
 
 	/// <summary>
 	/// 处理 device delete <name> 命令
 	/// </summary>
-	/// <param name="db">数据库上下文</param>
-	/// <param name="normalizer">设备名称归一化器</param>
+	/// <param name="deviceManagementService">设备管理服务</param>
 	/// <param name="name">要删除的设备名称</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleDeviceDeleteAsync(DeviceStatusBeaconContext db, ILookupNormalizer normalizer, string name) {
-		var normalizedDeviceName = normalizer.NormalizeName(name.Trim());
+	private static async Task<int> HandleDeviceDeleteAsync(IDeviceManagementService deviceManagementService, string name) {
+		try {
+			await deviceManagementService.DeleteAsync(name);
 
-		var deletedCount = await db.Devices
-			.Where(d => d.NormalizedDeviceName == normalizedDeviceName)
-			.ExecuteDeleteAsync();
+			Console.WriteLine($"设备 {name} 已删除");
 
-		if (deletedCount == 0) {
-			Console.WriteLine("未找到指定的设备");
-			return 2;
+			return 0;
+		} catch (DeviceManagementCommandException e) {
+			return ExitWithDeviceManagementError(e);
 		}
+	}
 
-		Console.WriteLine($"设备 {name} 已删除");
+	/// <summary>
+	/// 打印设备管理服务业务错误，并转换为 CLI 退出代码。
+	/// </summary>
+	/// <param name="exception">设备管理业务异常</param>
+	/// <returns>CLI 退出代码</returns>
+	private static int ExitWithDeviceManagementError(DeviceManagementCommandException exception) {
+		Console.WriteLine(exception.Message);
 
-		return 0;
+		return exception.StatusCode switch {
+			StatusCodes.Status409Conflict => 1,
+			StatusCodes.Status404NotFound => 2,
+			StatusCodes.Status400BadRequest or StatusCodes.Status422UnprocessableEntity => 3,
+			_ => 6
+		};
 	}
 }
