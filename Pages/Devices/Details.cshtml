@@ -1,4 +1,4 @@
-﻿@page "/devices/{deviceName}"
+﻿@page "/devices/{deviceName:deviceName}"
 @model DeviceStatusBeacon.Pages.Devices.DetailsModel
 @{
 	var deviceNameToDisplay = string.IsNullOrWhiteSpace(Model.Device.DisplayName) ? Model.Device.DeviceName : Model.Device.DisplayName;

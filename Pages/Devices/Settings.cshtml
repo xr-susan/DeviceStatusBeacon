@@ -1,4 +1,4 @@
-﻿@page "/devices/{deviceName}/settings"
+﻿@page "/devices/{deviceName:deviceName}/settings"
 @model DeviceStatusBeacon.Pages.Devices.SettingsModel
 @{
 	ViewData["Title"] = $"设置 {Model.Device.DeviceName}";

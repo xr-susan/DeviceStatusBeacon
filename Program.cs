@@ -1,6 +1,7 @@
 ﻿using DeviceStatusBeacon.Api;
 using DeviceStatusBeacon.Handlers;
 using DeviceStatusBeacon.Json;
+using DeviceStatusBeacon.Routing;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,12 @@ try {
 
 // 注册自定义服务
 builder.Services.AddCustomServices();
+
+// 配置路由约束
+builder.Services.Configure<RouteOptions>(options =>
+	options.ConstraintMap["deviceName"] = typeof(DeviceNameRouteConstraint));
+
+// 注册 Razor Pages、认证与授权、验证器、JSON 序列化器和问题详情处理
 builder.Services.AddRazorPages(options => options.Conventions.AuthorizeFolder("/", AuthorizationPolicyNames.InteractiveUser));
 builder.Services.AddApplicationAuthenticationAndAuthorization();
 builder.Services.AddValidation();
