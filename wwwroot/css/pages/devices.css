@@ -35,6 +35,14 @@
     table-layout: fixed;
 }
 
+.devices-table td {
+    vertical-align: middle;
+}
+
+.devices-table .device-identity {
+    margin-bottom: 0;
+}
+
 .devices-table__device {
     width: 20%;
 }
@@ -58,10 +66,6 @@
 .devices-table td:nth-child(4),
 .devices-table td:nth-child(5) {
     overflow-wrap: anywhere;
-}
-
-.table-subtext {
-    color: var(--color-fg-muted);
 }
 
 .device-detail {
@@ -98,9 +102,61 @@
     min-width: 0;
 }
 
-.network-address {
-    font-family: var(--font-mono);
+.device-settings-grid {
+    display: grid;
+    gap: var(--space-xl);
+}
+
+.settings-inline-form {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+}
+
+.settings-inline-form .button {
+    min-width: 5rem;
+}
+
+.settings-action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-xl);
+    min-width: 0;
+    padding: var(--space-lg);
+    border: var(--border-width) solid var(--color-border-default);
+    border-radius: var(--radius-medium);
+    background: var(--color-canvas-inset);
+}
+
+.settings-action-row__title {
+    font-weight: 650;
+}
+
+.settings-action-row__text {
+    margin-top: var(--space-xs);
+    color: var(--color-fg-muted);
+    font-size: 0.92rem;
+}
+
+.panel--danger {
+    border-color: rgba(207, 34, 46, 0.26);
+}
+
+.secret-key-notice {
+    display: grid;
+    gap: var(--space-md);
+}
+
+.secret-key-notice__title {
+    font-weight: 650;
+}
+
+.secret-key-notice__value {
+    display: block;
     overflow-wrap: anywhere;
+    white-space: normal;
 }
 
 .address-list {
@@ -148,7 +204,7 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--space-xl);
-    align-items: start;
+    align-items: center;
     color: var(--color-fg-muted);
     font-size: 0.92rem;
 }
@@ -196,6 +252,17 @@
 @media (max-width: 45em) {
     .device-detail {
         grid-template-columns: 1fr;
+    }
+
+    .settings-inline-form,
+    .settings-action-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .settings-inline-form .button,
+    .settings-action-row .button {
+        width: 100%;
     }
 
     .device-log-item__header,

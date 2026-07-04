@@ -1,11 +1,6 @@
 .metric-card {
     display: grid;
     align-content: start;
-    padding: var(--space-xl);
-    border: var(--border-width) solid var(--color-border-default);
-    border-radius: var(--radius-medium);
-    background: var(--color-canvas-subtle);
-    box-shadow: var(--shadow-panel);
 }
 
 .metric-card__label {
@@ -108,8 +103,14 @@
     justify-self: end;
 }
 
+.dashboard-activity-item__summary > *,
+.dashboard-activity-item__details > * {
+    min-width: 0;
+}
+
 .dashboard-activity-item__details {
     display: grid;
+    align-items: center;
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
     gap: var(--space-xl);
     font-size: 0.9rem;

@@ -22,7 +22,7 @@
 	<div class="auth-layout">
 		<section class="panel panel--form">
 			@if (ViewContext.ViewData.ModelState.ErrorCount > 0) {
-				<div asp-validation-summary="All" class="notice notice--error" role="alert"></div>
+				<div asp-validation-summary="All" class="notice notice--danger" role="alert"></div>
 			}
 
 			<form method="post" class="form-stack">

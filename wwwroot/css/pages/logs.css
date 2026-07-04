@@ -140,8 +140,36 @@
     margin: 0;
     min-width: 0;
     overflow-x: auto;
+    scrollbar-color: var(--color-border-default) transparent;
+    scrollbar-width: thin;
     white-space: nowrap;
     line-height: inherit;
+}
+
+.log-item__scroll-value::-webkit-scrollbar {
+    width: 0.5rem;
+    height: 0.5rem;
+}
+
+.log-item__scroll-value::-webkit-scrollbar-track {
+    border-radius: 999px;
+    background: var(--color-canvas-default);
+}
+
+.log-item__scroll-value::-webkit-scrollbar-thumb {
+    border: 0.125rem solid var(--color-canvas-default);
+    border-radius: 999px;
+    background: var(--color-border-default);
+}
+
+.log-item__scroll-value:hover::-webkit-scrollbar-thumb {
+    background: var(--color-fg-subtle);
+}
+
+.log-item__meta-source .log-item__scroll-value,
+.log-item__detail--addresses .log-item__scroll-value {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
 }
 
 .log-item__detail--addresses .detail-label,

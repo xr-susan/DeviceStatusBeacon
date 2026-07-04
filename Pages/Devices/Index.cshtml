@@ -138,15 +138,21 @@
 								</td>
 								<td>
 									@if (latestReportedAddresses.Length > 0) {
-										<span>@string.Join(", ", latestReportedAddresses)</span>
+										<span class="network-address">@string.Join(", ", latestReportedAddresses)</span>
 										@if (hasMoreReportedAddresses) {
-											<span class="table-subtext">...</span>
+											<span class="subtext">...</span>
 										}
 									} else {
 										<span>暂无地址</span>
 									}
 								</td>
-								<td>@(device.LatestReporterRemoteAddress?.ToString() ?? "未知")</td>
+								<td>
+									@if (device.LatestReporterRemoteAddress is not null) {
+										<span class="network-address">@device.LatestReporterRemoteAddress</span>
+									} else {
+										<span>未知</span>
+									}
+								</td>
 							</tr>
 						}
 					</tbody>
