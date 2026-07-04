@@ -33,6 +33,18 @@ public class IndexModel(IManagementQueryService queryService) : PageModel {
 	public DeviceListData PageData { get; private set; } = null!;
 
 	/// <summary>
+	/// 成功提示
+	/// </summary>
+	[TempData]
+	public string? StatusMessage { get; set; }
+
+	/// <summary>
+	/// 失败提示
+	/// </summary>
+	[TempData]
+	public string? ErrorMessage { get; set; }
+
+	/// <summary>
 	/// 处理设备列表页加载
 	/// </summary>
 	/// <param name="cancellationToken">取消令牌</param>

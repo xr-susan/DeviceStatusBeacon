@@ -10,6 +10,11 @@
 /// </remarks>
 public interface IDeviceManagementService {
 	/// <summary>
+	/// 删除设备前要求的无新日志时间窗口。
+	/// </summary>
+	static readonly TimeSpan DeleteRecentLogBlockWindow = TimeSpan.FromDays(7);
+
+	/// <summary>
 	/// 创建新设备。
 	/// </summary>
 	/// <param name="command">设备创建请求</param>

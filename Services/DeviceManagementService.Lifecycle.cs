@@ -102,7 +102,7 @@ public sealed partial class DeviceManagementService {
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务</returns>
 	private async Task DeleteAsync(IQueryable<Device> devices, CancellationToken cancellationToken) {
-		var recentLogBoundary = DateTime.UtcNow.Subtract(DeleteRecentLogBlockWindow);
+		var recentLogBoundary = DateTime.UtcNow.Subtract(IDeviceManagementService.DeleteRecentLogBlockWindow);
 		var deleteQuery = devices
 			.Where(device => !device.Enabled)
 			.Where(device => !dbContext.OnlineLogs.Any(log =>
@@ -115,7 +115,7 @@ public sealed partial class DeviceManagementService {
 			return;
 		}
 
-		// 如果没有设备被删除，则需要进一步检查原因，可能是设备不存在、设备未停用或设备近七天有新日志
+		// 如果没有设备被删除，则需要进一步检查原因，可能是设备不存在、设备未停用或设备近7天有新日志
 		var target = await devices
 			.AsNoTracking()
 			.Select(device => new DeviceManagementTarget(
@@ -135,7 +135,7 @@ public sealed partial class DeviceManagementService {
 				&& log.LogTime >= recentLogBoundary,
 				cancellationToken);
 		if (hasRecentLog) {
-			throw new DeviceManagementCommandException(StatusCodes.Status409Conflict, "设备近七天存在新日志，暂不能删除");
+			throw new DeviceManagementCommandException(StatusCodes.Status409Conflict, $"设备近{IDeviceManagementService.DeleteRecentLogBlockWindow.TotalDays}天存在新日志，暂不能删除");
 		}
 
 		// 如果仍然没有设备被删除，则说明存在并发问题，此时再次尝试删除设备

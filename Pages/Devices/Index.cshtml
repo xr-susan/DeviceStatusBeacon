@@ -18,6 +18,13 @@
 		</div>
 	</header>
 
+	@if (!string.IsNullOrWhiteSpace(Model.StatusMessage)) {
+		<div class="notice notice--success">@Model.StatusMessage</div>
+	}
+	@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage)) {
+		<div class="notice notice--danger">@Model.ErrorMessage</div>
+	}
+
 	<section class="panel panel--form">
 		<form method="get" class="filter-toolbar">
 			<input type="hidden" name="page" value="1" />

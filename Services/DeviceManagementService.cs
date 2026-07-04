@@ -15,11 +15,6 @@ public sealed partial class DeviceManagementService(
 	ILookupNormalizer lookupNormalizer,
 	IDataProtectorV1 dataProtector) : IDeviceManagementService {
 	/// <summary>
-	/// 删除设备前要求的无新日志时间窗口。
-	/// </summary>
-	private static readonly TimeSpan DeleteRecentLogBlockWindow = TimeSpan.FromDays(7);
-
-	/// <summary>
 	/// 设备管理目标。
 	/// </summary>
 	/// <param name="DeviceId">设备 ID</param>

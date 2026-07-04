@@ -3,17 +3,28 @@
 @{
 	ViewData["Title"] = $"设置 {Model.Device.DeviceName}";
 	var device = Model.Device;
+	var canBeDelete = Model.CanBeDelete;
+	var deleteBlockingMessage = Model.CanBeDelete ? string.Empty :
+		$"设备仅在停用且近{IDeviceManagementService.DeleteRecentLogBlockWindow.TotalDays}天内无新日志时可被删除。";
 }
 
 @section HeadStyles {
 	<link rel="stylesheet" href="~/css/pages/devices.css" asp-append-version="true" />
 }
 
+@section HeadModulePreloads {
+	<link rel="modulepreload" href="~/js/components/confirm-dialog.js" asp-append-version="true" />
+}
+
+@section HeadModules {
+	<script type="module" src="~/js/pages/device-settings.js" asp-append-version="true"></script>
+}
+
 <div class="page">
 	<header class="page-header">
 		<div>
-			<h1 class="page-header__title">设备设置</h1>
-			<p class="page-header__subtitle">预留页面，暂未实现。</p>
+			<h1 class="page-header__title">设备管理</h1>
+			<p class="page-header__subtitle">更新设备名称、显示名称、启用状态与访问范围。</p>
 		</div>
 		<div class="button-row">
 			<a asp-page="/Devices/Details"
@@ -21,6 +32,19 @@
 			   class="button button--secondary">返回详情</a>
 		</div>
 	</header>
+
+	@if (!string.IsNullOrWhiteSpace(Model.StatusMessage)) {
+		<div class="notice notice--success">@Model.StatusMessage</div>
+	}
+	@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage)) {
+		<div class="notice notice--danger">@Model.ErrorMessage</div>
+	}
+	@if (!string.IsNullOrWhiteSpace(Model.ResetSecretKey)) {
+		<div class="notice notice--danger secret-key-notice">
+			<div class="secret-key-notice__title">新操作密钥只会显示这一次，请妥善保存，避免泄露或遗失。</div>
+			<code class="secret-key-notice__value">@Model.ResetSecretKey</code>
+		</div>
+	}
 
 	<section class="panel">
 		<div class="device-detail">
@@ -32,10 +56,152 @@
 					}
 					<span class="device-identity__name">@device.DeviceName</span>
 				</div>
-				<div class="meta-row">
-					<span class="status-pill @(device.Enabled ? "status-pill--success" : "status-pill--muted")">@(device.Enabled ? "启用" : "停用")</span>
-				</div>
 			</div>
+			<dl class="info-list device-detail__info">
+				<div class="info-list__row">
+					<dt>最近上报时间</dt>
+					<dd>
+						@if (device.LatestLogTime is DateTime latestLogTime) {
+							<time datetime="@latestLogTime.ToString("O", System.Globalization.CultureInfo.InvariantCulture)"
+								  data-local-date-time>@latestLogTime.ToString("yyyy-MM-dd HH:mm:ss 'UTC'", System.Globalization.CultureInfo.InvariantCulture)</time>
+						} else {
+							<span>暂无日志</span>
+						}
+					</dd>
+				</div>
+				<div class="info-list__row">
+					<dt>启用状态</dt>
+					<dd>
+						<span class="status-pill @(device.Enabled ? "status-pill--success" : "status-pill--muted")">@(device.Enabled ? "启用" : "停用")</span>
+					</dd>
+				</div>
+			</dl>
+		</div>
+	</section>
+
+	<section class="panel">
+		<div class="panel__header">
+			<h2 class="panel__title">基础设置</h2>
+		</div>
+
+		<div class="device-settings-grid">
+			<form method="post"
+				  asp-page-handler="Rename"
+				  class="settings-inline-form"
+				  data-confirm-form
+				  data-confirm-title="确认重命名设备"
+				  data-confirm-message="设备名称会影响设备管理入口和签名目标识别，确认要重命名该设备吗？"
+				  data-confirm-button-text="确认重命名">
+				<div class="field field--grow">
+					<label for="new-device-name" class="field__label">设备名称</label>
+					<input id="new-device-name"
+						   name="NewDeviceName"
+						   class="field__input"
+						   minlength="@DeviceStatusBeacon.IdentityNameRules.MinimumLength"
+						   maxlength="@DeviceStatusBeacon.IdentityNameRules.MaximumLength"
+						   pattern="[A-Za-z\d][A-Za-z\d_\-]{2,62}[A-Za-z\d]"
+						   placeholder="@device.DeviceName"
+						   title="设备名称长度为 4 到 64 个字符，只能包含字母、数字、下划线和连字符，且首尾必须是字母或数字。"
+						   autocomplete="off"
+						   required
+						   data-select-on-focus />
+				</div>
+				<button type="submit" class="button button--primary">确认</button>
+			</form>
+
+			<form method="post"
+				  asp-page-handler="SetDisplayName"
+				  class="settings-inline-form"
+				  data-confirm-form
+				  data-confirm-title="确认更新显示名称"
+				  data-confirm-message="显示名称只影响后台展示，确认要更新该设备的显示名称吗？"
+				  data-confirm-button-text="确认更新">
+				<div class="field field--grow">
+					<label for="device-display-name" class="field__label">显示名称</label>
+					<input id="device-display-name"
+						   name="DisplayName"
+						   class="field__input"
+						   placeholder="@(device.DisplayName ?? "未设置")"
+						   autocomplete="off"
+						   data-select-on-focus />
+				</div>
+				<button type="submit" class="button button--primary">确认</button>
+			</form>
+
+			<form method="post"
+				  asp-page-handler="SetEnabled"
+				  class="settings-action-row"
+				  data-confirm-form
+				  data-confirm-title="确认@(device.Enabled ? "停用" : "启用")设备"
+				  data-confirm-message="@(device.Enabled ? "停用后该设备不能继续提交日志。" : "启用后该设备可以继续提交日志。")"
+				  data-confirm-button-text="确认@(device.Enabled ? "停用" : "启用")">
+				<div>
+					<div class="settings-action-row__title">启用状态</div>
+					<div class="settings-action-row__text">当前状态为 @(device.Enabled ? "启用" : "停用")。</div>
+				</div>
+				<input type="hidden" name="Enabled" value="@((!device.Enabled).ToString(System.Globalization.CultureInfo.InvariantCulture).ToLowerInvariant())" />
+				<button type="submit" class="button button--secondary">@(device.Enabled ? "停用设备" : "启用设备")</button>
+			</form>
+		</div>
+	</section>
+
+	<section class="panel">
+		<div class="panel__header">
+			<h2 class="panel__title">授权用户</h2>
+		</div>
+		<div class="empty-state empty-state--left">
+			授权用户列表 API 暂未实现。后续可以在这里展示有权访问该设备的用户；非 LimitedQuery 用户即使被授权，当前也不会改变其查询范围，但如实落库后可在未来用户权限降级时直接生效，并应在列表中加特殊标记。
+		</div>
+	</section>
+
+	<section class="panel panel--danger">
+		<div class="panel__header">
+			<h2 class="panel__title">危险操作</h2>
+		</div>
+		<div class="device-settings-grid">
+			<form method="post"
+				  asp-page-handler="ResetSecretKey"
+				  class="settings-action-row"
+				  data-confirm-form
+				  data-confirm-title="确认重置操作密钥"
+				  data-confirm-message="重置后旧操作密钥会立即失效，需要把新密钥更新到设备端。"
+				  data-confirm-button-text="确认重置"
+				  data-confirm-variant="danger">
+				<div>
+					<div class="settings-action-row__title">重置操作密钥</div>
+					<div class="settings-action-row__text">生成新的设备操作密钥，并使旧密钥失效。</div>
+				</div>
+				<button type="submit" class="button button--danger">重置密钥</button>
+			</form>
+
+			<form method="post"
+				  asp-page-handler="Delete"
+				  class="settings-action-row"
+				  data-confirm-form
+				  data-delete-device-form
+				  data-device-name="@device.DeviceName"
+				  data-can-be-delete="@canBeDelete.ToString(System.Globalization.CultureInfo.InvariantCulture).ToLowerInvariant()"
+				  data-delete-blocking-message="@deleteBlockingMessage"
+				  data-confirm-title="确认删除设备"
+				  data-confirm-message="删除设备会移除该设备、关联日志及所有相关数据，该操作无法撤销。"
+				  data-confirm-button-text="继续删除"
+				  data-confirm-variant="danger">
+				<div>
+					<div class="settings-action-row__title">删除设备</div>
+					<div class="settings-action-row__text">
+						@if (canBeDelete) {
+							<span>删除设备会移除该设备、关联日志及所有相关数据，该操作无法撤销。</span>
+						} else {
+							<span>@deleteBlockingMessage</span>
+						}
+					</div>
+				</div>
+				<input type="hidden" name="DeleteConfirmationDeviceName" data-delete-confirmation-input />
+				<button type="submit"
+						class="button button--danger"
+						disabled="@(!canBeDelete)"
+						aria-disabled="@((!canBeDelete).ToString(System.Globalization.CultureInfo.InvariantCulture).ToLowerInvariant())">删除设备</button>
+			</form>
 		</div>
 	</section>
 </div>
