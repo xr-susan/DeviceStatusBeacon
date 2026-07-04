@@ -52,6 +52,37 @@ public class ApiCredential : IHasProtectedSecretKey {
 	/// </summary>
 	/// <remarks>此集合由 EF Core 管理</remarks>
 	public ICollection<Device> AuthorizedDevices { get; } = [];
+
+	/// <summary>
+	/// 该 API 凭据有权限查询的设备授权关系列表。
+	/// </summary>
+	/// <remarks>此集合由 EF Core 管理</remarks>
+	public ICollection<ApiCredentialDevice> AuthorizedDeviceLinks { get; } = [];
+}
+
+
+public class ApiCredentialDevice {
+	/// <summary>
+	/// 被授权的 API 凭据 ID。
+	/// </summary>
+	public Guid AuthorizedApiCredentialsApiCredentialId { get; set; }
+
+	/// <summary>
+	/// 被授权的 API 凭据实体。
+	/// </summary>
+	/// <remarks>此实体由 EF Core 管理</remarks>
+	public ApiCredential AuthorizedApiCredential { get; set; } = null!;
+
+	/// <summary>
+	/// 授权设备 ID。
+	/// </summary>
+	public Guid AuthorizedDevicesDeviceId { get; set; }
+
+	/// <summary>
+	/// 授权设备实体。
+	/// </summary>
+	/// <remarks>此实体由 EF Core 管理</remarks>
+	public Device AuthorizedDevice { get; set; } = null!;
 }
 
 
@@ -120,8 +151,20 @@ public class Device : IHasProtectedSecretKey {
 	public ICollection<ApiCredential> AuthorizedApiCredentials { get; } = [];
 
 	/// <summary>
+	/// 有权限查询该设备数据的 API 凭据授权关系列表。
+	/// </summary>
+	/// <remarks>此集合由 EF Core 管理</remarks>
+	public ICollection<ApiCredentialDevice> AuthorizedApiCredentialLinks { get; } = [];
+
+	/// <summary>
 	/// 有权限查询该设备数据的用户列表，仅适用于具有 <see cref="PrincipalRole.LimitedQuery"/> 角色的用户
 	/// </summary>
 	/// <remarks>此集合由 EF Core 管理</remarks>
 	public ICollection<User> AuthorizedUsers { get; } = [];
+
+	/// <summary>
+	/// 有权限查询该设备数据的用户授权关系列表。
+	/// </summary>
+	/// <remarks>此集合由 EF Core 管理</remarks>
+	public ICollection<DeviceUser> AuthorizedUserLinks { get; } = [];
 }

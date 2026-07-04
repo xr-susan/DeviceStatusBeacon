@@ -27,6 +27,12 @@ public class User : IdentityUser<Guid> {
 	public ICollection<Device> AuthorizedDevices { get; } = [];
 
 	/// <summary>
+	/// 该用户有权限查询的设备授权关系列表。
+	/// </summary>
+	/// <remarks>此集合由 EF Core 管理</remarks>
+	public ICollection<DeviceUser> AuthorizedDeviceLinks { get; } = [];
+
+	/// <summary>
 	/// 该用户代设备提交的日志列表
 	/// </summary>
 	/// <remarks>此集合由 EF Core 管理</remarks>
@@ -46,4 +52,29 @@ public class UserRole : IdentityUserRole<Guid> {
 	/// </summary>
 	/// <remarks>此实体由 EF Core 管理</remarks>
 	public User User { get; set; } = null!;
+}
+
+
+public class DeviceUser {
+	/// <summary>
+	/// 授权设备 ID。
+	/// </summary>
+	public Guid AuthorizedDevicesDeviceId { get; set; }
+
+	/// <summary>
+	/// 授权设备实体。
+	/// </summary>
+	/// <remarks>此实体由 EF Core 管理</remarks>
+	public Device AuthorizedDevice { get; set; } = null!;
+
+	/// <summary>
+	/// 被授权用户 ID。
+	/// </summary>
+	public Guid AuthorizedUsersId { get; set; }
+
+	/// <summary>
+	/// 被授权用户实体。
+	/// </summary>
+	/// <remarks>此实体由 EF Core 管理</remarks>
+	public User AuthorizedUser { get; set; } = null!;
 }

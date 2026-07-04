@@ -17,28 +17,6 @@ namespace DeviceStatusBeacon.Migrations {
 #pragma warning disable 612, 618
 			modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
 
-			modelBuilder.Entity("ApiCredentialDevice", b => {
-				b.Property<Guid>("AuthorizedApiCredentialsApiCredentialId")
-					.HasColumnType("TEXT");
-
-				b.Property<Guid>("AuthorizedDevicesDeviceId")
-					.HasColumnType("TEXT");
-
-				b.HasKey("AuthorizedApiCredentialsApiCredentialId", "AuthorizedDevicesDeviceId");
-
-				b.HasIndex("AuthorizedDevicesDeviceId");
-
-				b.ToTable("ApiCredentialDevice", t => {
-					t.HasTrigger("TR_ApiCredentialDevice_EntityAuthInfoVersion_AfterDelete");
-
-					t.HasTrigger("TR_ApiCredentialDevice_EntityAuthInfoVersion_AfterInsert");
-
-					t.HasTrigger("TR_ApiCredentialDevice_EntityAuthInfoVersion_AfterUpdate");
-				});
-
-				b.HasAnnotation("Sqlite:UseSqlReturningClause", false);
-			});
-
 			modelBuilder.Entity("DeviceStatusBeacon.Database.ApiCredential", b => {
 				b.Property<Guid>("ApiCredentialId")
 					.ValueGeneratedOnAdd()
@@ -73,6 +51,28 @@ namespace DeviceStatusBeacon.Migrations {
 					t.HasTrigger("TR_ApiCredentials_EntityAuthInfoVersion_AfterUpdate");
 
 					t.HasCheckConstraint("CK_ApiCredentials_Role_PrincipalRole", "\"Role\" BETWEEN 0 AND 3");
+				});
+
+				b.HasAnnotation("Sqlite:UseSqlReturningClause", false);
+			});
+
+			modelBuilder.Entity("DeviceStatusBeacon.Database.ApiCredentialDevice", b => {
+				b.Property<Guid>("AuthorizedApiCredentialsApiCredentialId")
+					.HasColumnType("TEXT");
+
+				b.Property<Guid>("AuthorizedDevicesDeviceId")
+					.HasColumnType("TEXT");
+
+				b.HasKey("AuthorizedApiCredentialsApiCredentialId", "AuthorizedDevicesDeviceId");
+
+				b.HasIndex("AuthorizedDevicesDeviceId");
+
+				b.ToTable("ApiCredentialDevice", null, t => {
+					t.HasTrigger("TR_ApiCredentialDevice_EntityAuthInfoVersion_AfterDelete");
+
+					t.HasTrigger("TR_ApiCredentialDevice_EntityAuthInfoVersion_AfterInsert");
+
+					t.HasTrigger("TR_ApiCredentialDevice_EntityAuthInfoVersion_AfterUpdate");
 				});
 
 				b.HasAnnotation("Sqlite:UseSqlReturningClause", false);
@@ -133,6 +133,20 @@ namespace DeviceStatusBeacon.Migrations {
 				});
 
 				b.HasAnnotation("Sqlite:UseSqlReturningClause", false);
+			});
+
+			modelBuilder.Entity("DeviceStatusBeacon.Database.DeviceUser", b => {
+				b.Property<Guid>("AuthorizedDevicesDeviceId")
+					.HasColumnType("TEXT");
+
+				b.Property<Guid>("AuthorizedUsersId")
+					.HasColumnType("TEXT");
+
+				b.HasKey("AuthorizedDevicesDeviceId", "AuthorizedUsersId");
+
+				b.HasIndex("AuthorizedUsersId");
+
+				b.ToTable("DeviceUser", (string)null);
 			});
 
 			modelBuilder.Entity("DeviceStatusBeacon.Database.OnlineLog", b => {
@@ -286,20 +300,6 @@ namespace DeviceStatusBeacon.Migrations {
 				b.ToTable("AspNetUserRoles", (string)null);
 			});
 
-			modelBuilder.Entity("DeviceUser", b => {
-				b.Property<Guid>("AuthorizedDevicesDeviceId")
-					.HasColumnType("TEXT");
-
-				b.Property<Guid>("AuthorizedUsersId")
-					.HasColumnType("TEXT");
-
-				b.HasKey("AuthorizedDevicesDeviceId", "AuthorizedUsersId");
-
-				b.HasIndex("AuthorizedUsersId");
-
-				b.ToTable("DeviceUser");
-			});
-
 			modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b => {
 				b.Property<Guid>("Id")
 					.ValueGeneratedOnAdd()
@@ -432,20 +432,6 @@ namespace DeviceStatusBeacon.Migrations {
 				b.ToTable("AspNetUserTokens", (string)null);
 			});
 
-			modelBuilder.Entity("ApiCredentialDevice", b => {
-				b.HasOne("DeviceStatusBeacon.Database.ApiCredential", null)
-					.WithMany()
-					.HasForeignKey("AuthorizedApiCredentialsApiCredentialId")
-					.OnDelete(DeleteBehavior.Cascade)
-					.IsRequired();
-
-				b.HasOne("DeviceStatusBeacon.Database.Device", null)
-					.WithMany()
-					.HasForeignKey("AuthorizedDevicesDeviceId")
-					.OnDelete(DeleteBehavior.Cascade)
-					.IsRequired();
-			});
-
 			modelBuilder.Entity("DeviceStatusBeacon.Database.ApiCredential", b => {
 				b.HasOne("DeviceStatusBeacon.Database.User", "User")
 					.WithMany("ApiCredentials")
@@ -454,6 +440,42 @@ namespace DeviceStatusBeacon.Migrations {
 					.IsRequired();
 
 				b.Navigation("User");
+			});
+
+			modelBuilder.Entity("DeviceStatusBeacon.Database.ApiCredentialDevice", b => {
+				b.HasOne("DeviceStatusBeacon.Database.ApiCredential", "AuthorizedApiCredential")
+					.WithMany("AuthorizedDeviceLinks")
+					.HasForeignKey("AuthorizedApiCredentialsApiCredentialId")
+					.OnDelete(DeleteBehavior.Cascade)
+					.IsRequired();
+
+				b.HasOne("DeviceStatusBeacon.Database.Device", "AuthorizedDevice")
+					.WithMany("AuthorizedApiCredentialLinks")
+					.HasForeignKey("AuthorizedDevicesDeviceId")
+					.OnDelete(DeleteBehavior.Cascade)
+					.IsRequired();
+
+				b.Navigation("AuthorizedApiCredential");
+
+				b.Navigation("AuthorizedDevice");
+			});
+
+			modelBuilder.Entity("DeviceStatusBeacon.Database.DeviceUser", b => {
+				b.HasOne("DeviceStatusBeacon.Database.Device", "AuthorizedDevice")
+					.WithMany("AuthorizedUserLinks")
+					.HasForeignKey("AuthorizedDevicesDeviceId")
+					.OnDelete(DeleteBehavior.Cascade)
+					.IsRequired();
+
+				b.HasOne("DeviceStatusBeacon.Database.User", "AuthorizedUser")
+					.WithMany("AuthorizedDeviceLinks")
+					.HasForeignKey("AuthorizedUsersId")
+					.OnDelete(DeleteBehavior.Cascade)
+					.IsRequired();
+
+				b.Navigation("AuthorizedDevice");
+
+				b.Navigation("AuthorizedUser");
 			});
 
 			modelBuilder.Entity("DeviceStatusBeacon.Database.OnlineLog", b => {
@@ -491,20 +513,6 @@ namespace DeviceStatusBeacon.Migrations {
 				b.Navigation("User");
 			});
 
-			modelBuilder.Entity("DeviceUser", b => {
-				b.HasOne("DeviceStatusBeacon.Database.Device", null)
-					.WithMany()
-					.HasForeignKey("AuthorizedDevicesDeviceId")
-					.OnDelete(DeleteBehavior.Cascade)
-					.IsRequired();
-
-				b.HasOne("DeviceStatusBeacon.Database.User", null)
-					.WithMany()
-					.HasForeignKey("AuthorizedUsersId")
-					.OnDelete(DeleteBehavior.Cascade)
-					.IsRequired();
-			});
-
 			modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b => {
 				b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
 					.WithMany()
@@ -537,12 +545,22 @@ namespace DeviceStatusBeacon.Migrations {
 					.IsRequired();
 			});
 
+			modelBuilder.Entity("DeviceStatusBeacon.Database.ApiCredential", b => {
+				b.Navigation("AuthorizedDeviceLinks");
+			});
+
 			modelBuilder.Entity("DeviceStatusBeacon.Database.Device", b => {
+				b.Navigation("AuthorizedApiCredentialLinks");
+
+				b.Navigation("AuthorizedUserLinks");
+
 				b.Navigation("OnlineLogs");
 			});
 
 			modelBuilder.Entity("DeviceStatusBeacon.Database.User", b => {
 				b.Navigation("ApiCredentials");
+
+				b.Navigation("AuthorizedDeviceLinks");
 
 				b.Navigation("SubmittedOnlineLogs");
 

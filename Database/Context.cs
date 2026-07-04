@@ -23,6 +23,16 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 	public DbSet<ApiCredential> ApiCredentials { get; set; }
 
 	/// <summary>
+	/// 存储 API 凭据到设备授权关系 <seealso cref="ApiCredentialDevice"/> 的实体集合，由 EF Core 自动映射到数据库表
+	/// </summary>
+	public DbSet<ApiCredentialDevice> ApiCredentialDevices { get; set; }
+
+	/// <summary>
+	/// 存储设备到用户授权关系 <seealso cref="DeviceUser"/> 的实体集合，由 EF Core 自动映射到数据库表
+	/// </summary>
+	public DbSet<DeviceUser> DeviceUsers { get; set; }
+
+	/// <summary>
 	/// 存储设置 <seealso cref="SettingInDb"/> 的实体集合，由 EF Core 自动映射到数据库表
 	/// </summary>
 	public DbSet<SettingInDb> Settings { get; set; }
@@ -78,6 +88,29 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 
 			// 定义设备最新日志时间与标准化名称的复合索引，以优化查询最近活跃设备列表的性能
 			deviceBuilder.HasIndex(e => new { e.LatestLogTime, e.NormalizedDeviceName }).IsDescending(true, false);
+
+			// DeviceUser 保留现有表结构，同时显式建模中间表，便于管理侧直接按关系表批量查询和写入
+			deviceBuilder
+				.HasMany(device => device.AuthorizedUsers)
+				.WithMany(user => user.AuthorizedDevices)
+				.UsingEntity<DeviceUser>(
+					joinBuilder => joinBuilder
+						.HasOne(join => join.AuthorizedUser)
+						.WithMany(user => user.AuthorizedDeviceLinks)
+						.HasForeignKey(join => join.AuthorizedUsersId)
+						.OnDelete(DeleteBehavior.Cascade)
+						.IsRequired(),
+					joinBuilder => joinBuilder
+						.HasOne(join => join.AuthorizedDevice)
+						.WithMany(device => device.AuthorizedUserLinks)
+						.HasForeignKey(join => join.AuthorizedDevicesDeviceId)
+						.OnDelete(DeleteBehavior.Cascade)
+						.IsRequired(),
+					joinBuilder => {
+						joinBuilder.HasKey(join => new { join.AuthorizedDevicesDeviceId, join.AuthorizedUsersId });
+						joinBuilder.HasIndex(join => join.AuthorizedUsersId);
+						joinBuilder.ToTable("DeviceUser");
+					});
 		});
 
 		// 配置 OnlineLog 实体：声明摘要同步触发器，并为历史查询与摘要回写建立索引
@@ -140,17 +173,33 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 			// 此索引可同时作用于按 UserId 单项的查询，同样可以提升按 UserId 查询的性能
 			apiCredentialBuilder.HasIndex(e => new { e.UserId, e.DisplayName }).IsUnique();
 
-			// ApiCredentialDevice 需要挂接触发器元数据，因此这里保留最小范围的关系配置
+			// ApiCredentialDevice 需要挂接触发器元数据，同时显式建模中间表，便于后续直接操作凭据授权关系
 			apiCredentialBuilder
-				.HasMany(c => c.AuthorizedDevices)
-				.WithMany(d => d.AuthorizedApiCredentials)
-				.UsingEntity(joinBuilder =>
-					joinBuilder.ToTable(tableBuilder => {
-						tableBuilder.HasTrigger(SqliteTriggerNames.ApiCredentialDeviceEntityAuthInfoVersionAfterInsert);
-						tableBuilder.HasTrigger(SqliteTriggerNames.ApiCredentialDeviceEntityAuthInfoVersionAfterUpdate);
-						tableBuilder.HasTrigger(SqliteTriggerNames.ApiCredentialDeviceEntityAuthInfoVersionAfterDelete);
-						tableBuilder.UseSqlReturningClause(false);
-					}));
+				.HasMany(credential => credential.AuthorizedDevices)
+				.WithMany(device => device.AuthorizedApiCredentials)
+				.UsingEntity<ApiCredentialDevice>(
+					joinBuilder => joinBuilder
+						.HasOne(join => join.AuthorizedDevice)
+						.WithMany(device => device.AuthorizedApiCredentialLinks)
+						.HasForeignKey(join => join.AuthorizedDevicesDeviceId)
+						.OnDelete(DeleteBehavior.Cascade)
+						.IsRequired(),
+					joinBuilder => joinBuilder
+						.HasOne(join => join.AuthorizedApiCredential)
+						.WithMany(credential => credential.AuthorizedDeviceLinks)
+						.HasForeignKey(join => join.AuthorizedApiCredentialsApiCredentialId)
+						.OnDelete(DeleteBehavior.Cascade)
+						.IsRequired(),
+					joinBuilder => {
+						joinBuilder.HasKey(join => new { join.AuthorizedApiCredentialsApiCredentialId, join.AuthorizedDevicesDeviceId });
+						joinBuilder.HasIndex(join => join.AuthorizedDevicesDeviceId);
+						joinBuilder.ToTable("ApiCredentialDevice", tableBuilder => {
+							tableBuilder.HasTrigger(SqliteTriggerNames.ApiCredentialDeviceEntityAuthInfoVersionAfterInsert);
+							tableBuilder.HasTrigger(SqliteTriggerNames.ApiCredentialDeviceEntityAuthInfoVersionAfterUpdate);
+							tableBuilder.HasTrigger(SqliteTriggerNames.ApiCredentialDeviceEntityAuthInfoVersionAfterDelete);
+							tableBuilder.UseSqlReturningClause(false);
+						});
+					});
 		});
 
 		// 配置 UserRole 实体：把 Identity 的用户角色关系收紧为“一用户最多一个角色”
