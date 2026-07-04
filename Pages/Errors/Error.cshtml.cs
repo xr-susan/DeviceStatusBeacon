@@ -14,6 +14,11 @@ namespace DeviceStatusBeacon.Pages.Errors;
 [IgnoreAntiforgeryToken]
 public class ErrorModel : PageModel {
 	/// <summary>
+	/// 原始状态码
+	/// </summary>
+	public int OriginalStatusCode { get; private set; } = StatusCodes.Status500InternalServerError;
+
+	/// <summary>
 	/// 请求标识
 	/// </summary>
 	public string RequestId { get; private set; } = string.Empty;
@@ -82,6 +87,7 @@ public class ErrorModel : PageModel {
 
 		var statusCode = ErrorPageHelper.GetExceptionStatusCode(exceptionFeature.Error);
 		Response.StatusCode = statusCode;
+		OriginalStatusCode = statusCode;
 
 		RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
 		OriginalPathAndQuery = $"{Request.PathBase}{exceptionFeature.Path}{Request.QueryString}";

@@ -12,6 +12,10 @@
 		<p class="panel__text">@Model.Description</p>
 
 		<dl class="info-list">
+			<div class="info-list__row">
+				<dt>HTTP 状态码</dt>
+				<dd class="code-text">@Model.OriginalStatusCode</dd>
+			</div>
 			@if (!string.IsNullOrWhiteSpace(Model.OriginalPathAndQuery)) {
 				<div class="info-list__row">
 					<dt>原始目标</dt>
