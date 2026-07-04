@@ -56,6 +56,39 @@ public static class IQueryableExtensions {
 	}
 
 	/// <summary>
+	/// 为 <see cref="IQueryable{ApiCredential}"/> 提供 API 凭据筛选相关的扩展方法组
+	/// </summary>
+	/// <param name="apiCredentials">API 凭据查询</param>
+	extension(IQueryable<ApiCredential> apiCredentials) {
+		/// <summary>
+		/// 按 API 凭据 ID 筛选 API 凭据查询。
+		/// </summary>
+		/// <param name="apiCredentialId">API 凭据 ID</param>
+		/// <returns>应用筛选后的 API 凭据查询</returns>
+		public IQueryable<ApiCredential> WhereApiCredentialId(Guid apiCredentialId) =>
+			apiCredentials.Where(credential => credential.ApiCredentialId == apiCredentialId);
+
+		/// <summary>
+		/// 按所属用户 ID 筛选 API 凭据查询。
+		/// </summary>
+		/// <param name="ownerUserId">所属用户 ID</param>
+		/// <returns>应用筛选后的 API 凭据查询</returns>
+		public IQueryable<ApiCredential> WhereOwnerUserId(Guid ownerUserId) =>
+			apiCredentials.Where(credential => credential.UserId == ownerUserId);
+
+		/// <summary>
+		/// 按所属用户名筛选 API 凭据查询。
+		/// </summary>
+		/// <param name="ownerUserName">所属用户名查找条件</param>
+		/// <returns>应用筛选后的 API 凭据查询</returns>
+		public IQueryable<ApiCredential> WhereOwnerUserName(IdentityNameLookup ownerUserName) {
+			ArgumentNullException.ThrowIfNull(ownerUserName);
+
+			return apiCredentials.Where(credential => credential.User.NormalizedUserName == ownerUserName.NormalizedName);
+		}
+	}
+
+	/// <summary>
 	/// 为 <see cref="IQueryable{OnlineLog}"/> 提供日志筛选相关的扩展方法组
 	/// </summary>
 	/// <param name="logs">日志查询</param>

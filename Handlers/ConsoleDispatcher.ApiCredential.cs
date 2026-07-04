@@ -81,7 +81,7 @@ public static partial class ConsoleDispatcher {
 
 		var apiCredentials = await db.ApiCredentials
 			.AsNoTracking()
-			.Where(c => c.User.NormalizedUserName == ownerNameLookup.NormalizedName)
+			.WhereOwnerUserName(ownerNameLookup)
 			.Select(c => new {
 				c.ApiCredentialId,
 				c.DisplayName,
@@ -205,7 +205,7 @@ public static partial class ConsoleDispatcher {
 		var unprotectedSecretKey = ISecurityServiceV1.GenerateRandomBytes();
 
 		var updatedCount = await db.ApiCredentials
-			.Where(c => c.ApiCredentialId == credentialIdToReset)
+			.WhereApiCredentialId(credentialIdToReset)
 			.ExecuteUpdateAsync(c => c.SetProperty(credential => credential.ProtectedSecretKey, dataProtector.ProtectKey(unprotectedSecretKey)));
 
 		if (updatedCount == 0) {
@@ -232,7 +232,7 @@ public static partial class ConsoleDispatcher {
 		}
 
 		var deletedCount = await db.ApiCredentials
-			.Where(c => c.ApiCredentialId == credentialIdToDelete)
+			.WhereApiCredentialId(credentialIdToDelete)
 			.ExecuteDeleteAsync();
 
 		if (deletedCount == 0) {

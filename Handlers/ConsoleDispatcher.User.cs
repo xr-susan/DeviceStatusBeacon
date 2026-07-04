@@ -323,13 +323,13 @@ public static partial class ConsoleDispatcher {
 
 			// 通过用户 ID 查询相关的 API 凭据，利用索引加速查询
 			apiCredentialsToUpdate = await db.ApiCredentials
-				.Where(c => c.UserId == userId)
+				.WhereOwnerUserId(userId)
 				.Include(c => c.AuthorizedDevices)
 				.ToListAsync();
 		} else {
 			// 通过用户 ID 查询相关的 API 凭据，利用索引加速查询
 			apiCredentialsToUpdate = await db.ApiCredentials
-				.Where(c => c.UserId == userId)
+				.WhereOwnerUserId(userId)
 				.ToListAsync();
 		}
 
