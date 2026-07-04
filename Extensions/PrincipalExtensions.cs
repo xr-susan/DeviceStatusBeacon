@@ -124,7 +124,7 @@ public static class PrincipalExtensions {
 
 			var roleClaims = identity.FindAll(ClaimTypes.Role);
 			foreach (var claim in roleClaims) {
-				if (!Enum.TryParse<PrincipalRole>(claim.Value, true, out var parsedRole)) {
+				if (!PrincipalRole.TryParse(claim.Value, out var parsedRole)) {
 					continue;
 				}
 
@@ -153,6 +153,25 @@ public static class PrincipalExtensions {
 				PrincipalQueryScope.Limited => "部分设备",
 				_ => "无查询权限"
 			};
+	}
+
+	/// <summary>
+	/// 为 <see cref="PrincipalRole"/> 提供字符串解析为主体角色的扩展方法组
+	/// </summary>
+	extension(PrincipalRole) {
+		/// <summary>
+		/// 尝试将字符串解析为已定义的主体角色。
+		/// </summary>
+		/// <param name="roleString">角色字符串</param>
+		/// <param name="role">解析得到的主体角色</param>
+		/// <returns>如果字符串能解析为已定义的主体角色，则返回 true；否则返回 false</returns>
+		public static bool TryParse(string? roleString, out PrincipalRole role) {
+			var result = Enum.TryParse(roleString, true, out role) && Enum.IsDefined(role);
+			if (!result) {
+				role = default;
+			}
+			return result;
+		}
 	}
 }
 

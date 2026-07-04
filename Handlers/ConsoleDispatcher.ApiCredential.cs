@@ -111,7 +111,7 @@ public static partial class ConsoleDispatcher {
 	/// <param name="displayName">API 凭据的显示名称（可选）</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
 	private static async Task<int> HandleApiCredentialAddAsync(DeviceStatusBeaconContext db, IServiceProvider sp, string ownerUserName, string roleString, string? displayName = null) {
-		if (!Enum.TryParse(roleString, true, out PrincipalRole role)) {
+		if (!PrincipalRole.TryParse(roleString, out var role)) {
 			Console.WriteLine("无效的 API 凭据角色");
 			return 3;
 		}
@@ -145,7 +145,7 @@ public static partial class ConsoleDispatcher {
 			return 2;
 		}
 
-		if (!Enum.TryParse(owner.RoleName, true, out PrincipalRole ownerRole)) {
+		if (!PrincipalRole.TryParse(owner.RoleName, out var ownerRole)) {
 			Console.WriteLine("所属用户未正确设置角色");
 			return 6;
 		}

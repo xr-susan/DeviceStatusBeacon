@@ -117,7 +117,7 @@ public static partial class ConsoleDispatcher {
 			return 3;
 		}
 
-		if (!Enum.TryParse(roleString, true, out PrincipalRole role)) {
+		if (!PrincipalRole.TryParse(roleString, out var role)) {
 			Console.WriteLine("无效的用户角色");
 			return 3;
 		}
@@ -216,7 +216,7 @@ public static partial class ConsoleDispatcher {
 	/// <param name="roleString">要设置的角色字符串</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
 	private static async Task<int> HandleUserSetRoleAsync(DeviceStatusBeaconContext db, UserManager<User> userManager, string userName, string roleString) {
-		if (!Enum.TryParse(roleString, true, out PrincipalRole role)) {
+		if (!PrincipalRole.TryParse(roleString, out var role)) {
 			Console.WriteLine("无效的用户角色");
 			return 3;
 		}
@@ -252,7 +252,7 @@ public static partial class ConsoleDispatcher {
 
 		// 收窄相应的全部 API 凭据的权限范围（如果有的话），以匹配用户的新角色
 		// 原先不存在角色、原先的角色有误、角色降级这三种情况下需要进行权限范围的收窄
-		if (currentRoles.Count == 0 || !Enum.TryParse(currentRoles[0], true, out PrincipalRole currentRole) || role < currentRole) {
+		if (currentRoles.Count == 0 || !PrincipalRole.TryParse(currentRoles[0], out var currentRole) || role < currentRole) {
 			await ShrinkApiCredentialScopesAsync(db, user.Id, role);
 		}
 
