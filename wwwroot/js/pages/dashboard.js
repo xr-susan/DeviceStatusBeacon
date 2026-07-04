@@ -67,9 +67,7 @@ function renderRecentDeviceActivities(devices) {
         const latestLogTime = formatLocalDateTime(device.latestLogTime);
         const enabledText = device.enabled ? "启用" : "停用";
         const enabledClass = device.enabled ? "status-pill--success" : "status-pill--muted";
-        const latestReportedAddresses = Array.isArray(device.latestReportedAddresses) && device.latestReportedAddresses.length > 0
-            ? device.latestReportedAddresses.join(", ")
-            : "暂无地址";
+        const latestReportedAddresses = getRecentReportedAddressSummary(device.latestReportedAddresses);
         const latestReporterRemoteAddress = device.latestReporterRemoteAddress || "未知";
         const recentLogCount = Number.isInteger(device.recentLogCount) ? device.recentLogCount : 0;
 
@@ -102,8 +100,13 @@ function renderRecentDeviceActivities(devices) {
                 createElement("div", {
                     className: "dashboard-activity-item__details",
                     children: [
-                        createLabeledDetail("最近地址", latestReportedAddresses),
-                        createLabeledDetail("来源地址", latestReporterRemoteAddress)
+                        createLabeledDetail("最近地址", latestReportedAddresses, {
+                            valueClassName: "network-address",
+                            overflowText: "..."
+                        }),
+                        createLabeledDetail("来源地址", latestReporterRemoteAddress, {
+                            valueClassName: "network-address"
+                        })
                     ]
                 })
             ]
@@ -113,6 +116,21 @@ function renderRecentDeviceActivities(devices) {
     }
 
     return list;
+}
+
+// 仪表板最近活动只展示前两个地址，保持和设备列表一致的摘要密度
+function getRecentReportedAddressSummary(addresses) {
+    if (!Array.isArray(addresses) || addresses.length === 0) {
+        return {
+            text: "暂无地址",
+            hasOverflow: false
+        };
+    }
+
+    return {
+        text: addresses.slice(0, 2).join(", "),
+        hasOverflow: addresses.length > 2
+    };
 }
 
 // 将服务端返回的时间值格式化为本地可读时间文本
@@ -138,15 +156,34 @@ function formatLocalDateTime(value) {
 }
 
 // 创建用于“标签 + 值”结构的详情行
-function createLabeledDetail(label, value) {
+function createLabeledDetail(label, value, { valueClassName, overflowText } = {}) {
     // 标签仍使用独立 span，方便复用现有 detail-label 样式
     const row = document.createElement("div");
+    const valueText = typeof value === "object" && value !== null && "text" in value
+        ? value.text
+        : value;
+    const hasOverflow = typeof value === "object" && value !== null && Boolean(value.hasOverflow);
+    const valueElement = createElement("span", {
+        className: valueClassName,
+        text: valueText
+    });
+
+    if (hasOverflow && overflowText) {
+        valueElement.append(
+            " ",
+            createElement("span", {
+                className: "subtext",
+                text: overflowText
+            })
+        );
+    }
+
     row.append(
         createElement("span", {
             className: "detail-label",
             text: label
         }),
-        String(value)
+        valueElement
     );
 
     return row;
