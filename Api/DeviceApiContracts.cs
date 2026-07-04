@@ -1,6 +1,4 @@
-﻿using DeviceStatusBeacon.Services;
-
-namespace DeviceStatusBeacon.Api;
+﻿namespace DeviceStatusBeacon.Api;
 
 /// <summary>
 /// 设备列表 API 响应。

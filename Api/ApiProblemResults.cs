@@ -1,5 +1,4 @@
 ﻿using DeviceStatusBeacon.Pages.Errors;
-using DeviceStatusBeacon.Services;
 
 namespace DeviceStatusBeacon.Api;
 

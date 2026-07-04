@@ -1,5 +1,4 @@
-﻿using DeviceStatusBeacon.Services;
-using Microsoft.AspNetCore.DataProtection;
+﻿using Microsoft.AspNetCore.DataProtection;
 
 namespace DeviceStatusBeacon.Extensions;
 

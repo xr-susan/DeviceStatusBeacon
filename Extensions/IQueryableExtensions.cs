@@ -90,6 +90,7 @@ public static class IQueryableExtensions {
 			var normalizedDeviceName = searchTerm.NormalizedDeviceName;
 			var displayName = searchTerm.DisplayName;
 			if (normalizedDeviceName is null) {
+				// 如果没有指定设备名称，则只按显示名称筛选
 				return displayName is null
 					? logs
 					: logs.Where(log => log.Device.DisplayName != null

@@ -1,6 +1,4 @@
-﻿using DeviceStatusBeacon.Services;
-
-namespace DeviceStatusBeacon.Handlers;
+﻿namespace DeviceStatusBeacon.Handlers;
 
 /// <inheritdoc/>
 public static partial class ConsoleDispatcher {

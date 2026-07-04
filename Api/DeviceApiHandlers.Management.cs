@@ -1,6 +1,4 @@
-﻿using DeviceStatusBeacon.Services;
-
-namespace DeviceStatusBeacon.Api;
+﻿namespace DeviceStatusBeacon.Api;
 
 internal static partial class DeviceApiHandlers {
 	/// <summary>

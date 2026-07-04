@@ -1,6 +1,4 @@
-﻿using DeviceStatusBeacon.Services;
-
-namespace DeviceStatusBeacon.Api;
+﻿namespace DeviceStatusBeacon.Api;
 
 /// <summary>
 /// Dashboard 相关 Minimal API 处理逻辑。
