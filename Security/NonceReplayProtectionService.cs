@@ -54,7 +54,7 @@ public sealed class NonceReplayProtectionService : INonceReplayProtectionService
 			// nonce 的主索引只保留一份字典：
 			// 如果键不存在，则直接写入；
 			// 如果键已存在但已过期，则原位刷新；
-			// 如果键已存在且尚未过期，则视为重放。
+			// 如果键已存在且尚未过期，则视为重放
 			if (reservedNonceExpirations.TryGetValue(nonceCacheKey, out var existingExpiration)
 				&& existingExpiration > currentTimestamp) {
 				return false;

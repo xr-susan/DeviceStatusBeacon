@@ -41,7 +41,7 @@ public sealed class OnlineLogCommandService(DeviceStatusBeaconContext dbContext)
 		}
 
 		// 构造日志实体并直接写入数据库；
-		// 当前日志时间统一以后端确认写入时间为准，请求方不参与指定。
+		// 当前日志时间统一以后端确认写入时间为准，请求方不参与指定
 		var newLog = new OnlineLog {
 			DeviceId = deviceId,
 			LogTime = DateTime.UtcNow,

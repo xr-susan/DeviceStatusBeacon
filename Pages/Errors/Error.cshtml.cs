@@ -80,7 +80,7 @@ public class ErrorModel : PageModel {
 	private IActionResult ProcessRequest() {
 		var exceptionFeature = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
 
-		// 如果连异常处理中间件写入的原始路径都不存在，说明不是管线内部转入，而是用户主动访问了该页。
+		// 如果连异常处理中间件写入的原始路径都不存在，说明不是管线内部转入，而是用户主动访问了该页
 		if (string.IsNullOrWhiteSpace(exceptionFeature?.Path)) {
 			return NotFound();
 		}
@@ -96,10 +96,10 @@ public class ErrorModel : PageModel {
 		PageTitle = title;
 		Description = detail;
 
-		// 根据原始失败路径和当前请求头协商失败响应输出模式。
+		// 根据原始失败路径和当前请求头协商失败响应输出模式
 		var responseMode = Request.GetFailureResponseMode(exceptionFeature.Path);
 
-		// 根据协商结果返回 HTML 页面、Problem+Json 错误详情或空响应。
+		// 根据协商结果返回 HTML 页面、Problem+Json 错误详情或空响应
 		return responseMode switch {
 			FailureResponseMode.Json => new ObjectResult(ErrorPageHelper.CreateProblemDetails(
 				HttpContext,

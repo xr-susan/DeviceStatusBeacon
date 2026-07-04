@@ -124,8 +124,8 @@ public static class AuthenticationServiceCollectionExtensions {
 					.RequireRole(
 						nameof(PrincipalRole.DeviceManager),
 						nameof(PrincipalRole.Administrator)))
-				// 统一日志提交入口，不区分“设备主体直接提交”和“高权限主体代提交”两类场景。
-				// 只要主体满足管理员、设备管理员或 Device 角色之一，即可进入日志写入流程。
+				// 统一日志提交入口，不区分“设备主体直接提交”和“高权限主体代提交”两类场景
+				// 只要主体满足管理员、设备管理员或 Device 角色之一，即可进入日志写入流程
 				.AddPolicy(AuthorizationPolicyNames.LogSubmission, policy => policy
 					.AddAuthenticationSchemes(AuthenticationSchemeNames.Hybrid)
 					.RequireRole(

@@ -44,7 +44,7 @@ internal static partial class DeviceApiHandlers {
 			return Results.Ok(commandResult);
 		} catch (OnlineLogCommandException e) {
 			// 在线日志命令服务会把常见业务失败统一转成带状态码的异常；
-			// Minimal API 终结点在这里再将其转换为一致的 ProblemDetails JSON 响应。
+			// Minimal API 终结点在这里再将其转换为一致的 ProblemDetails JSON 响应
 			return ApiProblemResults.FromServiceCommandException(context, e);
 		}
 	}

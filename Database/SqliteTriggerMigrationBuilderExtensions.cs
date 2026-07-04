@@ -38,8 +38,8 @@ internal static class SqliteTriggerMigrationBuilderExtensions {
 		/// </remarks>
 		private void CreateEntityAuthInfoVersionTriggers() {
 
-			// 这些触发器负责在鉴权相关实体被写入后刷新版本字符串，
-			// 让运行中的进程可以据此判断本地鉴权缓存是否应当失效。
+			// 这些触发器负责在鉴权相关实体被写入后刷新版本字符串
+			// 让运行中的进程可以据此判断本地鉴权缓存是否应当失效
 			EmitSimpleVersionTriggers(
 				migrationBuilder,
 				"ApiCredentials",

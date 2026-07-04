@@ -83,7 +83,7 @@ public class StatusCodeModel : PageModel {
 
 		var statusCodeReExecuteFeature = HttpContext.Features.Get<IStatusCodeReExecuteFeature>();
 
-		// 用户主动访问内部状态码页时，不认定为合法流程，一律转成 404。
+		// 用户主动访问内部状态码页时，不认定为合法流程，一律转成 404
 		if (statusCodeReExecuteFeature is null) {
 			Response.StatusCode = StatusCodes.Status404NotFound;
 			OriginalStatusCode = StatusCodes.Status404NotFound;

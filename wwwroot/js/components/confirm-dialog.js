@@ -1,6 +1,6 @@
 let nextDialogId = 1;
 
-// 创建一次性的确认弹窗实例；调用方可以按需传入标题、正文、确认按钮和输入校验。
+// 创建一次性的确认弹窗实例；调用方可以按需传入标题、正文、确认按钮和输入校验
 export function createConfirmDialog(defaultOptions = {}) {
     return {
         open(options = {}) {

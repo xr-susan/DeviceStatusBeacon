@@ -26,7 +26,7 @@ public static class ReverseProxyForwardedHeadersExtensions {
 			services.AddSingleton(reverseProxyConfiguration);
 
 			if (!reverseProxyConfiguration.Enabled) {
-				// 未启用反向代理模式时保持 ASP.NET Core 默认行为，不额外注册转发请求头处理选项。
+				// 未启用反向代理模式时保持 ASP.NET Core 默认行为，不额外注册转发请求头处理选项
 				return services;
 			}
 
@@ -38,13 +38,13 @@ public static class ReverseProxyForwardedHeadersExtensions {
 					ForwardedHeaders.XForwardedPrefix;
 
 				// KnownIPNetworks 是转发请求头的信任边界；
-				// 只有来自这些网段或 ASP.NET Core 默认可信代理的请求头才会被中间件采信。
+				// 只有来自这些网段或 ASP.NET Core 默认可信代理的请求头才会被中间件采信
 				foreach (var knownNetwork in reverseProxyConfiguration.KnownNetworks) {
 					options.KnownIPNetworks.Add(knownNetwork);
 				}
 
 				if (reverseProxyConfiguration.AllowedHosts.Count > 0) {
-					// 只有配置了外部 Host 白名单时才处理 X-Forwarded-Host，避免错误代理配置放大 Host 伪造风险。
+					// 只有配置了外部 Host 白名单时才处理 X-Forwarded-Host，避免错误代理配置放大 Host 伪造风险
 					options.ForwardedHeaders |= ForwardedHeaders.XForwardedHost;
 
 					foreach (var allowedHost in reverseProxyConfiguration.AllowedHosts) {
@@ -68,7 +68,7 @@ public static class ReverseProxyForwardedHeadersExtensions {
 		/// <returns>当前应用构建器</returns>
 		public IApplicationBuilder UseReverseProxyForwardedHeaders() =>
 			app.ApplicationServices.GetRequiredService<ReverseProxyConfiguration>().Enabled
-				// 转发请求头需要尽早处理，后续认证、签名校验、链接生成和日志写入才能看到外部请求上下文。
+				// 转发请求头需要尽早处理，后续认证、签名校验、链接生成和日志写入才能看到外部请求上下文
 				? app.UseForwardedHeaders()
 				: app;
 	}
