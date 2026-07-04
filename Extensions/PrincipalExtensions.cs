@@ -156,6 +156,18 @@ public static class PrincipalExtensions {
 	}
 
 	/// <summary>
+	/// 为 <see cref="TEnum"/> 提供枚举值定义判定的扩展方法组
+	/// </summary>
+	/// <param name="value">当前要判定是否为已定义枚举值的枚举实例</param>
+	extension<TEnum>(TEnum value) where TEnum : struct, Enum {
+		/// <summary>
+		/// 判断当前枚举值是否为已定义的枚举值。
+		/// </summary>
+		/// <returns>如果当前枚举值已定义，则返回 true；否则返回 false</returns>
+		public bool IsDefined() => Enum.IsDefined(value);
+	}
+
+	/// <summary>
 	/// 为 <see cref="PrincipalRole"/> 提供字符串解析为主体角色的扩展方法组
 	/// </summary>
 	extension(PrincipalRole) {
@@ -166,7 +178,7 @@ public static class PrincipalExtensions {
 		/// <param name="role">解析得到的主体角色</param>
 		/// <returns>如果字符串能解析为已定义的主体角色，则返回 true；否则返回 false</returns>
 		public static bool TryParse(string? roleString, out PrincipalRole role) {
-			var result = Enum.TryParse(roleString, true, out role) && Enum.IsDefined(role);
+			var result = Enum.TryParse(roleString, true, out role) && role.IsDefined();
 			if (!result) {
 				role = default;
 			}

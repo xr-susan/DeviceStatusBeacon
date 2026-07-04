@@ -88,7 +88,7 @@ public sealed record AuthenticationHeaderV1(AuthenticationSchemeV1 Scheme, Guid 
 
 		// 解析 Scheme，确保是存在且有效的 Scheme
 		if (!Enum.TryParse(authorizationHeaderValueSpan[headerPartsRange[0]], out AuthenticationSchemeV1 scheme)
-			|| !Enum.IsDefined(scheme) || scheme == AuthenticationSchemeV1.Unknown) {
+			|| !scheme.IsDefined() || scheme == AuthenticationSchemeV1.Unknown) {
 			return false;
 		}
 
