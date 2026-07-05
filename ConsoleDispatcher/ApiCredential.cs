@@ -21,9 +21,8 @@ public static partial class ConsoleDispatcher {
 			// api-credential query-by-user <user-name>
 			["query-by-user", var ownerUserName] => await HandleApiCredentialQueryByUserAsync(db, sp, ownerUserName),
 
-			// api-credential add <owner-user-name> <role> [display-name]
+			// api-credential add <owner-user-name> <role> <display-name>
 			["add", var ownerUserName, var roleString, var displayName] => await HandleApiCredentialAddAsync(db, sp, ownerUserName, roleString, displayName),
-			["add", var ownerUserName, var roleString] => await HandleApiCredentialAddAsync(db, sp, ownerUserName, roleString),
 
 			// api-credential reset-key <api-credential-id>
 			["reset-key", var credentialIdString] => await HandleApiCredentialResetKeyAsync(db, sp, credentialIdString),
@@ -102,7 +101,7 @@ public static partial class ConsoleDispatcher {
 	}
 
 	/// <summary>
-	/// 处理 api-credential add <owner-user-name> <role> [display-name] 命令，在所属用户存在且角色边界合法时创建新的 API 凭据
+	/// 处理 api-credential add <owner-user-name> <role> <display-name> 命令，在所属用户存在且角色边界合法时创建新的 API 凭据
 	/// </summary>
 	/// <param name="db">数据库上下文</param>
 	/// <param name="sp">负责依赖注入的服务提供者</param>
@@ -110,7 +109,7 @@ public static partial class ConsoleDispatcher {
 	/// <param name="roleString">要分配的角色字符串</param>
 	/// <param name="displayName">API 凭据的显示名称（可选）</param>
 	/// <returns>一个表示异步操作的任务，返回操作结果的状态码</returns>
-	private static async Task<int> HandleApiCredentialAddAsync(DeviceStatusBeaconContext db, IServiceProvider sp, string ownerUserName, string roleString, string? displayName = null) {
+	private static async Task<int> HandleApiCredentialAddAsync(DeviceStatusBeaconContext db, IServiceProvider sp, string ownerUserName, string roleString, string displayName) {
 		if (!PrincipalRole.TryParse(roleString, out var role)) {
 			Console.WriteLine("无效的 API 凭据角色");
 			return 3;
@@ -121,6 +120,11 @@ public static partial class ConsoleDispatcher {
 			// 因此计划仅通过 Web / API 支持 LimitedQuery 角色的 API 凭据创建
 			Console.WriteLine("暂不支持使用命令行创建 LimitedQuery 角色的 API 凭据");
 			return 5;
+		}
+
+		if (string.IsNullOrWhiteSpace(displayName)) {
+			Console.WriteLine("API 凭据显示名称不能为空");
+			return 3;
 		}
 
 		if (!IdentityNameRules.IsValid(ownerUserName)) {
@@ -160,6 +164,7 @@ public static partial class ConsoleDispatcher {
 
 		var newCredential = new ApiCredential {
 			UserId = owner.Id,
+			DisplayName = displayName,
 			ProtectedSecretKey = dataProtector.ProtectKey(unprotectedSecretKey),
 			Role = role
 		};
