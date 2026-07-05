@@ -4,6 +4,12 @@
 	ViewData["Title"] = "日志";
 	var session = Model.PageData.Session;
 	var pagination = Model.PageData.Pagination;
+
+	// 设置空状态提示信息，仅在当前没查到日志时才显示
+	var emptyStateMessage = "没有找到符合条件的日志。";
+	if (string.IsNullOrWhiteSpace(Model.DeviceKeyword)) {
+		emptyStateMessage = session.Role.CanQueryAllDevices() ? "系统中当前暂无任何日志" : "当前账户没有可读取的日志。";
+	}
 }
 
 @section HeadStyles {
@@ -53,7 +59,7 @@
 			@if (Model.PageData.Logs.Count != pagination.TotalCount) {
 				<span class="meta-pill">当前展示 @Model.PageData.Logs.Count</span>
 			}
-			<span class="meta-pill">范围 @session.Role.GetDeviceQueryScopeText()</span>
+			<span class="meta-pill">权限范围 @session.Role.GetDeviceQueryScopeText()</span>
 			@if (!string.IsNullOrWhiteSpace(Model.DeviceKeyword)) {
 				<span class="meta-pill">筛选 @Model.DeviceKeyword</span>
 			}
@@ -89,7 +95,7 @@
 		</div>
 
 		@if (Model.PageData.Logs.Count == 0) {
-			<div class="empty-state">@(session.Role.CanQueryAnyDevices() ? "没有找到符合条件的日志。" : "当前账户没有可读取的日志。")</div>
+			<div class="empty-state">@emptyStateMessage</div>
 		} else {
 			<div class="log-list">
 				@foreach (var log in Model.PageData.Logs) {

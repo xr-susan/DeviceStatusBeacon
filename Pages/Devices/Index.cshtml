@@ -4,6 +4,12 @@
 	ViewData["Title"] = "设备";
 	var session = Model.PageData.Session;
 	var pagination = Model.PageData.Pagination;
+
+	// 设置空状态提示信息，仅在当前没查到设备时才显示
+	var emptyStateMessage = "没有找到符合条件的设备。";
+	if (string.IsNullOrWhiteSpace(Model.SearchTerm)) {
+		emptyStateMessage = session.Role.CanQueryAllDevices() ? "系统中当前暂无任何设备" : "当前账户没有可读取的设备。";
+	}
 }
 
 @section HeadStyles {
@@ -65,7 +71,7 @@
 			@if (Model.PageData.Devices.Count != pagination.TotalCount) {
 				<span class="meta-pill">当前展示 @Model.PageData.Devices.Count</span>
 			}
-			<span class="meta-pill">范围 @session.Role.GetDeviceQueryScopeText()</span>
+			<span class="meta-pill">权限范围 @session.Role.GetDeviceQueryScopeText()</span>
 			@if (!string.IsNullOrWhiteSpace(Model.SearchTerm)) {
 				<span class="meta-pill">筛选 @Model.SearchTerm</span>
 			}
@@ -101,7 +107,7 @@
 		</div>
 
 		@if (Model.PageData.Devices.Count == 0) {
-			<div class="empty-state">@(session.Role.CanQueryAnyDevices() ? "没有找到符合条件的设备。" : "当前账户没有可读取的设备。")</div>
+			<div class="empty-state">@emptyStateMessage</div>
 		} else {
 			<div class="table-wrap">
 				<table class="table devices-table">

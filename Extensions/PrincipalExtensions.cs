@@ -12,11 +12,11 @@ public static class PrincipalExtensions {
 	/// <param name="role">当前要判定能力边界的角色值</param>
 	extension(PrincipalRole? role) {
 		/// <summary>
-		/// 判断当前角色是否具备设备及日志读取能力。
+		/// 判断当前角色是否具备所有设备数据读取能力。
 		/// </summary>
-		/// <returns>如果具备任意设备数据读取能力，则返回 true；否则返回 false</returns>
-		public bool CanQueryAnyDevices() =>
-			role is PrincipalRole.LimitedQuery or PrincipalRole.FullQuery or PrincipalRole.DeviceManager or PrincipalRole.Administrator;
+		/// <returns>如果具备所有设备数据读取能力，则返回 true；否则返回 false</returns>
+		public bool CanQueryAllDevices() =>
+			role is PrincipalRole.FullQuery or PrincipalRole.DeviceManager or PrincipalRole.Administrator;
 
 		/// <summary>
 		/// 判断当前角色是否具备设备管理能力。
@@ -39,7 +39,7 @@ public static class PrincipalExtensions {
 			role switch {
 				PrincipalRole.FullQuery or PrincipalRole.DeviceManager or PrincipalRole.Administrator => PrincipalQueryScope.Full,
 				PrincipalRole.LimitedQuery => PrincipalQueryScope.Limited,
-				_ => PrincipalQueryScope.None
+				_ => PrincipalQueryScope.Unknown
 			};
 
 		/// <summary>
@@ -144,7 +144,7 @@ public static class PrincipalExtensions {
 			scope switch {
 				PrincipalQueryScope.Full => "全部设备",
 				PrincipalQueryScope.Limited => "部分设备",
-				_ => "无查询权限"
+				_ => "未知权限"
 			};
 	}
 
@@ -210,9 +210,9 @@ public enum PrincipalKind {
 /// </summary>
 public enum PrincipalQueryScope {
 	/// <summary>
-	/// 无设备查询权限
+	/// 未知权限
 	/// </summary>
-	None,
+	Unknown,
 
 	/// <summary>
 	/// 仅限查询部分设备
