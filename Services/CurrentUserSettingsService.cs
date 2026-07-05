@@ -1,0 +1,110 @@
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
+
+namespace DeviceStatusBeacon.Services;
+
+/// <summary>
+/// 当前用户设置服务。
+/// </summary>
+/// <remarks>
+/// 该服务把当前用户自身资料与个人 API 凭据写入规则收敛到同一个地方：
+/// 页面和后续 API 不需要自行解析当前用户 ID，也不需要重复维护个人凭据的归属校验。
+/// </remarks>
+public sealed partial class CurrentUserSettingsService(
+	DeviceStatusBeaconContext dbContext,
+	UserManager<User> userManager,
+	IUserManagementService userManagementService) : ICurrentUserSettingsService {
+	/// <summary>
+	/// 当前用户摘要。
+	/// </summary>
+	/// <param name="UserId">用户 ID</param>
+	/// <param name="Role">用户角色</param>
+	private sealed record CurrentUserTarget(
+		Guid UserId,
+		PrincipalRole Role
+	);
+
+	/// <inheritdoc/>
+	public async Task SetDisplayNameAsync(ClaimsPrincipal principal, SetCurrentUserDisplayNameCommand command, CancellationToken cancellationToken = default) {
+		ArgumentNullException.ThrowIfNull(command);
+
+		// 当前用户只能修改自己的显示名称，使用主体 ID 收窄更新范围
+		var target = await GetCurrentUserTargetAsync(principal, cancellationToken);
+		var updatedCount = await dbContext.Users
+			.Where(user => user.Id == target.UserId)
+			.ExecuteUpdateAsync(
+				user => user.SetProperty(entity => entity.DisplayName, command.DisplayName),
+				cancellationToken);
+
+		if (updatedCount == 0) {
+			throw new CurrentUserSettingsCommandException(StatusCodes.Status404NotFound, "未找到当前用户");
+		}
+	}
+
+	/// <inheritdoc/>
+	public async Task ChangePasswordAsync(ClaimsPrincipal principal, ChangeCurrentUserPasswordCommand command, CancellationToken cancellationToken = default) {
+		ArgumentNullException.ThrowIfNull(command);
+
+		var target = await GetCurrentUserTargetAsync(principal, cancellationToken);
+		var user = await userManager.FindByIdAsync(target.UserId.ToString())
+			?? throw new CurrentUserSettingsCommandException(StatusCodes.Status404NotFound, "未找到当前用户");
+
+		// 当前用户修改密码必须提供旧密码，交给 Identity 统一执行密码校验和哈希更新
+		var result = await userManager.ChangePasswordAsync(user, command.CurrentPassword, command.NewPassword);
+
+		if (!result.Succeeded) {
+			throw new CurrentUserSettingsCommandException(
+				StatusCodes.Status422UnprocessableEntity,
+				string.Join(Environment.NewLine, result.Errors.Select(error => error.Description)));
+		}
+	}
+
+	/// <summary>
+	/// 从当前登录主体中读取用户 ID，并查询当前用户角色。
+	/// </summary>
+	/// <remarks>
+	/// 此方法不信任 Cookie 中的角色声明作为最终依据，每次写入前从数据库读取当前角色。
+	/// 当 <paramref name="ownedApiCredentialId"/> 不为 null 时，还会确认该 API 凭据归属于当前用户。
+	/// </remarks>
+	/// <param name="principal">当前登录主体</param>
+	/// <param name="cancellationToken">取消令牌</param>
+	/// <param name="ownedApiCredentialId">需要同时确认归属的 API 凭据 ID；为 null 时仅查询当前用户摘要</param>
+	/// <returns>当前用户摘要</returns>
+	private async Task<CurrentUserTarget> GetCurrentUserTargetAsync(ClaimsPrincipal principal, CancellationToken cancellationToken, Guid? ownedApiCredentialId = null) {
+		var (principalKind, principalId, _) = principal.GetAuthenticatedPrincipalInfo();
+		if (principalKind != PrincipalKind.User || principalId is not Guid userId) {
+			throw new CurrentUserSettingsCommandException(StatusCodes.Status401Unauthorized, "当前用户未登录");
+		}
+
+		// 不信任 Cookie 中的角色声明作为最终依据，每次写入前从数据库读取当前角色
+		// 避免 Cookie 角色五分钟的有效期内，用户角色被管理员修改后仍然可以越权操作
+		var target = await dbContext.Users
+			.AsNoTracking()
+			.Where(user => user.Id == userId)
+			.Select(user => new {
+				user.Id,
+				RoleName = user.UserRoles.Select(userRole => userRole.Role.Name).SingleOrDefault(),
+				OwnsApiCredential = ownedApiCredentialId == null
+					|| user.ApiCredentials.Any(credential => credential.ApiCredentialId == ownedApiCredentialId)
+			})
+			.SingleOrDefaultAsync(cancellationToken)
+			?? throw new CurrentUserSettingsCommandException(StatusCodes.Status404NotFound, "未找到当前用户");
+
+		if (!target.OwnsApiCredential) {
+			// 当前用户只能操作自己归属的 API 凭据
+			throw new CurrentUserSettingsCommandException(StatusCodes.Status404NotFound, "未找到指定的 API 凭据");
+		}
+
+		return PrincipalRole.TryParse(target.RoleName, out var role)
+			? new(target.Id, role)
+			: throw new CurrentUserSettingsCommandException(StatusCodes.Status409Conflict, "当前用户未正确设置角色");
+	}
+
+	/// <summary>
+	/// 将管理员管理服务异常转换为当前用户设置服务异常。
+	/// </summary>
+	/// <param name="exception">用户管理服务异常</param>
+	/// <returns>当前用户设置服务异常</returns>
+	private static CurrentUserSettingsCommandException ToCurrentUserSettingsCommandException(UserManagementCommandException exception) =>
+		new(exception.StatusCode, exception.Message);
+}
