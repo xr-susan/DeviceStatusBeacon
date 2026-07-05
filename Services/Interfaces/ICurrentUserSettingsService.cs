@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 
-namespace DeviceStatusBeacon.Services;
+namespace DeviceStatusBeacon.Services.Interfaces;
 
 /// <summary>
 /// 为当前登录用户提供个人设置与个人 API 凭据管理能力的服务。

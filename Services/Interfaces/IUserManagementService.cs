@@ -1,4 +1,4 @@
-﻿namespace DeviceStatusBeacon.Services;
+﻿namespace DeviceStatusBeacon.Services.Interfaces;
 
 /// <summary>
 /// 为管理员页面、Minimal API 和 CLI 管理命令提供共享用户与 API 凭据管理能力的服务。

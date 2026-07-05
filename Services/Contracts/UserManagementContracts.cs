@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace DeviceStatusBeacon.Services;
+namespace DeviceStatusBeacon.Services.Contracts;
 
 /// <summary>
 /// 用户创建请求。
@@ -206,22 +206,3 @@ public sealed record CreateApiCredentialCommandResult(
 public sealed record ResetApiCredentialSecretKeyCommandResult(
 	string SecretKey
 );
-
-/// <summary>
-/// 表示用户与 API 凭据管理命令执行过程中出现的业务失败。
-/// </summary>
-public sealed class UserManagementCommandException(int statusCode, string message)
-	: ServiceCommandException(statusCode, GetProblemTitle(statusCode), message) {
-	/// <summary>
-	/// 获取用户与 API 凭据管理失败对应的错误标题。
-	/// </summary>
-	/// <param name="statusCode">HTTP 状态码</param>
-	/// <returns>用于 ProblemDetails 的错误标题</returns>
-	private static string GetProblemTitle(int statusCode) => statusCode switch {
-		StatusCodes.Status400BadRequest => "用户管理请求无效",
-		StatusCodes.Status404NotFound => "目标用户或 API 凭据不存在",
-		StatusCodes.Status409Conflict => "用户管理状态冲突",
-		StatusCodes.Status422UnprocessableEntity => "用户管理请求语义无效",
-		_ => "用户管理失败"
-	};
-}

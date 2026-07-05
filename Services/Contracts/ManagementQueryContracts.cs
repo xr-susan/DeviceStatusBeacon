@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace DeviceStatusBeacon.Services;
+namespace DeviceStatusBeacon.Services.Contracts;
 
 /// <summary>
 /// 表示一次可复用的管理查询会话。

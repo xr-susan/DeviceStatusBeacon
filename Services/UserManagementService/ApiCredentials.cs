@@ -146,5 +146,4 @@ public sealed partial class UserManagementService {
 			newCredential.ApiCredentialId,
 			Convert.ToBase64String(unprotectedSecretKey));
 	}
-
 }

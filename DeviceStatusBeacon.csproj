@@ -23,6 +23,8 @@
 		<Using Include="DeviceStatusBeacon.Extensions" />
 		<Using Include="DeviceStatusBeacon.Security" />
 		<Using Include="DeviceStatusBeacon.Services" />
+		<Using Include="DeviceStatusBeacon.Services.Contracts" />
+		<Using Include="DeviceStatusBeacon.Services.Interfaces" />
 		<Using Include="Microsoft.EntityFrameworkCore" />
 	</ItemGroup>
 

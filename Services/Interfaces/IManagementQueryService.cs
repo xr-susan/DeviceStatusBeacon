@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 
-namespace DeviceStatusBeacon.Services;
+namespace DeviceStatusBeacon.Services.Interfaces;
 
 /// <summary>
 /// 为 Web 管理页面和 CLI 管理命令提供共享查询能力的服务。

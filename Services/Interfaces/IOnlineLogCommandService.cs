@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Net;
 
-namespace DeviceStatusBeacon.Services;
+namespace DeviceStatusBeacon.Services.Interfaces;
 
 /// <summary>
 /// 为在线日志写入入口提供共享命令能力的服务。
@@ -84,21 +84,3 @@ public sealed record CreateOnlineLogCommandResult(
 	Guid DeviceId,
 	DateTime LogTime
 );
-
-/// <summary>
-/// 表示在线日志命令执行过程中出现的业务失败。
-/// </summary>
-public sealed class OnlineLogCommandException(int statusCode, string message)
-	: ServiceCommandException(statusCode, GetProblemTitle(statusCode), message) {
-	/// <summary>
-	/// 获取在线日志创建失败对应的错误标题。
-	/// </summary>
-	/// <param name="statusCode">HTTP 状态码</param>
-	/// <returns>用于 ProblemDetails 的错误标题</returns>
-	private static string GetProblemTitle(int statusCode) => statusCode switch {
-		StatusCodes.Status400BadRequest => "设备日志请求无效",
-		StatusCodes.Status403Forbidden => "不允许写入日志",
-		StatusCodes.Status404NotFound => "目标设备不存在",
-		_ => "日志写入失败"
-	};
-}
