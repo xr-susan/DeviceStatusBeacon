@@ -1,6 +1,6 @@
 ﻿namespace DeviceStatusBeacon.Services;
 
-public sealed partial class UserManagementService {
+public sealed partial class AccessAdministrationService {
 	/// <summary>
 	/// 收窄关联指定用户的 API 凭据权限范围以匹配用户的新角色。
 	/// </summary>

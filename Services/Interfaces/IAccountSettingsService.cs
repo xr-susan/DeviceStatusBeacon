@@ -3,14 +3,9 @@
 namespace DeviceStatusBeacon.Services.Interfaces;
 
 /// <summary>
-/// 为当前登录用户提供个人设置与个人 API 凭据管理能力的服务。
+/// 账号设置服务。
 /// </summary>
-/// <remarks>
-/// 该服务聚焦于“当前用户自身设置”侧能力：
-/// 统一处理当前交互式登录用户的显示名称、密码和个人 API 凭据管理。
-/// 调用者不传入目标用户 ID，目标用户始终来自当前登录主体。
-/// </remarks>
-public interface ICurrentUserSettingsService {
+public interface IAccountSettingsService {
 	/// <summary>
 	/// 更新当前用户的显示名称。
 	/// </summary>

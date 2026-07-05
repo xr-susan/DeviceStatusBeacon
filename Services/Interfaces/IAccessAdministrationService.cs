@@ -1,15 +1,9 @@
 ﻿namespace DeviceStatusBeacon.Services.Interfaces;
 
 /// <summary>
-/// 为管理员页面、Minimal API 和 CLI 管理命令提供共享用户与 API 凭据管理能力的服务。
+/// 用户与 API 凭据管理服务。
 /// </summary>
-/// <remarks>
-/// 该服务聚焦于“管理员管理”侧能力：
-/// 统一处理所有用户的创建、删除、重命名、密码重置和角色更新，
-/// 以及所有 API 凭据的创建、删除、密钥重置和基础设置更新。
-/// 具体入口应通过 Administrator-only 授权策略限制调用者。
-/// </remarks>
-public interface IUserManagementService {
+public interface IAccessAdministrationService {
 	/// <summary>
 	/// 创建新用户。
 	/// </summary>

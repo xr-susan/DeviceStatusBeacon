@@ -1,12 +1,12 @@
 ﻿namespace DeviceStatusBeacon.Services;
 
-public sealed partial class UserManagementService {
+public sealed partial class AccessAdministrationService {
 	/// <inheritdoc/>
 	public async Task<CreateUserCommandResult> CreateUserAsync(CreateUserCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		EnsureValidUserName(command.UserName, "用户名不符合身份标识格式");
 		EnsureDefinedRole(command.Role, "无效的用户角色");
@@ -38,7 +38,7 @@ public sealed partial class UserManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		EnsureValidUserName(command.NewUserName, "新用户名不符合身份标识格式");
 
@@ -51,7 +51,7 @@ public sealed partial class UserManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		EnsureValidUserName(command.NewUserName, "新用户名不符合身份标识格式");
 
@@ -64,7 +64,7 @@ public sealed partial class UserManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		await SetUserDisplayNameAsync(
 			dbContext.Users.Where(user => user.Id == userId),
@@ -77,7 +77,7 @@ public sealed partial class UserManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var userNameLookup = CreateUserNameLookup(userName);
 		await SetUserDisplayNameAsync(
@@ -91,7 +91,7 @@ public sealed partial class UserManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var user = await FindUserByIdAsync(userId);
 
@@ -105,7 +105,7 @@ public sealed partial class UserManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var user = await FindUserByNameAsync(userName);
 
@@ -119,7 +119,7 @@ public sealed partial class UserManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var user = await FindUserByIdAsync(userId);
 		await SetUserRoleAsync(user, command, cancellationToken);
@@ -130,7 +130,7 @@ public sealed partial class UserManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var user = await FindUserByNameAsync(userName);
 		await SetUserRoleAsync(user, command, cancellationToken);
@@ -141,7 +141,7 @@ public sealed partial class UserManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		await SetUserAuthorizedDevicesAsync(
 			dbContext.Users.Where(user => user.Id == userId),
@@ -154,7 +154,7 @@ public sealed partial class UserManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var userNameLookup = CreateUserNameLookup(userName);
 		await SetUserAuthorizedDevicesAsync(
@@ -247,11 +247,11 @@ public sealed partial class UserManagementService {
 				RoleName = entity.UserRoles.Select(userRole => userRole.Role.Name).SingleOrDefault()
 			})
 			.SingleOrDefaultAsync(cancellationToken)
-			?? throw new UserManagementCommandException(StatusCodes.Status404NotFound, "未找到指定的用户");
+			?? throw new AccessAdministrationException(StatusCodes.Status404NotFound, "未找到指定的用户");
 
 		var userRole = PrincipalRole.TryParse(user.RoleName, out var parsedRole)
 			? parsedRole
-			: throw new UserManagementCommandException(StatusCodes.Status409Conflict, "目标用户未正确设置角色");
+			: throw new AccessAdministrationException(StatusCodes.Status409Conflict, "目标用户未正确设置角色");
 
 		var authorizedDeviceIds = await UpdateAuthorizedDeviceLinksAsync(user.Id, command.AuthorizedDeviceIds, false, cancellationToken);
 

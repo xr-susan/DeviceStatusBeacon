@@ -4,16 +4,12 @@ using Microsoft.AspNetCore.Identity;
 namespace DeviceStatusBeacon.Services;
 
 /// <summary>
-/// 当前用户设置服务。
+/// 账号设置服务。
 /// </summary>
-/// <remarks>
-/// 该服务把当前用户自身资料与个人 API 凭据写入规则收敛到同一个地方：
-/// 页面和后续 API 不需要自行解析当前用户 ID，也不需要重复维护个人凭据的归属校验。
-/// </remarks>
-public sealed partial class CurrentUserSettingsService(
+public sealed partial class AccountSettingsService(
 	DeviceStatusBeaconContext dbContext,
 	UserManager<User> userManager,
-	IUserManagementService userManagementService) : ICurrentUserSettingsService {
+	IAccessAdministrationService accessAdministrationService) : IAccountSettingsService {
 	/// <summary>
 	/// 当前用户摘要。
 	/// </summary>
@@ -38,7 +34,7 @@ public sealed partial class CurrentUserSettingsService(
 	private async Task<CurrentUserTarget> GetCurrentUserTargetAsync(ClaimsPrincipal principal, CancellationToken cancellationToken, Guid? ownedApiCredentialId = null) {
 		var (principalKind, principalId, _) = principal.GetAuthenticatedPrincipalInfo();
 		if (principalKind != PrincipalKind.User || principalId is not Guid userId) {
-			throw new CurrentUserSettingsCommandException(StatusCodes.Status401Unauthorized, "当前用户未登录");
+			throw new AccountSettingsException(StatusCodes.Status401Unauthorized, "当前用户未登录");
 		}
 
 		// 不信任 Cookie 中的角色声明作为最终依据，每次写入前从数据库读取当前角色
@@ -53,23 +49,23 @@ public sealed partial class CurrentUserSettingsService(
 					|| user.ApiCredentials.Any(credential => credential.ApiCredentialId == ownedApiCredentialId)
 			})
 			.SingleOrDefaultAsync(cancellationToken)
-			?? throw new CurrentUserSettingsCommandException(StatusCodes.Status404NotFound, "未找到当前用户");
+			?? throw new AccountSettingsException(StatusCodes.Status404NotFound, "未找到当前用户");
 
 		if (!target.OwnsApiCredential) {
 			// 当前用户只能操作自己归属的 API 凭据
-			throw new CurrentUserSettingsCommandException(StatusCodes.Status404NotFound, "未找到指定的 API 凭据");
+			throw new AccountSettingsException(StatusCodes.Status404NotFound, "未找到指定的 API 凭据");
 		}
 
 		return PrincipalRole.TryParse(target.RoleName, out var role)
 			? new(target.Id, role)
-			: throw new CurrentUserSettingsCommandException(StatusCodes.Status409Conflict, "当前用户未正确设置角色");
+			: throw new AccountSettingsException(StatusCodes.Status409Conflict, "当前用户未正确设置角色");
 	}
 
 	/// <summary>
-	/// 将管理员管理服务异常转换为当前用户设置服务异常。
+	/// 将访问管理服务异常转换为账号设置服务异常。
 	/// </summary>
-	/// <param name="exception">用户管理服务异常</param>
-	/// <returns>当前用户设置服务异常</returns>
-	private static CurrentUserSettingsCommandException ToCurrentUserSettingsCommandException(UserManagementCommandException exception) =>
+	/// <param name="exception">访问管理服务异常</param>
+	/// <returns>账号设置服务异常</returns>
+	private static AccountSettingsException ToAccountSettingsException(AccessAdministrationException exception) =>
 		new(exception.StatusCode, exception.Message);
 }

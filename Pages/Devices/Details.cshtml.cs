@@ -8,7 +8,7 @@ namespace DeviceStatusBeacon.Pages.Devices;
 /// 设备详情页模型
 /// </summary>
 [Authorize(Policy = AuthorizationPolicyNames.InteractiveUser)]
-public class DetailsModel(IManagementQueryService queryService) : PageModel {
+public class DetailsModel(IDeviceStatusQueryService deviceStatusQueryService) : PageModel {
 	/// <summary>
 	/// 路由中的设备名称
 	/// </summary>
@@ -18,7 +18,7 @@ public class DetailsModel(IManagementQueryService queryService) : PageModel {
 	/// <summary>
 	/// 查询会话
 	/// </summary>
-	public ManagementSessionData Session { get; private set; } = null!;
+	public DeviceStatusSessionData Session { get; private set; } = null!;
 
 	/// <summary>
 	/// 设备摘要
@@ -36,10 +36,10 @@ public class DetailsModel(IManagementQueryService queryService) : PageModel {
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务</returns>
 	public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken) {
-		var session = queryService.CreateQuerySessionAsync(User);
+		var session = deviceStatusQueryService.CreateQuerySessionAsync(User);
 		Session = session.ToData();
 
-		var deviceDetails = await queryService.GetDeviceDetailsByNameAsync(
+		var deviceDetails = await deviceStatusQueryService.GetDeviceDetailsByNameAsync(
 			session,
 			DeviceName,
 			cancellationToken);

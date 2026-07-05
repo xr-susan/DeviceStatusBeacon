@@ -1,14 +1,9 @@
 ﻿namespace DeviceStatusBeacon.Services.Interfaces;
 
 /// <summary>
-/// 为 Web 管理页面、Minimal API 和 CLI 管理命令提供共享设备管理能力的服务。
+/// 设备管理服务。
 /// </summary>
-/// <remarks>
-/// 该服务聚焦于“设备管理”侧能力：
-/// 统一处理设备创建、删除、重命名、密钥重置和基础设置更新。
-/// 这样可以避免 CLI、页面和 API 各自维护一套相似但逐渐偏离的设备管理逻辑。
-/// </remarks>
-public interface IDeviceManagementService {
+public interface IDeviceAdministrationService {
 	/// <summary>
 	/// 删除设备前要求的无新日志时间窗口。
 	/// </summary>

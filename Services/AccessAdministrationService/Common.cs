@@ -5,16 +5,11 @@ namespace DeviceStatusBeacon.Services;
 /// <summary>
 /// 用户与 API 凭据管理服务。
 /// </summary>
-/// <remarks>
-/// 该服务把管理员侧的用户与 API 凭据写入规则收敛到同一个地方：
-/// CLI、Minimal API 和后续管理员页面都通过这里创建、修改和删除用户及 API 凭据；
-/// 用户名格式、角色边界、凭据授权范围和目标实体存在性也在这里统一处理。
-/// </remarks>
-public sealed partial class UserManagementService(
+public sealed partial class AccessAdministrationService(
 	DeviceStatusBeaconContext dbContext,
 	UserManager<User> userManager,
 	ILookupNormalizer lookupNormalizer,
-	IDataProtectorV1 dataProtector) : IUserManagementService {
+	IDataProtectorV1 dataProtector) : IAccessAdministrationService {
 	/// <summary>
 	/// API 凭据所属用户摘要。
 	/// </summary>
@@ -44,7 +39,7 @@ public sealed partial class UserManagementService(
 	/// <returns>用户名查找条件</returns>
 	private IdentityNameLookup CreateUserNameLookup(string value) =>
 		IdentityNameLookup.TryCreate(value, lookupNormalizer)
-			?? throw new UserManagementCommandException(StatusCodes.Status404NotFound, "未找到指定的用户");
+			?? throw new AccessAdministrationException(StatusCodes.Status404NotFound, "未找到指定的用户");
 
 	/// <summary>
 	/// 创建设备名称查找条件。
@@ -53,7 +48,7 @@ public sealed partial class UserManagementService(
 	/// <returns>设备名称查找条件</returns>
 	private IdentityNameLookup CreateDeviceNameLookup(string value) =>
 		IdentityNameLookup.TryCreate(value, lookupNormalizer)
-			?? throw new UserManagementCommandException(StatusCodes.Status404NotFound, "未找到指定的设备");
+			?? throw new AccessAdministrationException(StatusCodes.Status404NotFound, "未找到指定的设备");
 
 	/// <summary>
 	/// 确保用户名符合身份标识格式。
@@ -62,7 +57,7 @@ public sealed partial class UserManagementService(
 	/// <param name="message">格式错误时使用的错误消息</param>
 	private static void EnsureValidUserName(string userName, string message) {
 		if (!IdentityNameRules.IsValid(userName)) {
-			throw new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message);
+			throw new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message);
 		}
 	}
 
@@ -73,12 +68,12 @@ public sealed partial class UserManagementService(
 	/// <param name="message">未命中目标时使用的错误消息</param>
 	private static void EnsureEntityFound(int affectedCount, string message) {
 		if (affectedCount == 0) {
-			throw new UserManagementCommandException(StatusCodes.Status404NotFound, message);
+			throw new AccessAdministrationException(StatusCodes.Status404NotFound, message);
 		}
 	}
 
 	/// <summary>
-	/// 将 Identity 操作失败转换为统一的服务层命令异常。
+	/// 将 Identity 操作失败转换为统一的服务层业务异常。
 	/// </summary>
 	/// <param name="result">Identity 操作结果</param>
 	private static void EnsureIdentitySucceeded(IdentityResult result) {
@@ -93,7 +88,7 @@ public sealed partial class UserManagementService(
 			? StatusCodes.Status409Conflict
 			: StatusCodes.Status422UnprocessableEntity;
 
-		throw new UserManagementCommandException(statusCode, string.Join(Environment.NewLine, result.Errors.Select(error => error.Description)));
+		throw new AccessAdministrationException(statusCode, string.Join(Environment.NewLine, result.Errors.Select(error => error.Description)));
 	}
 
 	/// <summary>
@@ -105,7 +100,7 @@ public sealed partial class UserManagementService(
 	private async Task<User> FindUserByIdAsync(Guid userId) =>
 		// UserManager 负责 Identity 用户读取；此处保留统一的服务层 404 语义
 		await userManager.FindByIdAsync(userId.ToString())
-			?? throw new UserManagementCommandException(StatusCodes.Status404NotFound, "未找到指定的用户");
+			?? throw new AccessAdministrationException(StatusCodes.Status404NotFound, "未找到指定的用户");
 
 	/// <summary>
 	/// 根据用户名查询用户。
@@ -116,7 +111,7 @@ public sealed partial class UserManagementService(
 	private async Task<User> FindUserByNameAsync(string userName) =>
 		// UserManager 会按 Identity 的用户名归一化规则查找，避免服务层重复实现用户名匹配规则
 		await userManager.FindByNameAsync(userName)
-			?? throw new UserManagementCommandException(StatusCodes.Status404NotFound, "未找到指定的用户");
+			?? throw new AccessAdministrationException(StatusCodes.Status404NotFound, "未找到指定的用户");
 
 	/// <summary>
 	/// 查询 API 凭据所属用户与角色。
@@ -138,11 +133,11 @@ public sealed partial class UserManagementService(
 				RoleName = credential.User.UserRoles.Select(userRole => userRole.Role.Name).SingleOrDefault()
 			})
 			.SingleOrDefaultAsync(cancellationToken)
-			?? throw new UserManagementCommandException(StatusCodes.Status404NotFound, "未找到指定的 API 凭据");
+			?? throw new AccessAdministrationException(StatusCodes.Status404NotFound, "未找到指定的 API 凭据");
 
 		return PrincipalRole.TryParse(target.RoleName, out var ownerRole)
 			? new(target.ApiCredentialId, new(target.UserId, ownerRole), target.Role)
-			: throw new UserManagementCommandException(StatusCodes.Status409Conflict, "API 凭据所属用户未正确设置角色");
+			: throw new AccessAdministrationException(StatusCodes.Status409Conflict, "API 凭据所属用户未正确设置角色");
 	}
 
 	/// <summary>
@@ -165,11 +160,11 @@ public sealed partial class UserManagementService(
 				RoleName = user.UserRoles.Select(userRole => userRole.Role.Name).SingleOrDefault()
 			})
 			.SingleOrDefaultAsync(cancellationToken)
-			?? throw new UserManagementCommandException(StatusCodes.Status404NotFound, notFoundMessage);
+			?? throw new AccessAdministrationException(StatusCodes.Status404NotFound, notFoundMessage);
 
 		return PrincipalRole.TryParse(owner.RoleName, out var ownerRole)
 			? new(owner.Id, ownerRole)
-			: throw new UserManagementCommandException(StatusCodes.Status409Conflict, invalidRoleMessage);
+			: throw new AccessAdministrationException(StatusCodes.Status409Conflict, invalidRoleMessage);
 	}
 
 	/// <summary>
@@ -179,7 +174,7 @@ public sealed partial class UserManagementService(
 	/// <param name="message">角色无效时使用的错误消息</param>
 	private static void EnsureDefinedRole(PrincipalRole role, string message) {
 		if (!role.IsDefined()) {
-			throw new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message);
+			throw new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message);
 		}
 	}
 
@@ -192,7 +187,7 @@ public sealed partial class UserManagementService(
 		EnsureDefinedRole(role, "无效的 API 凭据角色");
 
 		if (role > ownerRole) {
-			throw new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, "API 凭据角色不得高于所属用户角色");
+			throw new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, "API 凭据角色不得高于所属用户角色");
 		}
 	}
 }

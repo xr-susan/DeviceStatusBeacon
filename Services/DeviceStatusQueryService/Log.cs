@@ -2,13 +2,13 @@
 
 namespace DeviceStatusBeacon.Services;
 
-public sealed partial class ManagementQueryService {
+public sealed partial class DeviceStatusQueryService {
 	/// <inheritdoc/>
 	public async Task<LogListData> GetLogsAsync(ClaimsPrincipal principal, string? deviceKeyword, int pageNumber, int pageSize, CancellationToken cancellationToken = default) =>
 		await GetLogsAsync(CreateQuerySessionAsync(principal), deviceKeyword, pageNumber, pageSize, cancellationToken);
 
 	/// <inheritdoc/>
-	public async Task<LogListData> GetLogsAsync(ManagementQuerySession session, string? deviceKeyword, int pageNumber, int pageSize, CancellationToken cancellationToken = default) {
+	public async Task<LogListData> GetLogsAsync(DeviceStatusQuerySession session, string? deviceKeyword, int pageNumber, int pageSize, CancellationToken cancellationToken = default) {
 		// 标准化分页选项
 		var normalizedPageNumber = NormalizePageNumber(pageNumber);
 		var normalizedPageSize = NormalizePageSize(pageSize, 1, MaxLogQueryCount);
@@ -36,7 +36,7 @@ public sealed partial class ManagementQueryService {
 	}
 
 	/// <inheritdoc/>
-	public Task<IReadOnlyCollection<OnlineLogSummary>> GetLogsByDeviceNameAsync(ManagementQuerySession session, string deviceName, int take, CancellationToken cancellationToken = default) {
+	public Task<IReadOnlyCollection<OnlineLogSummary>> GetLogsByDeviceNameAsync(DeviceStatusQuerySession session, string deviceName, int take, CancellationToken cancellationToken = default) {
 		var deviceNameLookup = IdentityNameLookup.TryCreate(deviceName, lookupNormalizer);
 		if (deviceNameLookup is null) {
 			return Task.FromResult<IReadOnlyCollection<OnlineLogSummary>>([]);
@@ -53,7 +53,7 @@ public sealed partial class ManagementQueryService {
 	}
 
 	/// <inheritdoc/>
-	public Task<IReadOnlyCollection<OnlineLogSummary>> GetLogsByDeviceIdAsync(ManagementQuerySession session, Guid deviceId, int take, CancellationToken cancellationToken = default) {
+	public Task<IReadOnlyCollection<OnlineLogSummary>> GetLogsByDeviceIdAsync(DeviceStatusQuerySession session, Guid deviceId, int take, CancellationToken cancellationToken = default) {
 		// 标准化查询数量
 		var normalizedTake = NormalizePageSize(take, 1, MaxLogQueryCount);
 
@@ -98,7 +98,7 @@ public sealed partial class ManagementQueryService {
 	/// </summary>
 	/// <param name="session">查询会话</param>
 	/// <returns>日志可读取范围查询</returns>
-	private IQueryable<OnlineLog> BuildAccessibleLogQuery(ManagementQuerySession session) {
+	private IQueryable<OnlineLog> BuildAccessibleLogQuery(DeviceStatusQuerySession session) {
 		var logs = dbContext.OnlineLogs.AsNoTracking();
 
 		return session.Role.GetDeviceQueryScope() switch {
@@ -108,11 +108,11 @@ public sealed partial class ManagementQueryService {
 			// 具备有限查询权限时，根据授权主体类型应用对应的设备授权关系
 			PrincipalQueryScope.Limited => session.PrincipalKind switch {
 				// 用户主体，返回已授权给该用户的设备日志
-				ManagementQueryPrincipalKind.User =>
+				DeviceStatusQueryPrincipalKind.User =>
 					logs.Where(log => log.Device.AuthorizedUsers.Any(user => user.Id == session.PrincipalId)),
 
 				// API 凭据主体，返回已授权给该 API 凭据的设备日志
-				ManagementQueryPrincipalKind.ApiCredential =>
+				DeviceStatusQueryPrincipalKind.ApiCredential =>
 					logs.Where(log => log.Device.AuthorizedApiCredentials.Any(credential => credential.ApiCredentialId == session.PrincipalId)),
 
 				// 其他主体类型不具备有限查询权限，返回空查询

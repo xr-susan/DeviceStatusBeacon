@@ -12,7 +12,7 @@ internal static class ApiProblemResults {
 	/// <param name="context">当前 HTTP 上下文</param>
 	/// <param name="exception">服务层业务异常</param>
 	/// <returns>ProblemDetails JSON 响应</returns>
-	public static IResult FromServiceCommandException(HttpContext context, ServiceCommandException exception) =>
+	public static IResult FromServiceException(HttpContext context, ServiceException exception) =>
 		CreateProblem(context, exception.StatusCode, exception.ProblemTitle, exception.Message);
 
 	/// <summary>

@@ -4,14 +4,9 @@ using Microsoft.AspNetCore.Identity;
 namespace DeviceStatusBeacon.Services;
 
 /// <summary>
-/// 供 Web 管理页面与 CLI 管理命令共享的查询服务。
+/// 设备状态查询服务。
 /// </summary>
-/// <remarks>
-/// 该服务把“查询范围判断”和“设备 / 日志读取”收敛到同一个地方：
-/// Web 可以基于当前登录主体构建受限查询；
-/// CLI 则可以显式创建特权查询会话，从而复用相同的投影、筛选和排序规则。
-/// </remarks>
-public sealed partial class ManagementQueryService(DeviceStatusBeaconContext dbContext, ILookupNormalizer lookupNormalizer) : IManagementQueryService {
+public sealed partial class DeviceStatusQueryService(DeviceStatusBeaconContext dbContext, ILookupNormalizer lookupNormalizer) : IDeviceStatusQueryService {
 	/// <summary>
 	/// 首页摘要中展示的设备数量。
 	/// </summary>
@@ -38,12 +33,12 @@ public sealed partial class ManagementQueryService(DeviceStatusBeaconContext dbC
 	private const int DeviceDetailsRecentLogCount = 5;
 
 	/// <inheritdoc/>
-	public ManagementQuerySession CreateQuerySessionAsync(ClaimsPrincipal principal) {
+	public DeviceStatusQuerySession CreateQuerySessionAsync(ClaimsPrincipal principal) {
 		var (principalKind, principalId, role) = principal.GetAuthenticatedPrincipalInfo();
 		var queryPrincipalKind = principalKind switch {
-			PrincipalKind.User => ManagementQueryPrincipalKind.User,
-			PrincipalKind.ApiCredential => ManagementQueryPrincipalKind.ApiCredential,
-			_ => ManagementQueryPrincipalKind.Unknown
+			PrincipalKind.User => DeviceStatusQueryPrincipalKind.User,
+			PrincipalKind.ApiCredential => DeviceStatusQueryPrincipalKind.ApiCredential,
+			_ => DeviceStatusQueryPrincipalKind.Unknown
 		};
 
 		var userName = principal.Identity?.Name ?? string.Empty;
@@ -58,10 +53,10 @@ public sealed partial class ManagementQueryService(DeviceStatusBeaconContext dbC
 	}
 
 	/// <inheritdoc/>
-	public ManagementQuerySession CreatePrivilegedQuerySession(string userName = "CLI") =>
+	public DeviceStatusQuerySession CreatePrivilegedQuerySession(string userName = "CLI") =>
 		new(
 			PrincipalId: null,
-			PrincipalKind: ManagementQueryPrincipalKind.Privileged,
+			PrincipalKind: DeviceStatusQueryPrincipalKind.Privileged,
 			UserName: userName,
 			DisplayName: null,
 			Role: PrincipalRole.Administrator);

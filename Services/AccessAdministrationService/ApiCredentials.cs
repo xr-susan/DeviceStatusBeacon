@@ -2,13 +2,13 @@
 
 namespace DeviceStatusBeacon.Services;
 
-public sealed partial class UserManagementService {
+public sealed partial class AccessAdministrationService {
 	/// <inheritdoc/>
 	public async Task<CreateApiCredentialCommandResult> CreateApiCredentialAsync(Guid ownerUserId, CreateApiCredentialCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		// 先读取所属用户角色，再创建凭据，确保凭据角色不会高于所属用户
 		var owner = await GetApiCredentialOwnerAsync(
@@ -24,7 +24,7 @@ public sealed partial class UserManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		// 用户名入口先归一化再查找，保持与 Identity 用户名唯一索引一致的匹配语义
 		var ownerNameLookup = CreateUserNameLookup(ownerUserName);
@@ -41,7 +41,7 @@ public sealed partial class UserManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		try {
 			// 显示名称受同一用户下唯一索引保护，使用批量更新后把 SQLite 唯一约束冲突转成业务异常
@@ -53,7 +53,7 @@ public sealed partial class UserManagementService {
 
 			EnsureEntityFound(updatedCount, "未找到指定的 API 凭据");
 		} catch (DbUpdateException e) when (e.InnerException is SqliteException { SqliteExtendedErrorCode: 2067 }) {
-			throw new UserManagementCommandException(StatusCodes.Status409Conflict, "指定的 API 凭据显示名称在关联用户下已被使用");
+			throw new AccessAdministrationException(StatusCodes.Status409Conflict, "指定的 API 凭据显示名称在关联用户下已被使用");
 		}
 	}
 
@@ -62,7 +62,7 @@ public sealed partial class UserManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		// 启用状态不涉及导航属性，直接批量更新即可
 		var updatedCount = await dbContext.ApiCredentials
@@ -79,7 +79,7 @@ public sealed partial class UserManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var target = await GetApiCredentialTargetAsync(apiCredentialId, cancellationToken);
 		EnsureApiCredentialRoleWithinOwnerRole(command.Role, target.Owner.Role);
@@ -98,7 +98,7 @@ public sealed partial class UserManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var target = await GetApiCredentialTargetAsync(apiCredentialId, cancellationToken);
 		EnsureApiCredentialRoleWithinOwnerRole(target.Role, target.Owner.Role);
@@ -157,7 +157,7 @@ public sealed partial class UserManagementService {
 			await UpdateApiCredentialDeviceLinksAsync(newCredential.ApiCredentialId, owner, command.AuthorizedDeviceIds, true, cancellationToken);
 			await dbContext.SaveChangesAsync(cancellationToken);
 		} catch (DbUpdateException e) when (e.InnerException is SqliteException { SqliteExtendedErrorCode: 2067 }) {
-			throw new UserManagementCommandException(StatusCodes.Status409Conflict, "指定的 API 凭据显示名称在关联用户下已被使用");
+			throw new AccessAdministrationException(StatusCodes.Status409Conflict, "指定的 API 凭据显示名称在关联用户下已被使用");
 		}
 
 		return new(

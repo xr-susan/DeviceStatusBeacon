@@ -2,13 +2,13 @@
 
 namespace DeviceStatusBeacon.Services;
 
-public sealed partial class ManagementQueryService {
+public sealed partial class DeviceStatusQueryService {
 	/// <inheritdoc/>
 	public async Task<DeviceListData> GetDevicesAsync(ClaimsPrincipal principal, string? searchTerm, int pageNumber, int pageSize, CancellationToken cancellationToken = default) =>
 		await GetDevicesAsync(CreateQuerySessionAsync(principal), searchTerm, pageNumber, pageSize, cancellationToken);
 
 	/// <inheritdoc/>
-	public async Task<DeviceListData> GetDevicesAsync(ManagementQuerySession session, string? searchTerm, int pageNumber, int pageSize, CancellationToken cancellationToken = default) {
+	public async Task<DeviceListData> GetDevicesAsync(DeviceStatusQuerySession session, string? searchTerm, int pageNumber, int pageSize, CancellationToken cancellationToken = default) {
 		// 标准化分页选项
 		var normalizedPageNumber = NormalizePageNumber(pageNumber);
 		var normalizedPageSize = NormalizePageSize(pageSize, 1, MaxDeviceQueryCount);
@@ -37,7 +37,7 @@ public sealed partial class ManagementQueryService {
 	}
 
 	/// <inheritdoc/>
-	public async Task<IReadOnlyCollection<DeviceSummary>> GetDeviceSliceAsync(ManagementQuerySession session, string? searchTerm, int take, bool sortByNormalizedDeviceName = false, CancellationToken cancellationToken = default) {
+	public async Task<IReadOnlyCollection<DeviceSummary>> GetDeviceSliceAsync(DeviceStatusQuerySession session, string? searchTerm, int take, bool sortByNormalizedDeviceName = false, CancellationToken cancellationToken = default) {
 		// 标准化查询数量
 		var normalizedTake = NormalizePageSize(take, 1, MaxDeviceQueryCount);
 
@@ -55,7 +55,7 @@ public sealed partial class ManagementQueryService {
 	}
 
 	/// <inheritdoc/>
-	public async Task<DeviceSummary?> GetDeviceByNameAsync(ManagementQuerySession session, string deviceName, CancellationToken cancellationToken = default) {
+	public async Task<DeviceSummary?> GetDeviceByNameAsync(DeviceStatusQuerySession session, string deviceName, CancellationToken cancellationToken = default) {
 		var deviceNameLookup = IdentityNameLookup.TryCreate(deviceName, lookupNormalizer);
 		if (deviceNameLookup is null) {
 			return null;
@@ -71,7 +71,7 @@ public sealed partial class ManagementQueryService {
 	}
 
 	/// <inheritdoc/>
-	public async Task<DeviceSummary?> GetDeviceByIdAsync(ManagementQuerySession session, Guid deviceId, CancellationToken cancellationToken = default) {
+	public async Task<DeviceSummary?> GetDeviceByIdAsync(DeviceStatusQuerySession session, Guid deviceId, CancellationToken cancellationToken = default) {
 		// 构建当前可读取的设备范围，并应用设备 ID 筛选
 		var filteredDevices = BuildAccessibleDeviceQuery(session)
 			.WhereDeviceId(deviceId);
@@ -82,7 +82,7 @@ public sealed partial class ManagementQueryService {
 	}
 
 	/// <inheritdoc/>
-	public async Task<DeviceDetailsData?> GetDeviceDetailsByNameAsync(ManagementQuerySession session, string deviceName, CancellationToken cancellationToken = default) {
+	public async Task<DeviceDetailsData?> GetDeviceDetailsByNameAsync(DeviceStatusQuerySession session, string deviceName, CancellationToken cancellationToken = default) {
 		var device = await GetDeviceByNameAsync(session, deviceName, cancellationToken);
 		if (device is null) {
 			return null;
@@ -98,7 +98,7 @@ public sealed partial class ManagementQueryService {
 	}
 
 	/// <inheritdoc/>
-	public async Task<DeviceDetailsData?> GetDeviceDetailsByIdAsync(ManagementQuerySession session, Guid deviceId, CancellationToken cancellationToken = default) {
+	public async Task<DeviceDetailsData?> GetDeviceDetailsByIdAsync(DeviceStatusQuerySession session, Guid deviceId, CancellationToken cancellationToken = default) {
 		var device = await GetDeviceByIdAsync(session, deviceId, cancellationToken);
 		if (device is null) {
 			return null;
@@ -162,7 +162,7 @@ public sealed partial class ManagementQueryService {
 	/// </summary>
 	/// <param name="session">查询会话</param>
 	/// <returns>设备可读取范围查询</returns>
-	private IQueryable<Device> BuildAccessibleDeviceQuery(ManagementQuerySession session) {
+	private IQueryable<Device> BuildAccessibleDeviceQuery(DeviceStatusQuerySession session) {
 		var devices = dbContext.Devices.AsNoTracking();
 
 		return session.Role.GetDeviceQueryScope() switch {
@@ -172,11 +172,11 @@ public sealed partial class ManagementQueryService {
 			// 具备有限查询权限时，根据授权主体类型应用对应的设备授权关系
 			PrincipalQueryScope.Limited => session.PrincipalKind switch {
 				// 用户主体，返回已授权给该用户的设备
-				ManagementQueryPrincipalKind.User =>
+				DeviceStatusQueryPrincipalKind.User =>
 					devices.Where(device => device.AuthorizedUsers.Any(user => user.Id == session.PrincipalId)),
 
 				// API 凭据主体，返回已授权给该 API 凭据的设备
-				ManagementQueryPrincipalKind.ApiCredential =>
+				DeviceStatusQueryPrincipalKind.ApiCredential =>
 					devices.Where(device => device.AuthorizedApiCredentials.Any(credential => credential.ApiCredentialId == session.PrincipalId)),
 
 				// 其他主体类型不具备有限查询权限，返回空查询

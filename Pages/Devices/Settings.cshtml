@@ -5,7 +5,7 @@
 	var device = Model.Device;
 	var canBeDelete = Model.CanBeDelete;
 	var deleteBlockingMessage = Model.CanBeDelete ? string.Empty :
-		$"设备仅在停用且近{IDeviceManagementService.DeleteRecentLogBlockWindow.TotalDays}天内无新日志时可被删除。";
+		$"设备仅在停用且近{IDeviceAdministrationService.DeleteRecentLogBlockWindow.TotalDays}天内无新日志时可被删除。";
 }
 
 @section HeadStyles {

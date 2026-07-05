@@ -8,7 +8,7 @@ namespace DeviceStatusBeacon.Pages.Devices;
 /// 设备列表页模型
 /// </summary>
 [Authorize(Policy = AuthorizationPolicyNames.InteractiveUser)]
-public class IndexModel(IManagementQueryService queryService) : PageModel {
+public class IndexModel(IDeviceStatusQueryService deviceStatusQueryService) : PageModel {
 	/// <summary>
 	/// 搜索关键字
 	/// </summary>
@@ -54,7 +54,7 @@ public class IndexModel(IManagementQueryService queryService) : PageModel {
 			? null
 			: SearchTerm.Trim();
 
-		PageData = await queryService.GetDevicesAsync(
+		PageData = await deviceStatusQueryService.GetDevicesAsync(
 			User,
 			SearchTerm,
 			PageNumber,

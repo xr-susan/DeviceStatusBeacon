@@ -9,8 +9,8 @@ namespace DeviceStatusBeacon.Pages.Devices;
 /// </summary>
 [Authorize(Policy = AuthorizationPolicyNames.InteractiveDeviceManagement)]
 public class SettingsModel(
-	IManagementQueryService queryService,
-	IDeviceManagementService deviceManagementService) : PageModel {
+	IDeviceStatusQueryService deviceStatusQueryService,
+	IDeviceAdministrationService deviceAdministrationService) : PageModel {
 	/// <summary>
 	/// 路由中的设备名称
 	/// </summary>
@@ -71,7 +71,7 @@ public class SettingsModel(
 	public bool CanBeDelete => Device is {
 		Enabled: false
 	} && (Device.LatestLogTime is null
-		|| Device.LatestLogTime < DateTime.UtcNow.Subtract(IDeviceManagementService.DeleteRecentLogBlockWindow));
+		|| Device.LatestLogTime < DateTime.UtcNow.Subtract(IDeviceAdministrationService.DeleteRecentLogBlockWindow));
 
 	/// <summary>
 	/// 处理设备管理页加载
@@ -79,9 +79,9 @@ public class SettingsModel(
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务</returns>
 	public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken) {
-		var session = queryService.CreateQuerySessionAsync(User);
+		var session = deviceStatusQueryService.CreateQuerySessionAsync(User);
 
-		var device = await queryService.GetDeviceByNameAsync(session, DeviceName, cancellationToken);
+		var device = await deviceStatusQueryService.GetDeviceByNameAsync(session, DeviceName, cancellationToken);
 		if (device is null) {
 			return NotFound();
 		}
@@ -110,14 +110,14 @@ public class SettingsModel(
 		var newDeviceName = NewDeviceName.Trim();
 
 		try {
-			await deviceManagementService.RenameAsync(DeviceName, new() {
+			await deviceAdministrationService.RenameAsync(DeviceName, new() {
 				NewDeviceName = newDeviceName
 			}, cancellationToken);
 
 			StatusMessage = $"设备已重命名为 {newDeviceName}。";
 			return RedirectToSettingsPage(newDeviceName);
-		} catch (DeviceManagementCommandException e) {
-			return HandleDeviceManagementCommandException(e);
+		} catch (DeviceAdministrationException e) {
+			return HandleDeviceAdministrationException(e);
 		}
 	}
 
@@ -132,14 +132,14 @@ public class SettingsModel(
 			: DisplayName;
 
 		try {
-			await deviceManagementService.SetDisplayNameAsync(DeviceName, new() {
+			await deviceAdministrationService.SetDisplayNameAsync(DeviceName, new() {
 				DisplayName = displayName
 			}, cancellationToken);
 
 			StatusMessage = displayName is null ? "设备显示名称已清空。" : $"设备显示名称已更新为 {displayName}。";
 			return RedirectToSettingsPage();
-		} catch (DeviceManagementCommandException e) {
-			return HandleDeviceManagementCommandException(e);
+		} catch (DeviceAdministrationException e) {
+			return HandleDeviceAdministrationException(e);
 		}
 	}
 
@@ -150,14 +150,14 @@ public class SettingsModel(
 	/// <returns>一个表示异步操作的任务</returns>
 	public async Task<IActionResult> OnPostSetEnabledAsync(CancellationToken cancellationToken) {
 		try {
-			await deviceManagementService.SetEnabledAsync(DeviceName, new() {
+			await deviceAdministrationService.SetEnabledAsync(DeviceName, new() {
 				Enabled = Enabled
 			}, cancellationToken);
 
 			StatusMessage = Enabled ? "设备已启用。" : "设备已停用。";
 			return RedirectToSettingsPage();
-		} catch (DeviceManagementCommandException e) {
-			return HandleDeviceManagementCommandException(e);
+		} catch (DeviceAdministrationException e) {
+			return HandleDeviceAdministrationException(e);
 		}
 	}
 
@@ -168,12 +168,12 @@ public class SettingsModel(
 	/// <returns>一个表示异步操作的任务</returns>
 	public async Task<IActionResult> OnPostResetSecretKeyAsync(CancellationToken cancellationToken) {
 		try {
-			var commandResult = await deviceManagementService.ResetSecretKeyAsync(DeviceName, cancellationToken);
+			var commandResult = await deviceAdministrationService.ResetSecretKeyAsync(DeviceName, cancellationToken);
 			ResetSecretKey = commandResult.SecretKey;
 			StatusMessage = "设备操作密钥已重置。";
 			return RedirectToSettingsPage();
-		} catch (DeviceManagementCommandException e) {
-			return HandleDeviceManagementCommandException(e);
+		} catch (DeviceAdministrationException e) {
+			return HandleDeviceAdministrationException(e);
 		}
 	}
 
@@ -183,9 +183,9 @@ public class SettingsModel(
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务</returns>
 	public async Task<IActionResult> OnPostDeleteAsync(CancellationToken cancellationToken) {
-		var session = queryService.CreateQuerySessionAsync(User);
+		var session = deviceStatusQueryService.CreateQuerySessionAsync(User);
 
-		var device = await queryService.GetDeviceByNameAsync(session, DeviceName, cancellationToken);
+		var device = await deviceStatusQueryService.GetDeviceByNameAsync(session, DeviceName, cancellationToken);
 		if (device is null) {
 			return NotFound();
 		}
@@ -196,22 +196,22 @@ public class SettingsModel(
 		}
 
 		try {
-			await deviceManagementService.DeleteAsync(device.DeviceName, cancellationToken);
+			await deviceAdministrationService.DeleteAsync(device.DeviceName, cancellationToken);
 
 			StatusMessage = $"设备 {device.DeviceName} 已删除。";
 			return RedirectToPage("/Devices/Index");
-		} catch (DeviceManagementCommandException e) {
-			return HandleDeviceManagementCommandException(e, device.DeviceName);
+		} catch (DeviceAdministrationException e) {
+			return HandleDeviceAdministrationException(e, device.DeviceName);
 		}
 	}
 
 	/// <summary>
-	/// 处理设备管理命令异常
+	/// 处理设备管理业务异常
 	/// </summary>
-	/// <param name="e">设备管理命令异常</param>
+	/// <param name="e">设备管理业务异常</param>
 	/// <param name="deviceName">获取到的设备名称，默认为 null</param>
 	/// <returns>操作结果</returns>
-	private IActionResult HandleDeviceManagementCommandException(DeviceManagementCommandException e, string? deviceName = null) {
+	private IActionResult HandleDeviceAdministrationException(DeviceAdministrationException e, string? deviceName = null) {
 		if (e.StatusCode == StatusCodes.Status404NotFound) {
 			return NotFound();
 		}

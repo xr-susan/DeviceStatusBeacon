@@ -1,12 +1,12 @@
 ﻿namespace DeviceStatusBeacon.Services;
 
-public sealed partial class UserManagementService {
+public sealed partial class AccessAdministrationService {
 	/// <inheritdoc/>
 	public async Task SetDeviceAuthorizedUsersAsync(Guid deviceId, SetDeviceAuthorizedUsersCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		await SetDeviceAuthorizedUsersAsync(
 			dbContext.Devices.WhereDeviceId(deviceId),
@@ -19,7 +19,7 @@ public sealed partial class UserManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var deviceNameLookup = CreateDeviceNameLookup(deviceName);
 		await SetDeviceAuthorizedUsersAsync(
@@ -44,7 +44,7 @@ public sealed partial class UserManagementService {
 		var device = await devices
 			.Select(entity => new { entity.DeviceId })
 			.SingleOrDefaultAsync(cancellationToken)
-			?? throw new UserManagementCommandException(StatusCodes.Status404NotFound, "未找到指定的设备");
+			?? throw new AccessAdministrationException(StatusCodes.Status404NotFound, "未找到指定的设备");
 		var deviceId = device.DeviceId;
 
 		var requestedUserIds = command.AuthorizedUserIds
@@ -58,7 +58,7 @@ public sealed partial class UserManagementService {
 				.AsNoTracking()
 				.CountAsync(user => requestedUserIds.Contains(user.Id), cancellationToken);
 			if (existingUserCount != requestedUserIds.Count) {
-				throw new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, "授权用户范围包含不存在的用户");
+				throw new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, "授权用户范围包含不存在的用户");
 			}
 		}
 
@@ -123,7 +123,7 @@ public sealed partial class UserManagementService {
 		List<Guid> limitedQueryUserIds = [];
 		foreach (var removedUser in removedUsers) {
 			if (!PrincipalRole.TryParse(removedUser.RoleName, out var role)) {
-				throw new UserManagementCommandException(StatusCodes.Status409Conflict, "被移除的授权用户未正确设置角色");
+				throw new AccessAdministrationException(StatusCodes.Status409Conflict, "被移除的授权用户未正确设置角色");
 			}
 
 			if (role != PrincipalRole.LimitedQuery) {

@@ -1,6 +1,6 @@
 ﻿namespace DeviceStatusBeacon.Services;
 
-public sealed partial class UserManagementService {
+public sealed partial class AccessAdministrationService {
 	/// <summary>
 	/// 更新授权设备列表。
 	/// </summary>
@@ -40,7 +40,7 @@ public sealed partial class UserManagementService {
 				.Where(device => addedDeviceIds.Contains(device.DeviceId))
 				.CountAsync(cancellationToken);
 			if (existingAddedDeviceCount != addedDeviceIds.Count) {
-				throw new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, "授权设备范围包含不存在的设备");
+				throw new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, "授权设备范围包含不存在的设备");
 			}
 		}
 
@@ -108,7 +108,7 @@ public sealed partial class UserManagementService {
 
 			var existingAddedDeviceCount = await devicesQuery.CountAsync(cancellationToken);
 			if (existingAddedDeviceCount != addedDeviceIds.Count) {
-				throw new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, "API 凭据授权设备范围包含不存在或所属用户不可访问的设备");
+				throw new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, "API 凭据授权设备范围包含不存在或所属用户不可访问的设备");
 			}
 		}
 

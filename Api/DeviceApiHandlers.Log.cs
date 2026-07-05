@@ -10,14 +10,14 @@ internal static partial class DeviceApiHandlers {
 	/// <param name="context">当前 HTTP 上下文</param>
 	/// <param name="deviceId">路由中指定的目标设备 ID</param>
 	/// <param name="request">在线日志创建请求</param>
-	/// <param name="onlineLogCommandService">在线日志命令服务</param>
+	/// <param name="onlineLogManagementService">在线日志管理服务</param>
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>创建成功结果或统一错误响应</returns>
 	public static async Task<IResult> CreateOnlineLogAsync(
 		HttpContext context,
 		Guid deviceId,
 		CreateOnlineLogCommand request,
-		IOnlineLogCommandService onlineLogCommandService,
+		IOnlineLogManagementService onlineLogManagementService,
 		CancellationToken cancellationToken) {
 		// 尝试获取已认证的设备实体
 		var authenticatedDevice = context.GetAuthenticatedSignatureEntity<Device>();
@@ -33,7 +33,7 @@ internal static partial class DeviceApiHandlers {
 		}
 
 		try {
-			var commandResult = await onlineLogCommandService.CreateAsync(
+			var commandResult = await onlineLogManagementService.CreateAsync(
 				deviceId,
 				request,
 				context.Connection.RemoteIpAddress,
@@ -42,10 +42,10 @@ internal static partial class DeviceApiHandlers {
 				cancellationToken);
 
 			return Results.Ok(commandResult);
-		} catch (OnlineLogCommandException e) {
-			// 在线日志命令服务会把常见业务失败统一转成带状态码的异常；
+		} catch (OnlineLogManagementException e) {
+			// 在线日志管理服务会把常见业务失败统一转成带状态码的异常；
 			// Minimal API 终结点在这里再将其转换为一致的 ProblemDetails JSON 响应
-			return ApiProblemResults.FromServiceCommandException(context, e);
+			return ApiProblemResults.FromServiceException(context, e);
 		}
 	}
 }

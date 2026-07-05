@@ -2,13 +2,13 @@
 
 namespace DeviceStatusBeacon.Services;
 
-public sealed partial class ManagementQueryService {
+public sealed partial class DeviceStatusQueryService {
 	/// <inheritdoc/>
 	public async Task<DashboardOverviewData> GetDashboardOverviewAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default) =>
 		await GetDashboardOverviewAsync(CreateQuerySessionAsync(principal), cancellationToken);
 
 	/// <inheritdoc/>
-	public async Task<DashboardOverviewData> GetDashboardOverviewAsync(ManagementQuerySession session, CancellationToken cancellationToken = default) {
+	public async Task<DashboardOverviewData> GetDashboardOverviewAsync(DeviceStatusQuerySession session, CancellationToken cancellationToken = default) {
 		var recentActiveCutoff = DateTime.UtcNow.AddHours(-DashboardRecentActiveWindowHours);
 
 		// 仪表板首屏只同步加载设备侧的轻量统计，避免把日志总量统计放进主渲染路径
@@ -36,7 +36,7 @@ public sealed partial class ManagementQueryService {
 		await GetDashboardActivityAsync(CreateQuerySessionAsync(principal), cancellationToken);
 
 	/// <inheritdoc/>
-	public async Task<DashboardActivityData> GetDashboardActivityAsync(ManagementQuerySession session, CancellationToken cancellationToken = default) {
+	public async Task<DashboardActivityData> GetDashboardActivityAsync(DeviceStatusQuerySession session, CancellationToken cancellationToken = default) {
 		// 获取当前查询会话范围内可读取的设备和日志范围，用于列表数据查询
 		var accessibleDevices = BuildAccessibleDeviceQuery(session);
 		var accessibleLogs = BuildAccessibleLogQuery(session);

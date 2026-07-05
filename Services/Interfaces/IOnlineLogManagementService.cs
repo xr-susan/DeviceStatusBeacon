@@ -4,13 +4,9 @@ using System.Net;
 namespace DeviceStatusBeacon.Services.Interfaces;
 
 /// <summary>
-/// 为在线日志写入入口提供共享命令能力的服务。
+/// 在线日志管理服务。
 /// </summary>
-/// <remarks>
-/// 该服务聚焦于“写入”侧能力：
-/// 统一处理目标设备解析、写入边界校验和日志落库。
-/// </remarks>
-public interface IOnlineLogCommandService {
+public interface IOnlineLogManagementService {
 	/// <summary>
 	/// 为指定设备创建一条在线日志。
 	/// </summary>

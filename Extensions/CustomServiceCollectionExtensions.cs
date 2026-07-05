@@ -20,11 +20,11 @@ public static class CustomServiceCollectionExtensions {
 				.AddSingleton<IDataProtectorV1, DataProtectorV1>()
 				.AddSingleton<INonceReplayProtectionService, NonceReplayProtectionService>()
 				.AddSingleton<ISecurityServiceV1, SecurityServiceV1>()
-				.AddScoped<IManagementQueryService, ManagementQueryService>()
-				.AddScoped<IDeviceManagementService, DeviceManagementService>()
-				.AddScoped<IUserManagementService, UserManagementService>()
-				.AddScoped<ICurrentUserSettingsService, CurrentUserSettingsService>()
-				.AddScoped<IOnlineLogCommandService, OnlineLogCommandService>();
+				.AddScoped<IDeviceStatusQueryService, DeviceStatusQueryService>()
+				.AddScoped<IDeviceAdministrationService, DeviceAdministrationService>()
+				.AddScoped<IAccessAdministrationService, AccessAdministrationService>()
+				.AddScoped<IAccountSettingsService, AccountSettingsService>()
+				.AddScoped<IOnlineLogManagementService, OnlineLogManagementService>();
 
 		/// <summary>
 		/// 依据配置注册数据库上下文 <see cref="DeviceStatusBeaconContext"/> 到 <see cref="IServiceCollection"/> 中

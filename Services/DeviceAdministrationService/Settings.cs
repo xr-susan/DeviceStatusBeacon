@@ -1,6 +1,6 @@
 ﻿namespace DeviceStatusBeacon.Services;
 
-public sealed partial class DeviceManagementService {
+public sealed partial class DeviceAdministrationService {
 	/// <inheritdoc/>
 	public async Task<ResetDeviceSecretKeyCommandResult> ResetSecretKeyAsync(Guid deviceId, CancellationToken cancellationToken = default) =>
 		await ResetSecretKeyAsync(
@@ -21,7 +21,7 @@ public sealed partial class DeviceManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new DeviceManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new DeviceAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		await SetDisplayNameAsync(
 			dbContext.Devices.WhereDeviceId(deviceId),
@@ -34,7 +34,7 @@ public sealed partial class DeviceManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new DeviceManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new DeviceAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var deviceNameLookup = CreateDeviceNameLookup(deviceName);
 
@@ -49,7 +49,7 @@ public sealed partial class DeviceManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new DeviceManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new DeviceAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		await SetEnabledAsync(
 			dbContext.Devices.WhereDeviceId(deviceId),
@@ -62,7 +62,7 @@ public sealed partial class DeviceManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new DeviceManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new DeviceAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var deviceNameLookup = CreateDeviceNameLookup(deviceName);
 

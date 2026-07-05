@@ -3,7 +3,7 @@
 namespace DeviceStatusBeacon.Services.Contracts;
 
 /// <summary>
-/// 表示一次可复用的管理查询会话。
+/// 表示一次可复用的设备状态查询会话。
 /// </summary>
 /// <remarks>
 /// Web 页面会基于当前登录主体构建受权限约束的查询会话；
@@ -17,29 +17,29 @@ namespace DeviceStatusBeacon.Services.Contracts;
 /// <param name="UserName">用户名或会话显示名，仅适用于交互式会话</param>
 /// <param name="DisplayName">显示名称，仅适用于交互式会话</param>
 /// <param name="Role">当前主体绑定的全局角色；具体读取与管理能力应通过角色扩展方法推导</param>
-public sealed record ManagementQuerySession(
+public sealed record DeviceStatusQuerySession(
 	Guid? PrincipalId,
-	ManagementQueryPrincipalKind PrincipalKind,
+	DeviceStatusQueryPrincipalKind PrincipalKind,
 	string UserName,
 	string? DisplayName,
 	PrincipalRole? Role
 ) {
 	/// <summary>
-	/// 转换为页面展示层使用的管理会话数据。
+	/// 转换为页面展示层使用的设备状态会话数据。
 	/// </summary>
-	/// <returns>一个供展示层 DTO 使用的管理会话数据</returns>
-	public ManagementSessionData ToData() => new(
+	/// <returns>一个供展示层 DTO 使用的设备状态会话数据</returns>
+	public DeviceStatusSessionData ToData() => new(
 		UserName,
 		DisplayName,
 		Role);
 }
 
 /// <summary>
-/// 管理查询会话的授权主体类型。
+/// 设备状态查询会话的授权主体类型。
 /// </summary>
-public enum ManagementQueryPrincipalKind {
+public enum DeviceStatusQueryPrincipalKind {
 	/// <summary>
-	/// 未识别或不支持管理查询的主体。
+	/// 未识别或不支持设备状态查询的主体。
 	/// </summary>
 	Unknown,
 
@@ -60,16 +60,16 @@ public enum ManagementQueryPrincipalKind {
 }
 
 /// <summary>
-/// 管理端当前会话数据。
+/// 当前设备状态查询会话数据。
 /// </summary>
 /// <remarks>
-/// 该记录用于页面展示层，是 <see cref="ManagementQuerySession"/> 的只读快照。
+/// 该记录用于页面展示层，是 <see cref="DeviceStatusQuerySession"/> 的只读快照。
 /// 页面如果需要判断查询范围或管理能力，应通过 <see cref="Role"/> 的扩展方法即时推导。
 /// </remarks>
 /// <param name="UserName">用户名</param>
 /// <param name="DisplayName">显示名称</param>
 /// <param name="Role">当前主体绑定的全局角色；具体读取与管理能力应通过角色扩展方法推导</param>
-public sealed record ManagementSessionData(
+public sealed record DeviceStatusSessionData(
 	string UserName,
 	string? DisplayName,
 	PrincipalRole? Role
@@ -153,7 +153,7 @@ public sealed record PaginationData {
 /// <param name="RecentActiveDeviceCount">当前查询会话范围内近期有日志的设备数</param>
 /// <param name="RecentActiveWindowHours">近期活动统计使用的时间窗口（小时）</param>
 public sealed record DashboardOverviewData(
-	ManagementSessionData Session,
+	DeviceStatusSessionData Session,
 	int AccessibleDeviceCount,
 	int EnabledDeviceCount,
 	int RecentActiveDeviceCount,
@@ -197,7 +197,7 @@ public sealed record DeviceActivitySummary(
 /// <param name="Pagination">分页数据</param>
 /// <param name="Devices">设备列表</param>
 public sealed record DeviceListData(
-	ManagementSessionData Session,
+	DeviceStatusSessionData Session,
 	PaginationData Pagination,
 	IReadOnlyCollection<DeviceSummary> Devices
 );
@@ -219,7 +219,7 @@ public sealed record DeviceDetailsData(
 /// <param name="Pagination">分页数据</param>
 /// <param name="Logs">日志列表</param>
 public sealed record LogListData(
-	ManagementSessionData Session,
+	DeviceStatusSessionData Session,
 	PaginationData Pagination,
 	IReadOnlyCollection<OnlineLogSummary> Logs
 );

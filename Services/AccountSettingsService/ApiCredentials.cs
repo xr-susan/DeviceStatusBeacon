@@ -2,7 +2,7 @@
 
 namespace DeviceStatusBeacon.Services;
 
-public sealed partial class CurrentUserSettingsService {
+public sealed partial class AccountSettingsService {
 	/// <inheritdoc/>
 	public async Task<CreateApiCredentialCommandResult> CreateApiCredentialAsync(ClaimsPrincipal principal, CreateApiCredentialCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
@@ -10,9 +10,9 @@ public sealed partial class CurrentUserSettingsService {
 		var target = await GetCurrentUserTargetAsync(principal, cancellationToken);
 		try {
 			// 当前用户入口只负责归属限定，个人凭据创建复用管理员服务
-			return await userManagementService.CreateApiCredentialAsync(target.UserId, command, cancellationToken);
-		} catch (UserManagementCommandException e) {
-			throw ToCurrentUserSettingsCommandException(e);
+			return await accessAdministrationService.CreateApiCredentialAsync(target.UserId, command, cancellationToken);
+		} catch (AccessAdministrationException e) {
+			throw ToAccountSettingsException(e);
 		}
 	}
 
@@ -23,9 +23,9 @@ public sealed partial class CurrentUserSettingsService {
 		await GetCurrentUserTargetAsync(principal, cancellationToken, apiCredentialId);
 		try {
 			// 当前用户入口只负责归属校验，显示名称更新复用管理员服务
-			await userManagementService.SetApiCredentialDisplayNameAsync(apiCredentialId, command, cancellationToken);
-		} catch (UserManagementCommandException e) {
-			throw ToCurrentUserSettingsCommandException(e);
+			await accessAdministrationService.SetApiCredentialDisplayNameAsync(apiCredentialId, command, cancellationToken);
+		} catch (AccessAdministrationException e) {
+			throw ToAccountSettingsException(e);
 		}
 	}
 
@@ -36,9 +36,9 @@ public sealed partial class CurrentUserSettingsService {
 		await GetCurrentUserTargetAsync(principal, cancellationToken, apiCredentialId);
 		try {
 			// 当前用户入口只负责归属校验，启用状态更新复用管理员服务
-			await userManagementService.SetApiCredentialEnabledAsync(apiCredentialId, command, cancellationToken);
-		} catch (UserManagementCommandException e) {
-			throw ToCurrentUserSettingsCommandException(e);
+			await accessAdministrationService.SetApiCredentialEnabledAsync(apiCredentialId, command, cancellationToken);
+		} catch (AccessAdministrationException e) {
+			throw ToAccountSettingsException(e);
 		}
 	}
 
@@ -49,9 +49,9 @@ public sealed partial class CurrentUserSettingsService {
 		await GetCurrentUserTargetAsync(principal, cancellationToken, apiCredentialId);
 		try {
 			// 当前用户入口只负责归属校验，凭据角色更新复用管理员服务
-			await userManagementService.SetApiCredentialRoleAsync(apiCredentialId, command, cancellationToken);
-		} catch (UserManagementCommandException e) {
-			throw ToCurrentUserSettingsCommandException(e);
+			await accessAdministrationService.SetApiCredentialRoleAsync(apiCredentialId, command, cancellationToken);
+		} catch (AccessAdministrationException e) {
+			throw ToAccountSettingsException(e);
 		}
 	}
 
@@ -62,9 +62,9 @@ public sealed partial class CurrentUserSettingsService {
 		await GetCurrentUserTargetAsync(principal, cancellationToken, apiCredentialId);
 		try {
 			// 当前用户入口只负责归属校验，授权设备更新复用管理员服务
-			await userManagementService.SetApiCredentialAuthorizedDevicesAsync(apiCredentialId, command, cancellationToken);
-		} catch (UserManagementCommandException e) {
-			throw ToCurrentUserSettingsCommandException(e);
+			await accessAdministrationService.SetApiCredentialAuthorizedDevicesAsync(apiCredentialId, command, cancellationToken);
+		} catch (AccessAdministrationException e) {
+			throw ToAccountSettingsException(e);
 		}
 	}
 
@@ -73,9 +73,9 @@ public sealed partial class CurrentUserSettingsService {
 		await GetCurrentUserTargetAsync(principal, cancellationToken, apiCredentialId);
 		try {
 			// 当前用户入口只负责归属校验，凭据密钥重置复用管理员服务
-			return await userManagementService.ResetApiCredentialSecretKeyAsync(apiCredentialId, cancellationToken);
-		} catch (UserManagementCommandException e) {
-			throw ToCurrentUserSettingsCommandException(e);
+			return await accessAdministrationService.ResetApiCredentialSecretKeyAsync(apiCredentialId, cancellationToken);
+		} catch (AccessAdministrationException e) {
+			throw ToAccountSettingsException(e);
 		}
 	}
 
@@ -84,9 +84,9 @@ public sealed partial class CurrentUserSettingsService {
 		await GetCurrentUserTargetAsync(principal, cancellationToken, apiCredentialId);
 		try {
 			// 当前用户入口只负责归属校验，删除凭据操作复用管理员服务
-			await userManagementService.DeleteApiCredentialAsync(apiCredentialId, cancellationToken);
-		} catch (UserManagementCommandException e) {
-			throw ToCurrentUserSettingsCommandException(e);
+			await accessAdministrationService.DeleteApiCredentialAsync(apiCredentialId, cancellationToken);
+		} catch (AccessAdministrationException e) {
+			throw ToAccountSettingsException(e);
 		}
 	}
 }

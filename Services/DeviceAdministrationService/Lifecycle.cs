@@ -2,13 +2,13 @@
 
 namespace DeviceStatusBeacon.Services;
 
-public sealed partial class DeviceManagementService {
+public sealed partial class DeviceAdministrationService {
 	/// <inheritdoc/>
 	public async Task<CreateDeviceCommandResult> CreateAsync(CreateDeviceCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new DeviceManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new DeviceAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		EnsureValidDeviceName(command.DeviceName, "设备名称不符合身份标识格式");
 
@@ -24,7 +24,7 @@ public sealed partial class DeviceManagementService {
 			dbContext.Devices.Add(newDevice);
 			await dbContext.SaveChangesAsync(cancellationToken);
 		} catch (DbUpdateException e) when (e.InnerException is SqliteException { SqliteExtendedErrorCode: 2067 }) {
-			throw new DeviceManagementCommandException(StatusCodes.Status409Conflict, "指定的设备名称已被使用");
+			throw new DeviceAdministrationException(StatusCodes.Status409Conflict, "指定的设备名称已被使用");
 		}
 
 		return new(
@@ -39,7 +39,7 @@ public sealed partial class DeviceManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new DeviceManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new DeviceAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		EnsureValidDeviceName(command.NewDeviceName, "新设备名称不符合身份标识格式");
 
@@ -54,7 +54,7 @@ public sealed partial class DeviceManagementService {
 		ArgumentNullException.ThrowIfNull(command);
 		CommandValidation.EnsureValid(
 			command,
-			message => new DeviceManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
+			message => new DeviceAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		EnsureValidDeviceName(command.NewDeviceName, "新设备名称不符合身份标识格式");
 
@@ -100,7 +100,7 @@ public sealed partial class DeviceManagementService {
 
 			EnsureDeviceFound(updatedCount);
 		} catch (DbUpdateException e) when (e.InnerException is SqliteException { SqliteExtendedErrorCode: 2067 }) {
-			throw new DeviceManagementCommandException(StatusCodes.Status409Conflict, "指定的新设备名称已被使用");
+			throw new DeviceAdministrationException(StatusCodes.Status409Conflict, "指定的新设备名称已被使用");
 		}
 	}
 
@@ -111,7 +111,7 @@ public sealed partial class DeviceManagementService {
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务</returns>
 	private async Task DeleteAsync(IQueryable<Device> devices, CancellationToken cancellationToken) {
-		var recentLogBoundary = DateTime.UtcNow.Subtract(IDeviceManagementService.DeleteRecentLogBlockWindow);
+		var recentLogBoundary = DateTime.UtcNow.Subtract(IDeviceAdministrationService.DeleteRecentLogBlockWindow);
 		var deleteQuery = devices
 			.Where(device => !device.Enabled)
 			.Where(device => !dbContext.OnlineLogs.Any(log =>
@@ -127,14 +127,14 @@ public sealed partial class DeviceManagementService {
 		// 如果没有设备被删除，则需要进一步检查原因，可能是设备不存在、设备未停用或设备近7天有新日志
 		var target = await devices
 			.AsNoTracking()
-			.Select(device => new DeviceManagementTarget(
+			.Select(device => new DeviceAdministrationTarget(
 				device.DeviceId,
 				device.Enabled))
 			.SingleOrDefaultAsync(cancellationToken)
-			?? throw new DeviceManagementCommandException(StatusCodes.Status404NotFound, "未找到指定的设备");
+			?? throw new DeviceAdministrationException(StatusCodes.Status404NotFound, "未找到指定的设备");
 
 		if (target.Enabled) {
-			throw new DeviceManagementCommandException(StatusCodes.Status409Conflict, "设备必须先停用后才能删除");
+			throw new DeviceAdministrationException(StatusCodes.Status409Conflict, "设备必须先停用后才能删除");
 		}
 
 		var hasRecentLog = await dbContext.OnlineLogs
@@ -144,7 +144,7 @@ public sealed partial class DeviceManagementService {
 				&& log.LogTime >= recentLogBoundary,
 				cancellationToken);
 		if (hasRecentLog) {
-			throw new DeviceManagementCommandException(StatusCodes.Status409Conflict, $"设备近{IDeviceManagementService.DeleteRecentLogBlockWindow.TotalDays}天存在新日志，暂不能删除");
+			throw new DeviceAdministrationException(StatusCodes.Status409Conflict, $"设备近{IDeviceAdministrationService.DeleteRecentLogBlockWindow.TotalDays}天存在新日志，暂不能删除");
 		}
 
 		// 如果仍然没有设备被删除，则说明存在并发问题，此时再次尝试删除设备
@@ -154,6 +154,6 @@ public sealed partial class DeviceManagementService {
 		}
 
 		// 如果仍然没有设备被删除，则说明存在并发问题，此时抛出异常提示用户重试
-		throw new DeviceManagementCommandException(StatusCodes.Status409Conflict, "设备删除失败，请重试");
+		throw new DeviceAdministrationException(StatusCodes.Status409Conflict, "设备删除失败，请重试");
 	}
 }

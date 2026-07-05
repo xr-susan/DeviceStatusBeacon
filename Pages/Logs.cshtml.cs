@@ -8,7 +8,7 @@ namespace DeviceStatusBeacon.Pages;
 /// 日志总览页模型
 /// </summary>
 [Authorize(Policy = AuthorizationPolicyNames.InteractiveUser)]
-public class LogsModel(IManagementQueryService queryService) : PageModel {
+public class LogsModel(IDeviceStatusQueryService deviceStatusQueryService) : PageModel {
 	/// <summary>
 	/// 设备筛选关键字
 	/// </summary>
@@ -42,7 +42,7 @@ public class LogsModel(IManagementQueryService queryService) : PageModel {
 			? null
 			: DeviceKeyword.Trim();
 
-		PageData = await queryService.GetLogsAsync(
+		PageData = await deviceStatusQueryService.GetLogsAsync(
 			User,
 			DeviceKeyword,
 			PageNumber,

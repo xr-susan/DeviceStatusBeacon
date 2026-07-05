@@ -5,21 +5,16 @@ namespace DeviceStatusBeacon.Services;
 /// <summary>
 /// 设备管理服务。
 /// </summary>
-/// <remarks>
-/// 该服务把设备相关的写入规则收敛到同一个地方：
-/// CLI、Minimal API 和后续管理页面都通过这里创建、修改和删除设备；
-/// 设备名称格式、唯一性冲突和目标设备存在性也在这里统一处理。
-/// </remarks>
-public sealed partial class DeviceManagementService(
+public sealed partial class DeviceAdministrationService(
 	DeviceStatusBeaconContext dbContext,
 	ILookupNormalizer lookupNormalizer,
-	IDataProtectorV1 dataProtector) : IDeviceManagementService {
+	IDataProtectorV1 dataProtector) : IDeviceAdministrationService {
 	/// <summary>
 	/// 设备管理目标。
 	/// </summary>
 	/// <param name="DeviceId">设备 ID</param>
 	/// <param name="Enabled">是否启用</param>
-	private sealed record DeviceManagementTarget(
+	private sealed record DeviceAdministrationTarget(
 		Guid DeviceId,
 		bool Enabled
 	);
@@ -31,7 +26,7 @@ public sealed partial class DeviceManagementService(
 	/// <returns>设备名称查找条件</returns>
 	private IdentityNameLookup CreateDeviceNameLookup(string value) =>
 		IdentityNameLookup.TryCreate(value, lookupNormalizer)
-			?? throw new DeviceManagementCommandException(StatusCodes.Status404NotFound, "未找到指定的设备");
+			?? throw new DeviceAdministrationException(StatusCodes.Status404NotFound, "未找到指定的设备");
 
 	/// <summary>
 	/// 确保设备名称符合身份标识格式。
@@ -40,7 +35,7 @@ public sealed partial class DeviceManagementService(
 	/// <param name="message">格式错误时使用的错误消息</param>
 	private static void EnsureValidDeviceName(string deviceName, string message) {
 		if (!IdentityNameRules.IsValid(deviceName)) {
-			throw new DeviceManagementCommandException(StatusCodes.Status422UnprocessableEntity, message);
+			throw new DeviceAdministrationException(StatusCodes.Status422UnprocessableEntity, message);
 		}
 	}
 
@@ -50,7 +45,7 @@ public sealed partial class DeviceManagementService(
 	/// <param name="affectedCount">写入影响的行数</param>
 	private static void EnsureDeviceFound(int affectedCount) {
 		if (affectedCount == 0) {
-			throw new DeviceManagementCommandException(StatusCodes.Status404NotFound, "未找到指定的设备");
+			throw new DeviceAdministrationException(StatusCodes.Status404NotFound, "未找到指定的设备");
 		}
 	}
 }
