@@ -3,7 +3,7 @@
 namespace DeviceStatusBeacon.Services;
 
 /// <summary>
-/// 用户与 API 凭据管理服务。
+/// 访问管理服务。
 /// </summary>
 public sealed partial class AccessAdministrationService(
 	DeviceStatusBeaconContext dbContext,

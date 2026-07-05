@@ -1,7 +1,7 @@
 ﻿namespace DeviceStatusBeacon.Services.Interfaces;
 
 /// <summary>
-/// 用户与 API 凭据管理服务。
+/// 访问管理服务。
 /// </summary>
 public interface IAccessAdministrationService {
 	/// <summary>

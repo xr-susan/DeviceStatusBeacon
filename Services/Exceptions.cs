@@ -34,12 +34,12 @@ public sealed class OnlineLogManagementException(int statusCode, string message)
 }
 
 /// <summary>
-/// 表示用户与 API 凭据管理操作过程中出现的业务失败。
+/// 表示访问管理操作过程中出现的业务失败。
 /// </summary>
 public sealed class AccessAdministrationException(int statusCode, string message)
 	: ServiceException(statusCode, GetProblemTitle(statusCode), message) {
 	/// <summary>
-	/// 获取用户与 API 凭据管理失败对应的错误标题。
+	/// 获取访问管理失败对应的错误标题。
 	/// </summary>
 	/// <param name="statusCode">HTTP 状态码</param>
 	/// <returns>用于 ProblemDetails 的错误标题</returns>
