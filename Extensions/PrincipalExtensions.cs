@@ -19,13 +19,6 @@ public static class PrincipalExtensions {
 			role is PrincipalRole.LimitedQuery or PrincipalRole.FullQuery or PrincipalRole.DeviceManager or PrincipalRole.Administrator;
 
 		/// <summary>
-		/// 判断当前角色是否具备全部设备及日志读取能力。
-		/// </summary>
-		/// <returns>如果具备全部设备数据读取能力，则返回 true；否则返回 false</returns>
-		public bool CanQueryAllDevices() =>
-			role is PrincipalRole.FullQuery or PrincipalRole.DeviceManager or PrincipalRole.Administrator;
-
-		/// <summary>
 		/// 判断当前角色是否具备设备管理能力。
 		/// </summary>
 		/// <returns>如果具备设备管理能力，则返回 true；否则返回 false</returns>

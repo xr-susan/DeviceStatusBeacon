@@ -1,4 +1,4 @@
-﻿@page "/devices/{deviceName:deviceName}/settings"
+﻿@page "/devices/by-name/{deviceName:deviceName}/settings"
 @model DeviceStatusBeacon.Pages.Devices.SettingsModel
 @{
 	ViewData["Title"] = $"设置 {Model.Device.DeviceName}";
@@ -41,7 +41,7 @@
 	}
 	@if (!string.IsNullOrWhiteSpace(Model.ResetSecretKey)) {
 		<div class="notice notice--danger secret-key-notice">
-			<div class="secret-key-notice__title">新操作密钥只会显示这一次，请妥善保存，避免泄露或遗失。</div>
+			<div class="secret-key-notice__title">操作密钥只会显示这一次，请妥善保存，避免泄露或遗失。</div>
 			<code class="secret-key-notice__value">@Model.ResetSecretKey</code>
 		</div>
 	}

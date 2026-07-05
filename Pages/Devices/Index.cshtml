@@ -16,6 +16,11 @@
 			<h1 class="page-header__title">设备查询</h1>
 			<p class="page-header__subtitle">筛选并查看当前账户有权读取的设备。</p>
 		</div>
+		@if (session.Role.CanManageDevices()) {
+			<div class="button-row">
+				<a asp-page="/Devices/Create" class="button button--primary">创建设备</a>
+			</div>
+		}
 	</header>
 
 	@if (!string.IsNullOrWhiteSpace(Model.StatusMessage)) {

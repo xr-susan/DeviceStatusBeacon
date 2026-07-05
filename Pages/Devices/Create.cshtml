@@ -1,0 +1,56 @@
+﻿@page "/devices/create"
+@model DeviceStatusBeacon.Pages.Devices.CreateModel
+@{
+	ViewData["Title"] = "创建设备";
+}
+
+@section HeadStyles {
+	<link rel="stylesheet" href="~/css/pages/devices.css" asp-append-version="true" />
+}
+
+<div class="page">
+	<header class="page-header">
+		<div>
+			<h1 class="page-header__title">创建设备</h1>
+			<p class="page-header__subtitle">新增设备主体并生成初始操作密钥。</p>
+		</div>
+		<div class="button-row">
+			<a asp-page="/Devices/Index" class="button button--secondary">返回设备查询</a>
+		</div>
+	</header>
+
+	@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage)) {
+		<div class="notice notice--danger">@Model.ErrorMessage</div>
+	}
+
+	<section class="panel">
+		<div class="panel__header">
+			<h2 class="panel__title">设备信息</h2>
+		</div>
+
+		<form method="post" class="device-settings-grid">
+			<div class="field">
+				<label asp-for="DeviceName" class="field__label">设备名称</label>
+				<input asp-for="DeviceName"
+					   class="field__input"
+					   minlength="@DeviceStatusBeacon.IdentityNameRules.MinimumLength"
+					   maxlength="@DeviceStatusBeacon.IdentityNameRules.MaximumLength"
+					   pattern="[A-Za-z\d][A-Za-z\d_\-]{2,62}[A-Za-z\d]"
+					   title="设备名称长度为 4 到 64 个字符，只能包含字母、数字、下划线和连字符，且首尾必须是字母或数字。"
+					   autocomplete="off"
+					   required
+					   data-select-on-focus />
+			</div>
+			<div class="field">
+				<label asp-for="DisplayName" class="field__label">显示名称</label>
+				<input asp-for="DisplayName"
+					   class="field__input"
+					   autocomplete="off"
+					   data-select-on-focus />
+			</div>
+			<div class="button-row">
+				<button type="submit" class="button button--primary">创建设备</button>
+			</div>
+		</form>
+	</section>
+</div>
