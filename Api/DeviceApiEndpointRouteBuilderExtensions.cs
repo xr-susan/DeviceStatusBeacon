@@ -37,7 +37,7 @@ public static class DeviceApiEndpointRouteBuilderExtensions {
 			queryGroup.MapGet("/{deviceId:guid}", DeviceApiHandlers.GetDeviceByIdAsync)
 				.WithName("GetDeviceById");
 
-			queryGroup.MapGet("/by-name/{deviceName:deviceName}", DeviceApiHandlers.GetDeviceByNameAsync)
+			queryGroup.MapGet("/by-name/{deviceName:identityName}", DeviceApiHandlers.GetDeviceByNameAsync)
 				.WithName("GetDeviceByName");
 
 			// 设备管理相关端点组，要求用户或 API 凭据具有设备管理权限

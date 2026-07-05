@@ -36,7 +36,7 @@ try {
 
 // 配置路由约束
 builder.Services.Configure<RouteOptions>(options =>
-	options.ConstraintMap["deviceName"] = typeof(DeviceNameRouteConstraint));
+	options.ConstraintMap["identityName"] = typeof(IdentityNameRouteConstraint));
 
 // 注册 Razor Pages、认证与授权、验证器、JSON 序列化器和问题详情处理
 builder.Services.AddRazorPages(options => options.Conventions.AuthorizeFolder("/", AuthorizationPolicyNames.InteractiveUser));

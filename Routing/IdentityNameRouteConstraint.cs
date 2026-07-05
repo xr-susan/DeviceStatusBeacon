@@ -3,9 +3,9 @@
 namespace DeviceStatusBeacon.Routing;
 
 /// <summary>
-/// 设备名称路由约束。
+/// 身份标识名称路由约束。
 /// </summary>
-public sealed class DeviceNameRouteConstraint : IRouteConstraint {
+public sealed class IdentityNameRouteConstraint : IRouteConstraint {
 	/// <inheritdoc/>
 	public bool Match(
 		HttpContext? httpContext,
