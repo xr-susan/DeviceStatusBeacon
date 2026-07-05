@@ -4,6 +4,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task<CreateUserCommandResult> CreateUserAsync(CreateUserCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		EnsureValidUserName(command.UserName, "用户名不符合身份标识格式");
 		EnsureDefinedRole(command.Role, "无效的用户角色");
@@ -33,6 +36,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task RenameUserAsync(Guid userId, RenameUserCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		EnsureValidUserName(command.NewUserName, "新用户名不符合身份标识格式");
 
@@ -43,6 +49,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task RenameUserAsync(string userName, RenameUserCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		EnsureValidUserName(command.NewUserName, "新用户名不符合身份标识格式");
 
@@ -53,6 +62,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task SetUserDisplayNameAsync(Guid userId, SetUserDisplayNameCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		await SetUserDisplayNameAsync(
 			dbContext.Users.Where(user => user.Id == userId),
@@ -63,6 +75,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task SetUserDisplayNameAsync(string userName, SetUserDisplayNameCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var userNameLookup = CreateUserNameLookup(userName);
 		await SetUserDisplayNameAsync(
@@ -74,6 +89,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task ResetUserPasswordAsync(Guid userId, ResetUserPasswordCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var user = await FindUserByIdAsync(userId);
 
@@ -85,6 +103,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task ResetUserPasswordAsync(string userName, ResetUserPasswordCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var user = await FindUserByNameAsync(userName);
 
@@ -96,6 +117,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task SetUserRoleAsync(Guid userId, SetUserRoleCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var user = await FindUserByIdAsync(userId);
 		await SetUserRoleAsync(user, command, cancellationToken);
@@ -104,6 +128,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task SetUserRoleAsync(string userName, SetUserRoleCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var user = await FindUserByNameAsync(userName);
 		await SetUserRoleAsync(user, command, cancellationToken);
@@ -112,6 +139,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task SetUserAuthorizedDevicesAsync(Guid userId, SetUserAuthorizedDevicesCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		await SetUserAuthorizedDevicesAsync(
 			dbContext.Users.Where(user => user.Id == userId),
@@ -122,6 +152,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task SetUserAuthorizedDevicesAsync(string userName, SetUserAuthorizedDevicesCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var userNameLookup = CreateUserNameLookup(userName);
 		await SetUserAuthorizedDevicesAsync(

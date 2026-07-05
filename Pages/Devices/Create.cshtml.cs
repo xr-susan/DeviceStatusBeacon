@@ -53,7 +53,7 @@ public class CreateModel(IDeviceManagementService deviceManagementService) : Pag
 		try {
 			var result = await deviceManagementService.CreateAsync(new() {
 				DeviceName = DeviceName.Trim(),
-				DisplayName = string.IsNullOrWhiteSpace(DisplayName) ? null : DisplayName.Trim()
+				DisplayName = string.IsNullOrEmpty(DisplayName) ? null : DisplayName
 			}, cancellationToken);
 
 			ResetSecretKey = result.SecretKey;

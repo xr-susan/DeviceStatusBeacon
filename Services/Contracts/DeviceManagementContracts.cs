@@ -5,17 +5,21 @@ namespace DeviceStatusBeacon.Services.Contracts;
 /// <summary>
 /// 设备创建请求。
 /// </summary>
-public sealed class CreateDeviceCommand {
+public sealed class CreateDeviceCommand : IValidatableObject {
 	/// <summary>
 	/// 设备名称。
 	/// </summary>
-	[Required]
+	[Required(ErrorMessage = "设备名称不能为空。")]
 	public required string DeviceName { get; init; }
 
 	/// <summary>
 	/// 设备显示名称。
 	/// </summary>
 	public string? DisplayName { get; init; }
+
+	/// <inheritdoc/>
+	public IEnumerable<ValidationResult> Validate(ValidationContext validationContext) =>
+		CommandValidation.ValidateOptionalDisplayName(DisplayName, nameof(DisplayName), "设备显示名称");
 }
 
 /// <summary>
@@ -25,19 +29,23 @@ public sealed class RenameDeviceCommand {
 	/// <summary>
 	/// 新设备名称。
 	/// </summary>
-	[Required]
+	[Required(ErrorMessage = "新设备名称不能为空。")]
 	public required string NewDeviceName { get; init; }
 }
 
 /// <summary>
 /// 设备显示名称更新请求。
 /// </summary>
-public sealed class SetDeviceDisplayNameCommand {
+public sealed class SetDeviceDisplayNameCommand : IValidatableObject {
 	/// <summary>
 	/// 新显示名称。
 	/// </summary>
 	/// <remarks>设为 null 表示清空显示名称。</remarks>
 	public required string? DisplayName { get; init; }
+
+	/// <inheritdoc/>
+	public IEnumerable<ValidationResult> Validate(ValidationContext validationContext) =>
+		CommandValidation.ValidateOptionalDisplayName(DisplayName, nameof(DisplayName), "设备显示名称");
 }
 
 /// <summary>
@@ -47,7 +55,7 @@ public sealed class SetDeviceEnabledCommand {
 	/// <summary>
 	/// 是否启用设备。
 	/// </summary>
-	[Required]
+	[Required(ErrorMessage = "设备启用状态不能为空。")]
 	public required bool Enabled { get; init; }
 }
 

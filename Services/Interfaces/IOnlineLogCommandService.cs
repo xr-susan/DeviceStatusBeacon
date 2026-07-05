@@ -37,15 +37,15 @@ public sealed class CreateOnlineLogCommand : IValidatableObject {
 	/// <summary>
 	/// 本次上报的地址列表。
 	/// </summary>
-	[Required]
-	[MinLength(1)]
-	[MaxLength(16)]
+	[Required(ErrorMessage = "ReportedAddresses 不能为空。")]
+	[MinLength(1, ErrorMessage = "ReportedAddresses 至少需要包含 1 个地址。")]
+	[MaxLength(16, ErrorMessage = "ReportedAddresses 不能超过 16 个地址。")]
 	public List<IPAddress> ReportedAddresses { get; init; } = [];
 
 	/// <summary>
 	/// 本次上报附带的附加消息。
 	/// </summary>
-	[StringLength(256)]
+	[StringLength(256, ErrorMessage = "Message 长度不能超过 256 个字符。")]
 	public string? Message { get; init; }
 
 	/// <inheritdoc/>

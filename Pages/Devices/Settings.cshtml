@@ -121,6 +121,7 @@
 					<input id="device-display-name"
 						   name="DisplayName"
 						   class="field__input"
+						   maxlength="@CommandValidation.DisplayNameMaximumLength"
 						   placeholder="@(device.DisplayName ?? "未设置")"
 						   autocomplete="off"
 						   data-select-on-focus />

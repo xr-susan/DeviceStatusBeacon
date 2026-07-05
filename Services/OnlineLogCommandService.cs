@@ -22,6 +22,9 @@ public sealed class OnlineLogCommandService(DeviceStatusBeaconContext dbContext)
 		Device? authenticatedDevice,
 		CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new OnlineLogCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		if (authenticatedDevice is not null) {
 			if (authenticatedDevice.DeviceId != deviceId) {

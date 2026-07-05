@@ -19,6 +19,9 @@ public sealed partial class DeviceManagementService {
 	/// <inheritdoc/>
 	public async Task SetDisplayNameAsync(Guid deviceId, SetDeviceDisplayNameCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new DeviceManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		await SetDisplayNameAsync(
 			dbContext.Devices.WhereDeviceId(deviceId),
@@ -29,6 +32,9 @@ public sealed partial class DeviceManagementService {
 	/// <inheritdoc/>
 	public async Task SetDisplayNameAsync(string deviceName, SetDeviceDisplayNameCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new DeviceManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var deviceNameLookup = CreateDeviceNameLookup(deviceName);
 
@@ -41,6 +47,9 @@ public sealed partial class DeviceManagementService {
 	/// <inheritdoc/>
 	public async Task SetEnabledAsync(Guid deviceId, SetDeviceEnabledCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new DeviceManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		await SetEnabledAsync(
 			dbContext.Devices.WhereDeviceId(deviceId),
@@ -51,6 +60,9 @@ public sealed partial class DeviceManagementService {
 	/// <inheritdoc/>
 	public async Task SetEnabledAsync(string deviceName, SetDeviceEnabledCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new DeviceManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var deviceNameLookup = CreateDeviceNameLookup(deviceName);
 

@@ -6,6 +6,9 @@ public sealed partial class DeviceManagementService {
 	/// <inheritdoc/>
 	public async Task<CreateDeviceCommandResult> CreateAsync(CreateDeviceCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new DeviceManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		EnsureValidDeviceName(command.DeviceName, "设备名称不符合身份标识格式");
 
@@ -34,6 +37,9 @@ public sealed partial class DeviceManagementService {
 	/// <inheritdoc/>
 	public async Task RenameAsync(Guid deviceId, RenameDeviceCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new DeviceManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		EnsureValidDeviceName(command.NewDeviceName, "新设备名称不符合身份标识格式");
 
@@ -46,6 +52,9 @@ public sealed partial class DeviceManagementService {
 	/// <inheritdoc/>
 	public async Task RenameAsync(string oldDeviceName, RenameDeviceCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new DeviceManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		EnsureValidDeviceName(command.NewDeviceName, "新设备名称不符合身份标识格式");
 

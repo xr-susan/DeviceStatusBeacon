@@ -6,6 +6,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task<CreateApiCredentialCommandResult> CreateApiCredentialAsync(Guid ownerUserId, CreateApiCredentialCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		// 先读取所属用户角色，再创建凭据，确保凭据角色不会高于所属用户
 		var owner = await GetApiCredentialOwnerAsync(
@@ -19,6 +22,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task<CreateApiCredentialCommandResult> CreateApiCredentialAsync(string ownerUserName, CreateApiCredentialCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		// 用户名入口先归一化再查找，保持与 Identity 用户名唯一索引一致的匹配语义
 		var ownerNameLookup = CreateUserNameLookup(ownerUserName);
@@ -33,6 +39,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task SetApiCredentialDisplayNameAsync(Guid apiCredentialId, SetApiCredentialDisplayNameCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		try {
 			// 显示名称受同一用户下唯一索引保护，使用批量更新后把 SQLite 唯一约束冲突转成业务异常
@@ -51,6 +60,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task SetApiCredentialEnabledAsync(Guid apiCredentialId, SetApiCredentialEnabledCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		// 启用状态不涉及导航属性，直接批量更新即可
 		var updatedCount = await dbContext.ApiCredentials
@@ -65,6 +77,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task SetApiCredentialRoleAsync(Guid apiCredentialId, SetApiCredentialRoleCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var target = await GetApiCredentialTargetAsync(apiCredentialId, cancellationToken);
 		EnsureApiCredentialRoleWithinOwnerRole(command.Role, target.Owner.Role);
@@ -81,6 +96,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task SetApiCredentialAuthorizedDevicesAsync(Guid apiCredentialId, SetApiCredentialAuthorizedDevicesCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var target = await GetApiCredentialTargetAsync(apiCredentialId, cancellationToken);
 		EnsureApiCredentialRoleWithinOwnerRole(target.Role, target.Owner.Role);
@@ -129,7 +147,7 @@ public sealed partial class UserManagementService {
 		var unprotectedSecretKey = ISecurityServiceV1.GenerateRandomBytes();
 		var newCredential = new ApiCredential {
 			UserId = owner.UserId,
-			DisplayName = string.IsNullOrWhiteSpace(command.DisplayName) ? null : command.DisplayName,
+			DisplayName = command.DisplayName,
 			ProtectedSecretKey = dataProtector.ProtectKey(unprotectedSecretKey),
 			Role = command.Role
 		};

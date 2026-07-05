@@ -127,9 +127,9 @@ public class SettingsModel(
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务</returns>
 	public async Task<IActionResult> OnPostSetDisplayNameAsync(CancellationToken cancellationToken) {
-		var displayName = string.IsNullOrWhiteSpace(DisplayName)
+		var displayName = string.IsNullOrEmpty(DisplayName)
 			? null
-			: DisplayName.Trim();
+			: DisplayName;
 
 		try {
 			await deviceManagementService.SetDisplayNameAsync(DeviceName, new() {

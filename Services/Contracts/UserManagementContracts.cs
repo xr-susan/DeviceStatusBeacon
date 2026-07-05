@@ -5,24 +5,24 @@ namespace DeviceStatusBeacon.Services.Contracts;
 /// <summary>
 /// 用户创建请求。
 /// </summary>
-public sealed class CreateUserCommand {
+public sealed class CreateUserCommand : IValidatableObject {
 	/// <summary>
 	/// 用户名。
 	/// </summary>
-	[Required]
+	[Required(ErrorMessage = "用户名不能为空。")]
 	public required string UserName { get; init; }
 
 	/// <summary>
 	/// 用户初始密码。
 	/// </summary>
-	[Required]
+	[Required(ErrorMessage = "用户初始密码不能为空。")]
 	public required string Password { get; init; }
 
 	/// <summary>
 	/// 用户角色。
 	/// </summary>
 	/// <remarks>调用方应只传入 <see cref="PrincipalRole"/> 中已定义的角色值。</remarks>
-	[Required]
+	[Required(ErrorMessage = "用户角色不能为空。")]
 	public required PrincipalRole Role { get; init; }
 
 	/// <summary>
@@ -35,6 +35,10 @@ public sealed class CreateUserCommand {
 	/// </summary>
 	/// <remarks>用户角色高于 <see cref="PrincipalRole.LimitedQuery"/> 时，此列表将如实落库，但不会影响用户的查询权限。</remarks>
 	public IReadOnlyCollection<Guid>? AuthorizedDeviceIds { get; init; }
+
+	/// <inheritdoc/>
+	public IEnumerable<ValidationResult> Validate(ValidationContext validationContext) =>
+		CommandValidation.ValidateOptionalDisplayName(DisplayName, nameof(DisplayName), "用户显示名称");
 }
 
 /// <summary>
@@ -44,19 +48,23 @@ public sealed class RenameUserCommand {
 	/// <summary>
 	/// 新用户名。
 	/// </summary>
-	[Required]
+	[Required(ErrorMessage = "新用户名不能为空。")]
 	public required string NewUserName { get; init; }
 }
 
 /// <summary>
 /// 用户显示名称更新请求。
 /// </summary>
-public sealed class SetUserDisplayNameCommand {
+public sealed class SetUserDisplayNameCommand : IValidatableObject {
 	/// <summary>
 	/// 新显示名称。
 	/// </summary>
 	/// <remarks>设为 null 表示清空显示名称。</remarks>
 	public required string? DisplayName { get; init; }
+
+	/// <inheritdoc/>
+	public IEnumerable<ValidationResult> Validate(ValidationContext validationContext) =>
+		CommandValidation.ValidateOptionalDisplayName(DisplayName, nameof(DisplayName), "用户显示名称");
 }
 
 /// <summary>
@@ -66,7 +74,7 @@ public sealed class ResetUserPasswordCommand {
 	/// <summary>
 	/// 新密码。
 	/// </summary>
-	[Required]
+	[Required(ErrorMessage = "新密码不能为空。")]
 	public required string NewPassword { get; init; }
 }
 
@@ -78,7 +86,7 @@ public sealed class SetUserRoleCommand {
 	/// 新角色。
 	/// </summary>
 	/// <remarks>调用方应只传入 <see cref="PrincipalRole"/> 中已定义的角色值。</remarks>
-	[Required]
+	[Required(ErrorMessage = "用户角色不能为空。")]
 	public required PrincipalRole Role { get; init; }
 }
 
@@ -90,42 +98,51 @@ public sealed class SetUserAuthorizedDevicesCommand {
 	/// 用户有权限查询的设备 ID 列表，仅在用户角色为 <see cref="PrincipalRole.LimitedQuery"/> 时生效。
 	/// </summary>
 	/// <remarks>用户角色高于 <see cref="PrincipalRole.LimitedQuery"/> 时，此列表将如实落库，但不会影响用户的查询权限。</remarks>
-	[Required]
+	[Required(ErrorMessage = "用户授权设备列表不能为空。")]
 	public required IReadOnlyCollection<Guid> AuthorizedDeviceIds { get; init; }
 }
 
 /// <summary>
 /// API 凭据创建请求。
 /// </summary>
-public sealed class CreateApiCredentialCommand {
+public sealed class CreateApiCredentialCommand : IValidatableObject {
 	/// <summary>
 	/// API 凭据角色。
 	/// </summary>
 	/// <remarks>调用方应只传入 <see cref="PrincipalRole"/> 中已定义的角色值。</remarks>
-	[Required]
+	[Required(ErrorMessage = "API 凭据角色不能为空。")]
 	public required PrincipalRole Role { get; init; }
 
 	/// <summary>
 	/// API 凭据显示名称。
 	/// </summary>
-	public string? DisplayName { get; init; }
+	[Required(ErrorMessage = "API 凭据显示名称不能为空。")]
+	public required string DisplayName { get; init; }
 
 	/// <summary>
 	/// API 凭据有权限查询的设备 ID 列表，仅在 <see cref="Role"/> 为 <see cref="PrincipalRole.LimitedQuery"/> 时生效。
 	/// </summary>
 	/// <remarks>凭据角色高于 <see cref="PrincipalRole.LimitedQuery"/> 时，此列表将如实落库，但不会影响凭据的查询权限。</remarks>
 	public IReadOnlyCollection<Guid>? AuthorizedDeviceIds { get; init; }
+
+	/// <inheritdoc/>
+	public IEnumerable<ValidationResult> Validate(ValidationContext validationContext) =>
+		CommandValidation.ValidateRequiredDisplayName(DisplayName, nameof(DisplayName), "API 凭据显示名称");
 }
 
 /// <summary>
 /// API 凭据显示名称更新请求。
 /// </summary>
-public sealed class SetApiCredentialDisplayNameCommand {
+public sealed class SetApiCredentialDisplayNameCommand : IValidatableObject {
 	/// <summary>
 	/// 新显示名称。
 	/// </summary>
-	/// <remarks>设为 null 表示清空显示名称。</remarks>
-	public required string? DisplayName { get; init; }
+	[Required(ErrorMessage = "API 凭据显示名称不能为空。")]
+	public required string DisplayName { get; init; }
+
+	/// <inheritdoc/>
+	public IEnumerable<ValidationResult> Validate(ValidationContext validationContext) =>
+		CommandValidation.ValidateRequiredDisplayName(DisplayName, nameof(DisplayName), "API 凭据显示名称");
 }
 
 /// <summary>
@@ -135,7 +152,7 @@ public sealed class SetApiCredentialEnabledCommand {
 	/// <summary>
 	/// 是否启用 API 凭据。
 	/// </summary>
-	[Required]
+	[Required(ErrorMessage = "API 凭据启用状态不能为空。")]
 	public required bool Enabled { get; init; }
 }
 
@@ -147,7 +164,7 @@ public sealed class SetApiCredentialRoleCommand {
 	/// 新角色。
 	/// </summary>
 	/// <remarks>调用方应只传入 <see cref="PrincipalRole"/> 中已定义的角色值。</remarks>
-	[Required]
+	[Required(ErrorMessage = "API 凭据角色不能为空。")]
 	public required PrincipalRole Role { get; init; }
 }
 
@@ -159,7 +176,7 @@ public sealed class SetApiCredentialAuthorizedDevicesCommand {
 	/// API 凭据有权限查询的设备 ID 列表，仅在 API 凭据角色为 <see cref="PrincipalRole.LimitedQuery"/> 时生效。
 	/// </summary>
 	/// <remarks>凭据角色高于 <see cref="PrincipalRole.LimitedQuery"/> 时，此列表将如实落库，但不会影响凭据的查询权限。</remarks>
-	[Required]
+	[Required(ErrorMessage = "API 凭据授权设备列表不能为空。")]
 	public required IReadOnlyCollection<Guid> AuthorizedDeviceIds { get; init; }
 }
 
@@ -171,7 +188,7 @@ public sealed class SetDeviceAuthorizedUsersCommand {
 	/// 有权限查询该设备数据的用户 ID 列表，仅在用户角色为 <see cref="PrincipalRole.LimitedQuery"/> 时生效。
 	/// </summary>
 	/// <remarks>列表中存在用户角色高于 <see cref="PrincipalRole.LimitedQuery"/> 时，此列表将如实落库，但不会影响该用户的查询权限。</remarks>
-	[Required]
+	[Required(ErrorMessage = "设备授权用户列表不能为空。")]
 	public required IReadOnlyCollection<Guid> AuthorizedUserIds { get; init; }
 }
 

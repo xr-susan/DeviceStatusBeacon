@@ -6,6 +6,9 @@ public sealed partial class CurrentUserSettingsService {
 	/// <inheritdoc/>
 	public async Task SetDisplayNameAsync(ClaimsPrincipal principal, SetCurrentUserDisplayNameCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new CurrentUserSettingsCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		// 当前用户只能修改自己的显示名称，使用主体 ID 收窄更新范围
 		var target = await GetCurrentUserTargetAsync(principal, cancellationToken);
@@ -23,6 +26,9 @@ public sealed partial class CurrentUserSettingsService {
 	/// <inheritdoc/>
 	public async Task ChangePasswordAsync(ClaimsPrincipal principal, ChangeCurrentUserPasswordCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new CurrentUserSettingsCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var target = await GetCurrentUserTargetAsync(principal, cancellationToken);
 		var user = await userManager.FindByIdAsync(target.UserId.ToString())

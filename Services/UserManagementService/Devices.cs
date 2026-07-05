@@ -4,6 +4,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task SetDeviceAuthorizedUsersAsync(Guid deviceId, SetDeviceAuthorizedUsersCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		await SetDeviceAuthorizedUsersAsync(
 			dbContext.Devices.WhereDeviceId(deviceId),
@@ -14,6 +17,9 @@ public sealed partial class UserManagementService {
 	/// <inheritdoc/>
 	public async Task SetDeviceAuthorizedUsersAsync(string deviceName, SetDeviceAuthorizedUsersCommand command, CancellationToken cancellationToken = default) {
 		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new UserManagementCommandException(StatusCodes.Status422UnprocessableEntity, message));
 
 		var deviceNameLookup = CreateDeviceNameLookup(deviceName);
 		await SetDeviceAuthorizedUsersAsync(

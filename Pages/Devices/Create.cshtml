@@ -45,6 +45,7 @@
 				<label asp-for="DisplayName" class="field__label">显示名称</label>
 				<input asp-for="DisplayName"
 					   class="field__input"
+					   maxlength="@CommandValidation.DisplayNameMaximumLength"
 					   autocomplete="off"
 					   data-select-on-focus />
 			</div>
