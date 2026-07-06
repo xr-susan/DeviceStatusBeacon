@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Security.Claims;
 
 namespace DeviceStatusBeacon.Extensions;
 
@@ -175,6 +176,18 @@ public static class PrincipalExtensions {
 			if (!result) {
 				role = default;
 			}
+			return result;
+		}
+
+		/// <summary>
+		/// 尝试将字符串解析为已定义的主体角色。
+		/// </summary>
+		/// <param name="roleString">角色字符串</param>
+		/// <param name="role">解析得到的主体角色</param>
+		/// <returns>如果字符串能解析为已定义的主体角色，则返回 true；否则返回 false</returns>
+		public static bool TryParseOrNull(string? roleString, [NotNullWhen(true)] out PrincipalRole? role) {
+			var result = TryParse(roleString, out var parsedRole);
+			role = result ? parsedRole : null;
 			return result;
 		}
 	}

@@ -1,4 +1,4 @@
-﻿namespace DeviceStatusBeacon.Handlers;
+﻿namespace DeviceStatusBeacon;
 
 /// <summary>
 /// 控制台命令分发器
@@ -9,7 +9,7 @@
 /// </remarks>
 public static partial class ConsoleDispatcher {
 	internal static readonly HashSet<string> ValidVerbs = ["api-credential", "device", "user", "help", "exit"];
-	internal const int MaxDisplayCount = 50;
+	private const int MaxDisplayCount = AccessAdministrationQueryService.MaxAccessQueryCount;
 
 	/// <summary>
 	/// 根据命令行参数选择性地分发命令到控制台命令处理程序
@@ -53,10 +53,9 @@ public static partial class ConsoleDispatcher {
 		Console.WriteLine(
 			"""
 			支持的命令：
-			  api-credential add <user-name> <role> [display-name]  添加新 API 凭据
+			  api-credential add <user-name> <role> <display-name>  添加新 API 凭据
 			  api-credential delete <api-credential-id>             删除指定 API 凭据
-			  api-credential list                                   列出所有 API 凭据
-			  api-credential query-by-user <user-name>              查询指定用户关联的 API 凭据
+			  api-credential list <user-name>                       列出指定用户关联的 API 凭据
 			  api-credential reset-key <api-credential-id>          重置指定 API 凭据的操作密钥
 
 			  user add <name> <role> <password>                     添加新用户

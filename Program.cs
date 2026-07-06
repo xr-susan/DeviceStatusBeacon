@@ -1,5 +1,4 @@
 ﻿using DeviceStatusBeacon.Api;
-using DeviceStatusBeacon.Handlers;
 using DeviceStatusBeacon.Json;
 using DeviceStatusBeacon.Routing;
 

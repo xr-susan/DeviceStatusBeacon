@@ -23,6 +23,7 @@ public static class CustomServiceCollectionExtensions {
 				.AddScoped<IDeviceStatusQueryService, DeviceStatusQueryService>()
 				.AddScoped<IDeviceAdministrationService, DeviceAdministrationService>()
 				.AddScoped<IAccessAdministrationService, AccessAdministrationService>()
+				.AddScoped<IAccessAdministrationQueryService, AccessAdministrationQueryService>()
 				.AddScoped<IAccountSettingsService, AccountSettingsService>()
 				.AddScoped<IOnlineLogManagementService, OnlineLogManagementService>();
 
