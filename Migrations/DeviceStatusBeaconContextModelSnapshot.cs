@@ -20,6 +20,7 @@ namespace DeviceStatusBeacon.Migrations {
 					.HasColumnType("TEXT");
 
 				b.Property<string>("DisplayName")
+					.IsRequired()
 					.HasColumnType("TEXT");
 
 				b.Property<bool>("Enabled")
@@ -46,6 +47,8 @@ namespace DeviceStatusBeacon.Migrations {
 					t.HasTrigger("TR_ApiCredentials_EntityAuthInfoVersion_AfterInsert");
 
 					t.HasTrigger("TR_ApiCredentials_EntityAuthInfoVersion_AfterUpdate");
+
+					t.HasCheckConstraint("CK_ApiCredentials_DisplayName_Format", "length(\"DisplayName\") BETWEEN 1 AND 64\r\nAND \"DisplayName\" = trim(\"DisplayName\")");
 
 					t.HasCheckConstraint("CK_ApiCredentials_Role_PrincipalRole", "\"Role\" BETWEEN 0 AND 3");
 				});
@@ -123,6 +126,8 @@ namespace DeviceStatusBeacon.Migrations {
 					t.HasTrigger("TR_Devices_EntityAuthInfoVersion_AfterInsert");
 
 					t.HasCheckConstraint("CK_Devices_DeviceName_IdentityFormat", "\"DeviceName\" GLOB '[A-Za-z0-9]*'\r\nAND \"DeviceName\" GLOB '*[A-Za-z0-9]'\r\nAND length(\"DeviceName\") BETWEEN 4 AND 64\r\nAND \"DeviceName\" NOT GLOB '*[^A-Za-z0-9_-]*'");
+
+					t.HasCheckConstraint("CK_Devices_DisplayName_Format", "\"DisplayName\" IS NULL\r\nOR (\r\n	length(\"DisplayName\") BETWEEN 1 AND 64\r\n	AND \"DisplayName\" = trim(\"DisplayName\")\r\n)");
 
 					t.HasCheckConstraint("CK_Devices_LatestReportedAddresses_JsonArrayShape", "\"LatestReportedAddresses\" IS NULL\r\nOR (\r\n	json_valid(\"LatestReportedAddresses\")\r\n	AND json_type(\"LatestReportedAddresses\") = 'array'\r\n	AND json_array_length(\"LatestReportedAddresses\") > 0\r\n)");
 
@@ -277,7 +282,9 @@ namespace DeviceStatusBeacon.Migrations {
 					.IsUnique()
 					.HasDatabaseName("UserNameIndex");
 
-				b.ToTable("AspNetUsers", (string)null);
+				b.ToTable("AspNetUsers", null, t => {
+					t.HasCheckConstraint("CK_AspNetUsers_DisplayName_Format", "\"DisplayName\" IS NULL\r\nOR (\r\n	length(\"DisplayName\") BETWEEN 1 AND 64\r\n	AND \"DisplayName\" = trim(\"DisplayName\")\r\n)");
+				});
 			});
 
 			modelBuilder.Entity("DeviceStatusBeacon.Database.UserRole", b => {

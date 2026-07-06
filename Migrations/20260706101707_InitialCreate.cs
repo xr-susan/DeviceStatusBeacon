@@ -39,7 +39,10 @@ public partial class InitialCreate : Migration {
 				LockoutEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
 				AccessFailedCount = table.Column<int>(type: "INTEGER", nullable: false)
 			},
-			constraints: table => table.PrimaryKey("PK_AspNetUsers", x => x.Id));
+			constraints: table => {
+				table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+				table.CheckConstraint("CK_AspNetUsers_DisplayName_Format", "\"DisplayName\" IS NULL\r\nOR (\r\n	length(\"DisplayName\") BETWEEN 1 AND 64\r\n	AND \"DisplayName\" = trim(\"DisplayName\")\r\n)");
+			});
 
 		migrationBuilder.CreateTable(
 			name: "Devices",
@@ -57,6 +60,7 @@ public partial class InitialCreate : Migration {
 			constraints: table => {
 				table.PrimaryKey("PK_Devices", x => x.DeviceId);
 				table.CheckConstraint("CK_Devices_DeviceName_IdentityFormat", "\"DeviceName\" GLOB '[A-Za-z0-9]*'\r\nAND \"DeviceName\" GLOB '*[A-Za-z0-9]'\r\nAND length(\"DeviceName\") BETWEEN 4 AND 64\r\nAND \"DeviceName\" NOT GLOB '*[^A-Za-z0-9_-]*'");
+				table.CheckConstraint("CK_Devices_DisplayName_Format", "\"DisplayName\" IS NULL\r\nOR (\r\n	length(\"DisplayName\") BETWEEN 1 AND 64\r\n	AND \"DisplayName\" = trim(\"DisplayName\")\r\n)");
 				table.CheckConstraint("CK_Devices_LatestReportedAddresses_JsonArrayShape", "\"LatestReportedAddresses\" IS NULL\r\nOR (\r\n	json_valid(\"LatestReportedAddresses\")\r\n	AND json_type(\"LatestReportedAddresses\") = 'array'\r\n	AND json_array_length(\"LatestReportedAddresses\") > 0\r\n)");
 				table.CheckConstraint("CK_Devices_NormalizedDeviceName_IdentityFormat", "\"NormalizedDeviceName\" GLOB '[A-Z0-9]*'\r\nAND \"NormalizedDeviceName\" GLOB '*[A-Z0-9]'\r\nAND length(\"NormalizedDeviceName\") BETWEEN 4 AND 64\r\nAND \"NormalizedDeviceName\" NOT GLOB '*[^A-Z0-9_-]*'");
 			});
@@ -95,7 +99,7 @@ public partial class InitialCreate : Migration {
 			name: "ApiCredentials",
 			columns: table => new {
 				ApiCredentialId = table.Column<Guid>(type: "TEXT", nullable: false),
-				DisplayName = table.Column<string>(type: "TEXT", nullable: true),
+				DisplayName = table.Column<string>(type: "TEXT", nullable: false),
 				UserId = table.Column<Guid>(type: "TEXT", nullable: false),
 				ProtectedSecretKey = table.Column<byte[]>(type: "BLOB", nullable: false),
 				Role = table.Column<int>(type: "INTEGER", nullable: false),
@@ -103,6 +107,7 @@ public partial class InitialCreate : Migration {
 			},
 			constraints: table => {
 				table.PrimaryKey("PK_ApiCredentials", x => x.ApiCredentialId);
+				table.CheckConstraint("CK_ApiCredentials_DisplayName_Format", "length(\"DisplayName\") BETWEEN 1 AND 64\r\nAND \"DisplayName\" = trim(\"DisplayName\")");
 				table.CheckConstraint("CK_ApiCredentials_Role_PrincipalRole", "\"Role\" BETWEEN 0 AND 3");
 				table.ForeignKey(
 					name: "FK_ApiCredentials_AspNetUsers_UserId",

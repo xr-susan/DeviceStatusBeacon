@@ -17,9 +17,9 @@ public class ApiCredential : IHasProtectedSecretKey {
 	public Guid ApiCredentialId { get; set; }
 
 	/// <summary>
-	/// API 凭据显示名称（可选）
+	/// API 凭据显示名称，在同一用户下唯一
 	/// </summary>
-	public string? DisplayName { get; set; }
+	public required string DisplayName { get; set; }
 
 	/// <summary>
 	/// 所属用户唯一标识符

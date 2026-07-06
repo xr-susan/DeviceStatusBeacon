@@ -74,6 +74,9 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 						AND json_array_length("LatestReportedAddresses") > 0
 					)
 					""");
+				tableBuilder.HasCheckConstraint(
+					"CK_Devices_DisplayName_Format",
+					OptionalDisplayNameCheckSql);
 				tableBuilder.UseSqlReturningClause(false);
 			});
 
@@ -166,6 +169,9 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 					"""
 					"Role" BETWEEN 0 AND 3
 					""");
+				tableBuilder.HasCheckConstraint(
+					"CK_ApiCredentials_DisplayName_Format",
+					RequiredDisplayNameCheckSql);
 				tableBuilder.UseSqlReturningClause(false);
 			});
 
@@ -223,6 +229,12 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 				.IsRequired()
 				.OnDelete(DeleteBehavior.Cascade);
 		});
+
+		// 配置 User 实体：为可选显示名称增加数据库层面的基础格式兜底
+		modelBuilder.Entity<User>(userBuilder => userBuilder.ToTable(tableBuilder =>
+			tableBuilder.HasCheckConstraint(
+				"CK_AspNetUsers_DisplayName_Format",
+				OptionalDisplayNameCheckSql)));
 
 		// 预置鉴权缓存版本号设置项，供后续触发器自动刷新
 		modelBuilder.Entity<SettingInDb>(settingBuilder => {
@@ -293,6 +305,21 @@ public class DeviceStatusBeaconContext(DbContextOptions<DeviceStatusBeaconContex
 
 		return (dbConnectionString, dbDirectoryInfo);
 	}
+
+	private const string OptionalDisplayNameCheckSql =
+		"""
+		"DisplayName" IS NULL
+		OR (
+			length("DisplayName") BETWEEN 1 AND 64
+			AND "DisplayName" = trim("DisplayName")
+		)
+		""";
+
+	private const string RequiredDisplayNameCheckSql =
+		"""
+		length("DisplayName") BETWEEN 1 AND 64
+		AND "DisplayName" = trim("DisplayName")
+		""";
 
 	private static IdentityRole<Guid> BuildIdentityRole(string id, PrincipalRole role) {
 		var roleName = role.ToString();
