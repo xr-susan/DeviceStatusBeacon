@@ -15,7 +15,11 @@ public static class LogApiEndpointRouteBuilderExtensions {
 		/// <returns>当前端点构建器</returns>
 		public IEndpointRouteBuilder MapLogInternalApiEndpoints() {
 			var group = endpoints.MapGroup("/api/internal/logs")
-				.WithTags("Logs");
+				.WithTags("InternalLogs");
+
+			group.MapPost("/by-name/{deviceName:identityName}", LogApiHandlers.CreateInternalOnlineLogAsync)
+				.RequireAuthorization(AuthorizationPolicyNames.InteractiveDeviceManagement)
+				.WithName("CreateOnlineLogByDeviceName");
 
 			group.MapGet("/{onlineLogId:long}", LogApiHandlers.GetOnlineLogAsync)
 				.RequireAuthorization(AuthorizationPolicyNames.InteractiveUser)

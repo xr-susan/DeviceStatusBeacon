@@ -3,6 +3,8 @@ import { createElement, openModalDialog } from "../components/modal-dialog.js";
 
 const deviceNamePlaceholder = "DeviceNamePlaceholder";
 const userNamePlaceholder = "UserNamePlaceholder";
+const identityNamePattern = /^[A-Za-z\d][A-Za-z\d_\-]{2,62}[A-Za-z\d]$/;
+const identityNameTitle = "设备名称长度为 4 到 64 个字符，只能包含字母、数字、下划线和连字符，且首尾必须是字母或数字。";
 const root = document.querySelector("[data-log-details-root]");
 
 if (root instanceof HTMLElement) {
@@ -12,6 +14,13 @@ if (root instanceof HTMLElement) {
     const requestVerificationToken = root.dataset.requestVerificationToken;
     const canManageLogs = root.dataset.canManageLogs === "true";
     const canViewUsers = root.dataset.canViewUsers === "true";
+    const simulatedLogButton = root.querySelector("[data-simulated-log-button]");
+
+    if (canManageLogs && simulatedLogButton && apiBase) {
+        simulatedLogButton.addEventListener("click", () => {
+            openSimulatedLogDialog(apiBase, requestVerificationToken);
+        });
+    }
 
     if (apiBase) {
         for (const button of root.querySelectorAll("[data-log-id]")) {
@@ -30,6 +39,172 @@ if (root instanceof HTMLElement) {
             });
         }
     }
+}
+
+function openSimulatedLogDialog(apiUrl, requestVerificationToken) {
+    const deviceNameInput = createElement("input", {
+        className: "field__input",
+        attributes: {
+            id: "simulated-log-device-name",
+            minlength: 4,
+            maxlength: 64,
+            pattern: "[A-Za-z\\d][A-Za-z\\d_\\-]{2,62}[A-Za-z\\d]",
+            placeholder: "设备名称",
+            title: identityNameTitle
+        }
+    });
+
+    const addressesInput = createElement("textarea", {
+        className: "field__input simulated-log-editor__input",
+        attributes: {
+            id: "simulated-log-addresses",
+            rows: 4,
+            placeholder: "192.168.1.10, 10.0.0.5"
+        }
+    });
+
+    const messageInput = createElement("textarea", {
+        className: "field__input simulated-log-editor__input",
+        attributes: {
+            id: "simulated-log-message",
+            rows: 4,
+            maxlength: 256,
+            placeholder: "可选"
+        }
+    });
+
+    const errorElement = createElement("div", {
+        className: "simulated-log-editor__error"
+    });
+    const cancelButton = createButton("取消", "button button--secondary");
+    const submitButton = createButton("提交", "button button--primary");
+
+    const modal = openModalDialog({
+        title: "模拟提交日志",
+        content: createElement("div", {
+            className: "simulated-log-editor",
+            children: [
+                createField("设备名称", deviceNameInput),
+                createField("IP 地址列表", addressesInput),
+                createField("提交消息", messageInput),
+                errorElement
+            ]
+        }),
+        footer: createElement("div", {
+            className: "modal-dialog__button-row",
+            children: [cancelButton, submitButton]
+        }),
+        className: "simulated-log-editor-dialog",
+        initialFocus: deviceNameInput
+    });
+
+    cancelButton.addEventListener("click", () => modal.close());
+    submitButton.addEventListener("click", () => {
+        void submitSimulatedLog(apiUrl, requestVerificationToken, {
+            deviceNameInput,
+            addressesInput,
+            messageInput,
+            errorElement,
+            cancelButton,
+            submitButton
+        });
+    });
+}
+
+async function submitSimulatedLog(apiUrl, requestVerificationToken, {
+    deviceNameInput,
+    addressesInput,
+    messageInput,
+    errorElement,
+    cancelButton,
+    submitButton
+}) {
+    errorElement.textContent = "";
+
+    const deviceName = deviceNameInput.value.trim();
+    const addressList = parseAddressList(addressesInput.value);
+    const reportedAddresses = addressList.addresses;
+    const message = messageInput.value.trim() || null;
+
+    if (!deviceName) {
+        errorElement.textContent = "请填写设备名称。";
+        return;
+    }
+
+    if (!identityNamePattern.test(deviceName)) {
+        errorElement.textContent = identityNameTitle;
+        return;
+    }
+
+    if (reportedAddresses.length === 0) {
+        errorElement.textContent = "请至少填写 1 个 IP 地址。";
+        return;
+    }
+
+    if (addressList.hasEmptyAddress) {
+        errorElement.textContent = "IP 地址不能为空。";
+        return;
+    }
+
+    setButtonsDisabled([cancelButton, submitButton], true);
+    try {
+        const response = await fetch(`${apiUrl}/by-name/${encodeURIComponent(deviceName)}`, {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                RequestVerificationToken: requestVerificationToken ?? ""
+            },
+            credentials: "same-origin",
+            body: JSON.stringify({
+                reportedAddresses,
+                message
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(await readProblemMessage(response, "日志提交失败。"));
+        }
+
+        window.location.reload();
+    } catch (error) {
+        errorElement.textContent = getErrorMessage(error);
+        setButtonsDisabled([cancelButton, submitButton], false);
+    }
+}
+
+function createField(label, input) {
+    const labelElement = createElement("label", {
+        className: "field__label",
+        text: label,
+        attributes: {
+            for: input.id
+        }
+    });
+
+    return createElement("div", {
+        className: "field",
+        children: [labelElement, input]
+    });
+}
+
+function parseAddressList(value) {
+    const normalizedValue = value.trim();
+    if (!normalizedValue) {
+        return {
+            addresses: [],
+            hasEmptyAddress: false
+        };
+    }
+
+    const addresses = normalizedValue
+        .split(/[,，\n]/)
+        .map(address => address.trim());
+
+    return {
+        addresses,
+        hasEmptyAddress: addresses.some(address => !address)
+    };
 }
 
 async function openLogDetails(apiBase, logId, options) {

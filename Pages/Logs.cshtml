@@ -37,6 +37,13 @@
 			<h1 class="page-header__title">日志查询</h1>
 			<p class="page-header__subtitle">按设备关键字筛选上报记录，快速确认最近活动和来源信息。</p>
 		</div>
+		@if (canManageLogs) {
+			<div class="button-row">
+				<button type="button"
+						class="button button--primary"
+						data-simulated-log-button>模拟提交日志</button>
+			</div>
+		}
 	</header>
 
 	<section class="panel panel--form">

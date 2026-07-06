@@ -325,6 +325,24 @@
     font-size: 0.9rem;
 }
 
+.simulated-log-editor {
+    display: grid;
+    gap: var(--space-lg);
+}
+
+.simulated-log-editor__input {
+    min-height: 6.5rem;
+    padding-top: var(--space-md);
+    padding-bottom: var(--space-md);
+    resize: vertical;
+}
+
+.simulated-log-editor__error {
+    min-height: 1.25rem;
+    color: var(--color-danger-fg);
+    font-size: 0.9rem;
+}
+
 @media (max-width: 45em) {
     .log-item__row {
         align-items: flex-start;

@@ -22,15 +22,10 @@ internal static partial class DeviceApiHandlers {
 		// 尝试获取已认证的设备实体
 		var authenticatedDevice = context.GetAuthenticatedSignatureEntity<Device>();
 
-		// 签名式 API 凭据记录其绑定用户；交互式用户则从 ClaimsPrincipal 读取用户 ID
-		Guid? submittedByUserId = null;
-		if (authenticatedDevice is null) {
-			submittedByUserId = context.GetAuthenticatedSignatureEntity<ApiCredential>()?.UserId
-				?? context.User.GetAuthenticatedPrincipalInfo() switch {
-					(PrincipalKind.User, var userId, _) => userId,
-					_ => null
-				};
-		}
+		// 签名式 API 凭据记录其绑定用户；设备自身提交时不记录代提交用户
+		var submittedByUserId = authenticatedDevice is null
+			? context.GetAuthenticatedSignatureEntity<ApiCredential>()?.UserId
+			: null;
 
 		try {
 			var commandResult = await onlineLogManagementService.CreateAsync(
