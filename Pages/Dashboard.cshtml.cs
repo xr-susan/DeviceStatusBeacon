@@ -16,15 +16,13 @@ public class DashboardModel(IDeviceStatusQueryService deviceStatusQueryService) 
 	/// <summary>
 	/// Dashboard 按需加载数据路径
 	/// </summary>
-	public string ActivityApiPath { get; private set; } = "/api/dashboard/activity";
+	public string ActivityApiPath => field ??= Url.Content("~/api/dashboard/activity");
 
 	/// <summary>
 	/// 处理 Dashboard 页面加载
 	/// </summary>
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务</returns>
-	public async Task OnGetAsync(CancellationToken cancellationToken) {
+	public async Task OnGetAsync(CancellationToken cancellationToken) =>
 		Overview = await deviceStatusQueryService.GetDashboardOverviewAsync(User, cancellationToken);
-		ActivityApiPath = Url.Content("~/api/dashboard/activity");
-	}
 }

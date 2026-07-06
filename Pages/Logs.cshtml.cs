@@ -13,12 +13,15 @@ public class LogsModel(IDeviceStatusQueryService deviceStatusQueryService) : Pag
 	/// 设备筛选关键字
 	/// </summary>
 	[BindProperty(SupportsGet = true, Name = "device")]
-	public string? DeviceKeyword { get; set; }
+	public string? DeviceKeyword {
+		get;
+		set => field = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+	}
 
 	/// <summary>
 	/// 页码
 	/// </summary>
-	[BindProperty(SupportsGet = true, Name = "page")]
+	[BindProperty(SupportsGet = true, Name = "pageNumber")]
 	public int PageNumber { get; set; } = 1;
 
 	/// <summary>
@@ -33,23 +36,26 @@ public class LogsModel(IDeviceStatusQueryService deviceStatusQueryService) : Pag
 	public LogListData PageData { get; private set; } = null!;
 
 	/// <summary>
+	/// 规范化后的分页数据
+	/// </summary>
+	public PaginationData Pagination => PageData.Pagination;
+
+	/// <summary>
+	/// 每页数量选项
+	/// </summary>
+	public int[] PageSizeOptions =>
+		field ??= PageSizeOptionHelper.Create([20, 50, 100], Pagination.PageSize);
+
+	/// <summary>
 	/// 处理日志总览页加载
 	/// </summary>
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务</returns>
-	public async Task OnGetAsync(CancellationToken cancellationToken) {
-		DeviceKeyword = string.IsNullOrWhiteSpace(DeviceKeyword)
-			? null
-			: DeviceKeyword.Trim();
-
+	public async Task OnGetAsync(CancellationToken cancellationToken) =>
 		PageData = await deviceStatusQueryService.GetLogsAsync(
 			User,
 			DeviceKeyword,
 			PageNumber,
 			PageSize,
 			cancellationToken);
-
-		PageNumber = PageData.Pagination.PageNumber;
-		PageSize = PageData.Pagination.PageSize;
-	}
 }

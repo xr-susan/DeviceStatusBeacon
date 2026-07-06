@@ -2,7 +2,7 @@
 @model DeviceStatusBeacon.Pages.Admin.Users.IndexModel
 @{
 	ViewData["Title"] = "用户查询";
-	var pagination = Model.PageData.Pagination;
+	var pagination = Model.Pagination;
 
 	var emptyStateMessage = "没有找到符合条件的用户。";
 	if (string.IsNullOrWhiteSpace(Model.SearchTerm)) {
@@ -35,7 +35,7 @@
 
 	<section class="panel panel--form">
 		<form method="get" class="filter-toolbar">
-			<input type="hidden" name="page" value="1" />
+			<input type="hidden" name="pageNumber" value="1" />
 			<div class="field field--grow">
 				<label for="user-filter" class="field__label">用户筛选</label>
 				<input id="user-filter"
@@ -48,8 +48,8 @@
 			<div class="field">
 				<label for="user-page-size" class="field__label">每页数量</label>
 				<select id="user-page-size" name="pageSize" class="field__input">
-					@foreach (var option in new[] { 10, 20, 50 }) {
-						<option value="@option" selected="@(Model.PageSize == option ? "selected" : null)">@option</option>
+					@foreach (var option in Model.PageSizeOptions) {
+						<option value="@option" selected="@(pagination.PageSize == option ? "selected" : null)">@option</option>
 					}
 				</select>
 			</div>
@@ -79,7 +79,7 @@
 				@if (pagination.HasPreviousPage) {
 					<a asp-page="/Admin/Users/Index"
 					   asp-route-q="@Model.SearchTerm"
-					   asp-route-page="@(pagination.PageNumber - 1)"
+					   asp-route-pageNumber="@(pagination.PageNumber - 1)"
 					   asp-route-pageSize="@pagination.PageSize"
 					   class="button button--secondary">上一页</a>
 				} else {
@@ -91,7 +91,7 @@
 				@if (pagination.HasNextPage) {
 					<a asp-page="/Admin/Users/Index"
 					   asp-route-q="@Model.SearchTerm"
-					   asp-route-page="@(pagination.PageNumber + 1)"
+					   asp-route-pageNumber="@(pagination.PageNumber + 1)"
 					   asp-route-pageSize="@pagination.PageSize"
 					   class="button button--secondary">下一页</a>
 				} else {

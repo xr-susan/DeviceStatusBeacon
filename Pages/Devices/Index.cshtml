@@ -3,7 +3,7 @@
 @{
 	ViewData["Title"] = "设备查询";
 	var session = Model.PageData.Session;
-	var pagination = Model.PageData.Pagination;
+	var pagination = Model.Pagination;
 
 	// 设置空状态提示信息，仅在当前没查到设备时才显示
 	var emptyStateMessage = "没有找到符合条件的设备。";
@@ -38,7 +38,7 @@
 
 	<section class="panel panel--form">
 		<form method="get" class="filter-toolbar">
-			<input type="hidden" name="page" value="1" />
+			<input type="hidden" name="pageNumber" value="1" />
 			<div class="field field--grow">
 				<label for="device-filter" class="field__label">设备筛选</label>
 				<input id="device-filter"
@@ -52,8 +52,8 @@
 			<div class="field">
 				<label for="device-page-size" class="field__label">每页数量</label>
 				<select id="device-page-size" name="pageSize" class="field__input">
-					@foreach (var option in new[] { 10, 20, 50 }) {
-						<option value="@option" selected="@(Model.PageSize == option ? "selected" : null)">@option</option>
+					@foreach (var option in Model.PageSizeOptions) {
+						<option value="@option" selected="@(pagination.PageSize == option ? "selected" : null)">@option</option>
 					}
 				</select>
 			</div>
@@ -85,7 +85,7 @@
 				@if (pagination.HasPreviousPage) {
 					<a asp-page="/Devices/Index"
 					   asp-route-q="@Model.SearchTerm"
-					   asp-route-page="@(pagination.PageNumber - 1)"
+					   asp-route-pageNumber="@(pagination.PageNumber - 1)"
 					   asp-route-pageSize="@pagination.PageSize"
 					   class="button button--secondary">上一页</a>
 				} else {
@@ -97,7 +97,7 @@
 				@if (pagination.HasNextPage) {
 					<a asp-page="/Devices/Index"
 					   asp-route-q="@Model.SearchTerm"
-					   asp-route-page="@(pagination.PageNumber + 1)"
+					   asp-route-pageNumber="@(pagination.PageNumber + 1)"
 					   asp-route-pageSize="@pagination.PageSize"
 					   class="button button--secondary">下一页</a>
 				} else {

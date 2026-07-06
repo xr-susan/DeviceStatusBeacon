@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using DeviceStatusBeacon.Pages;
 
 namespace DeviceStatusBeacon.Pages.Devices;
 
@@ -13,12 +14,15 @@ public class IndexModel(IDeviceStatusQueryService deviceStatusQueryService) : Pa
 	/// 搜索关键字
 	/// </summary>
 	[BindProperty(SupportsGet = true, Name = "q")]
-	public string? SearchTerm { get; set; }
+	public string? SearchTerm {
+		get;
+		set => field = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+	}
 
 	/// <summary>
 	/// 页码
 	/// </summary>
-	[BindProperty(SupportsGet = true, Name = "page")]
+	[BindProperty(SupportsGet = true, Name = "pageNumber")]
 	public int PageNumber { get; set; } = 1;
 
 	/// <summary>
@@ -31,6 +35,17 @@ public class IndexModel(IDeviceStatusQueryService deviceStatusQueryService) : Pa
 	/// 页面数据
 	/// </summary>
 	public DeviceListData PageData { get; private set; } = null!;
+
+	/// <summary>
+	/// 规范化后的分页数据
+	/// </summary>
+	public PaginationData Pagination => PageData.Pagination;
+
+	/// <summary>
+	/// 每页数量选项
+	/// </summary>
+	public int[] PageSizeOptions =>
+		field ??= PageSizeOptionHelper.Create([10, 20, 50], Pagination.PageSize);
 
 	/// <summary>
 	/// 成功提示
@@ -49,19 +64,11 @@ public class IndexModel(IDeviceStatusQueryService deviceStatusQueryService) : Pa
 	/// </summary>
 	/// <param name="cancellationToken">取消令牌</param>
 	/// <returns>一个表示异步操作的任务</returns>
-	public async Task OnGetAsync(CancellationToken cancellationToken) {
-		SearchTerm = string.IsNullOrWhiteSpace(SearchTerm)
-			? null
-			: SearchTerm.Trim();
-
+	public async Task OnGetAsync(CancellationToken cancellationToken) =>
 		PageData = await deviceStatusQueryService.GetDevicesAsync(
 			User,
 			SearchTerm,
 			PageNumber,
 			PageSize,
 			cancellationToken);
-
-		PageNumber = PageData.Pagination.PageNumber;
-		PageSize = PageData.Pagination.PageSize;
-	}
 }
