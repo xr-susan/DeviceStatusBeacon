@@ -31,15 +31,15 @@ public static class IQueryableExtensions {
 		/// <summary>
 		/// 按设备搜索条件筛选设备查询。
 		/// </summary>
-		/// <param name="searchTerm">设备搜索条件</param>
+		/// <param name="searchTerm">身份标识搜索条件</param>
 		/// <returns>应用筛选后的设备查询</returns>
-		public IQueryable<Device> WhereMatches(DeviceSearchTerm searchTerm) {
+		public IQueryable<Device> WhereMatches(IdentitySearchTerm searchTerm) {
 			ArgumentNullException.ThrowIfNull(searchTerm);
 
-			var normalizedDeviceName = searchTerm.NormalizedDeviceName;
+			var normalizedName = searchTerm.NormalizedName;
 			var displayName = searchTerm.DisplayName;
 
-			if (normalizedDeviceName is null) {
+			if (normalizedName is null) {
 				// 如果没有指定设备名称，则只按显示名称筛选
 				return displayName is null
 					? devices
@@ -48,10 +48,62 @@ public static class IQueryableExtensions {
 			}
 
 			return displayName is null
-				? devices.Where(device => device.NormalizedDeviceName.Contains(normalizedDeviceName))
+				? devices.Where(device => device.NormalizedDeviceName.Contains(normalizedName))
 				: devices.Where(device =>
-					device.NormalizedDeviceName.Contains(normalizedDeviceName)
+					device.NormalizedDeviceName.Contains(normalizedName)
 					|| (device.DisplayName != null && device.DisplayName.Contains(displayName)));
+		}
+	}
+
+	/// <summary>
+	/// 为 <see cref="IQueryable{User}"/> 提供用户筛选相关的扩展方法组
+	/// </summary>
+	/// <param name="users">用户查询</param>
+	extension(IQueryable<User> users) {
+		/// <summary>
+		/// 按用户 ID 筛选用户查询。
+		/// </summary>
+		/// <param name="userId">用户 ID</param>
+		/// <returns>应用筛选后的用户查询</returns>
+		public IQueryable<User> WhereUserId(Guid userId) =>
+			users.Where(user => user.Id == userId);
+
+		/// <summary>
+		/// 按用户名筛选用户查询。
+		/// </summary>
+		/// <param name="userName">用户名查找条件</param>
+		/// <returns>应用筛选后的用户查询</returns>
+		public IQueryable<User> WhereUserName(IdentityNameLookup userName) {
+			ArgumentNullException.ThrowIfNull(userName);
+
+			return users.Where(user => user.NormalizedUserName == userName.NormalizedName);
+		}
+
+		/// <summary>
+		/// 按用户搜索条件筛选用户查询。
+		/// </summary>
+		/// <param name="searchTerm">身份标识搜索条件</param>
+		/// <returns>应用筛选后的用户查询</returns>
+		public IQueryable<User> WhereMatches(IdentitySearchTerm searchTerm) {
+			ArgumentNullException.ThrowIfNull(searchTerm);
+
+			var normalizedName = searchTerm.NormalizedName;
+			var displayName = searchTerm.DisplayName;
+
+			if (normalizedName is null) {
+				// 如果没有指定用户名，则只按显示名称筛选
+				return displayName is null
+					? users
+					: users.Where(user => user.DisplayName != null
+						&& user.DisplayName.Contains(displayName));
+			}
+
+			return displayName is null
+				? users.Where(user => user.NormalizedUserName != null
+					&& user.NormalizedUserName.Contains(normalizedName))
+				: users.Where(user =>
+					(user.NormalizedUserName != null && user.NormalizedUserName.Contains(normalizedName))
+					|| (user.DisplayName != null && user.DisplayName.Contains(displayName)));
 		}
 	}
 
@@ -115,14 +167,14 @@ public static class IQueryableExtensions {
 		/// <summary>
 		/// 按关联设备搜索条件筛选日志查询。
 		/// </summary>
-		/// <param name="searchTerm">设备搜索条件</param>
+		/// <param name="searchTerm">身份标识搜索条件</param>
 		/// <returns>应用筛选后的日志查询</returns>
-		public IQueryable<OnlineLog> WhereDeviceMatches(DeviceSearchTerm searchTerm) {
+		public IQueryable<OnlineLog> WhereDeviceMatches(IdentitySearchTerm searchTerm) {
 			ArgumentNullException.ThrowIfNull(searchTerm);
 
-			var normalizedDeviceName = searchTerm.NormalizedDeviceName;
+			var normalizedName = searchTerm.NormalizedName;
 			var displayName = searchTerm.DisplayName;
-			if (normalizedDeviceName is null) {
+			if (normalizedName is null) {
 				// 如果没有指定设备名称，则只按显示名称筛选
 				return displayName is null
 					? logs
@@ -131,9 +183,9 @@ public static class IQueryableExtensions {
 			}
 
 			return displayName is null
-				? logs.Where(log => log.Device.NormalizedDeviceName.Contains(normalizedDeviceName))
+				? logs.Where(log => log.Device.NormalizedDeviceName.Contains(normalizedName))
 				: logs.Where(log =>
-					log.Device.NormalizedDeviceName.Contains(normalizedDeviceName)
+					log.Device.NormalizedDeviceName.Contains(normalizedName)
 					|| (log.Device.DisplayName != null && log.Device.DisplayName.Contains(displayName)));
 		}
 	}

@@ -36,21 +36,21 @@ public sealed record IdentityNameLookup(string NormalizedName) {
 }
 
 /// <summary>
-/// 设备搜索条件。
+/// 身份标识搜索条件。
 /// </summary>
-/// <param name="NormalizedDeviceName">归一化后的设备名称搜索关键字</param>
+/// <param name="NormalizedName">归一化后的身份标识名称搜索关键字</param>
 /// <param name="DisplayName">显示名称搜索关键字</param>
-public sealed record DeviceSearchTerm(
-	string? NormalizedDeviceName,
+public sealed record IdentitySearchTerm(
+	string? NormalizedName,
 	string? DisplayName
 ) {
 	/// <summary>
-	/// 从原始搜索关键字创建设备搜索条件。
+	/// 从原始搜索关键字创建身份标识搜索条件。
 	/// </summary>
 	/// <param name="value">原始搜索关键字</param>
 	/// <param name="normalizer">身份标识名称归一化器</param>
-	/// <returns>设备搜索条件</returns>
-	public static DeviceSearchTerm Create(string? value, ILookupNormalizer normalizer) {
+	/// <returns>身份标识搜索条件</returns>
+	public static IdentitySearchTerm Create(string? value, ILookupNormalizer normalizer) {
 		ArgumentNullException.ThrowIfNull(normalizer);
 
 		if (string.IsNullOrWhiteSpace(value)) {

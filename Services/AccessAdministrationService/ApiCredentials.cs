@@ -12,7 +12,7 @@ public sealed partial class AccessAdministrationService {
 
 		// 先读取所属用户角色，再创建凭据，确保凭据角色不会高于所属用户
 		var owner = await GetApiCredentialOwnerAsync(
-			dbContext.Users.Where(user => user.Id == ownerUserId),
+			dbContext.Users.WhereUserId(ownerUserId),
 			"未找到指定的所属用户",
 			"所属用户未正确设置角色",
 			cancellationToken);
@@ -29,7 +29,7 @@ public sealed partial class AccessAdministrationService {
 		// 用户名入口先归一化再查找，保持与 Identity 用户名唯一索引一致的匹配语义
 		var ownerNameLookup = CreateUserNameLookup(ownerUserName);
 		var owner = await GetApiCredentialOwnerAsync(
-			dbContext.Users.Where(user => user.NormalizedUserName == ownerNameLookup.NormalizedName),
+			dbContext.Users.WhereUserName(ownerNameLookup),
 			"未找到指定的所属用户",
 			"所属用户未正确设置角色",
 			cancellationToken);

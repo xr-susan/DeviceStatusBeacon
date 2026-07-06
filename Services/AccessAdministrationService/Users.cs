@@ -67,7 +67,7 @@ public sealed partial class AccessAdministrationService {
 			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		await SetUserDisplayNameAsync(
-			dbContext.Users.Where(user => user.Id == userId),
+			dbContext.Users.WhereUserId(userId),
 			command.DisplayName,
 			cancellationToken);
 	}
@@ -81,7 +81,7 @@ public sealed partial class AccessAdministrationService {
 
 		var userNameLookup = CreateUserNameLookup(userName);
 		await SetUserDisplayNameAsync(
-			dbContext.Users.Where(user => user.NormalizedUserName == userNameLookup.NormalizedName),
+			dbContext.Users.WhereUserName(userNameLookup),
 			command.DisplayName,
 			cancellationToken);
 	}
@@ -144,7 +144,7 @@ public sealed partial class AccessAdministrationService {
 			message => new AccessAdministrationException(StatusCodes.Status422UnprocessableEntity, message));
 
 		await SetUserAuthorizedDevicesAsync(
-			dbContext.Users.Where(user => user.Id == userId),
+			dbContext.Users.WhereUserId(userId),
 			command,
 			cancellationToken);
 	}
@@ -158,7 +158,7 @@ public sealed partial class AccessAdministrationService {
 
 		var userNameLookup = CreateUserNameLookup(userName);
 		await SetUserAuthorizedDevicesAsync(
-			dbContext.Users.Where(user => user.NormalizedUserName == userNameLookup.NormalizedName),
+			dbContext.Users.WhereUserName(userNameLookup),
 			command,
 			cancellationToken);
 	}

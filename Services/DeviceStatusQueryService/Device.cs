@@ -14,7 +14,7 @@ public sealed partial class DeviceStatusQueryService {
 		var normalizedPageSize = NormalizePageSize(pageSize, 1, MaxDeviceQueryCount);
 
 		// 构建当前可读取的设备范围，并应用关键字筛选
-		var deviceSearchTerm = DeviceSearchTerm.Create(searchTerm, lookupNormalizer);
+		var deviceSearchTerm = IdentitySearchTerm.Create(searchTerm, lookupNormalizer);
 		var filteredDevices = BuildAccessibleDeviceQuery(session)
 			.WhereMatches(deviceSearchTerm);
 
@@ -42,7 +42,7 @@ public sealed partial class DeviceStatusQueryService {
 		var normalizedTake = NormalizePageSize(take, 1, MaxDeviceQueryCount);
 
 		// 构建当前可读取的设备范围，并应用关键字筛选
-		var deviceSearchTerm = DeviceSearchTerm.Create(searchTerm, lookupNormalizer);
+		var deviceSearchTerm = IdentitySearchTerm.Create(searchTerm, lookupNormalizer);
 		var filteredDevices = BuildAccessibleDeviceQuery(session)
 			.WhereMatches(deviceSearchTerm);
 

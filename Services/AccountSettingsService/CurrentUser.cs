@@ -13,7 +13,7 @@ public sealed partial class AccountSettingsService {
 		// 当前用户只能修改自己的显示名称，使用主体 ID 收窄更新范围
 		var target = await GetCurrentUserTargetAsync(principal, cancellationToken);
 		var updatedCount = await dbContext.Users
-			.Where(user => user.Id == target.UserId)
+			.WhereUserId(target.UserId)
 			.ExecuteUpdateAsync(
 				user => user.SetProperty(entity => entity.DisplayName, command.DisplayName),
 				cancellationToken);

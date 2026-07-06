@@ -41,7 +41,7 @@ public sealed partial class AccountSettingsService(
 		// 避免 Cookie 角色五分钟的有效期内，用户角色被管理员修改后仍然可以越权操作
 		var target = await dbContext.Users
 			.AsNoTracking()
-			.Where(user => user.Id == userId)
+			.WhereUserId(userId)
 			.Select(user => new {
 				user.Id,
 				RoleName = user.UserRoles.Select(userRole => userRole.Role.Name).SingleOrDefault(),

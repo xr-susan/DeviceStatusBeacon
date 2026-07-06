@@ -14,7 +14,7 @@ public sealed partial class DeviceStatusQueryService {
 		var normalizedPageSize = NormalizePageSize(pageSize, 1, MaxLogQueryCount);
 
 		// 构建当前可读取的日志范围，并应用设备关键字筛选
-		var deviceSearchTerm = DeviceSearchTerm.Create(deviceKeyword, lookupNormalizer);
+		var deviceSearchTerm = IdentitySearchTerm.Create(deviceKeyword, lookupNormalizer);
 		var filteredLogs = BuildAccessibleLogQuery(session)
 			.WhereDeviceMatches(deviceSearchTerm);
 
