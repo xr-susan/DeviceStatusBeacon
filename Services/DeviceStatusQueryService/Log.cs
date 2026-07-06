@@ -112,6 +112,9 @@ public sealed partial class DeviceStatusQueryService {
 				log.LogTime,
 				log.ReportedAddresses,
 				log.ReporterRemoteAddress,
+				log.SubmittedByUserId,
+				log.SubmittedByUser == null ? null : log.SubmittedByUser.UserName,
+				log.SubmittedByUser == null ? null : log.SubmittedByUser.DisplayName,
 				log.Message))
 			.ToListAsync(cancellationToken);
 

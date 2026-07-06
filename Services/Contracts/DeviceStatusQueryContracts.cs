@@ -254,6 +254,9 @@ public sealed record DeviceSummary(
 /// <param name="LogTime">日志时间</param>
 /// <param name="ReportedAddresses">上报地址</param>
 /// <param name="ReporterRemoteAddress">上报来源地址</param>
+/// <param name="SubmittedByUserId">代提交用户 ID；如果由设备自身提交或用户已被删除，则为 null</param>
+/// <param name="SubmittedByUserName">代提交用户名；如果由设备自身提交或用户已被删除，则为 null</param>
+/// <param name="SubmittedByUserDisplayName">代提交用户显示名称；如果由设备自身提交、用户已被删除或未设置显示名称，则为 null</param>
 /// <param name="Message">附加消息</param>
 public sealed record OnlineLogSummary(
 	long OnlineLogId,
@@ -263,6 +266,9 @@ public sealed record OnlineLogSummary(
 	DateTime LogTime,
 	IReadOnlyCollection<IPAddress> ReportedAddresses,
 	IPAddress? ReporterRemoteAddress,
+	Guid? SubmittedByUserId,
+	string? SubmittedByUserName,
+	string? SubmittedByUserDisplayName,
 	string? Message
 );
 
@@ -276,9 +282,9 @@ public sealed record OnlineLogSummary(
 /// <param name="LogTime">日志时间</param>
 /// <param name="ReportedAddresses">上报地址</param>
 /// <param name="ReporterRemoteAddress">上报来源地址</param>
-/// <param name="SubmittedByUserId">代提交用户 ID；如果由设备自身提交，则为 null</param>
-/// <param name="SubmittedByUserName">代提交用户名；如果由设备自身提交或用户已删除，则为 null</param>
-/// <param name="SubmittedByUserDisplayName">代提交用户显示名称；如果由设备自身提交、用户已删除或未设置显示名称，则为 null</param>
+/// <param name="SubmittedByUserId">代提交用户 ID；如果由设备自身提交或用户已被删除，则为 null</param>
+/// <param name="SubmittedByUserName">代提交用户名；如果由设备自身提交或用户已被删除，则为 null</param>
+/// <param name="SubmittedByUserDisplayName">代提交用户显示名称；如果由设备自身提交、用户已被删除或未设置显示名称，则为 null</param>
 /// <param name="Message">附加消息</param>
 public sealed record OnlineLogDetails(
 	long OnlineLogId,
