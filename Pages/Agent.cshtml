@@ -1,0 +1,87 @@
+﻿@page "/agent"
+@model DeviceStatusBeacon.Pages.AgentModel
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+	ViewData["Title"] = "智能分析";
+	var antiforgeryToken = Antiforgery.GetAndStoreTokens(HttpContext).RequestToken;
+}
+
+@section HeadStyles {
+	<link rel="stylesheet" href="~/css/pages/agent.css" asp-append-version="true" />
+}
+
+@section HeadModules {
+	<script type="module" src="~/js/pages/agent.js" asp-append-version="true"></script>
+}
+
+<div class="page agent-page"
+	 data-agent-root
+	 data-agent-api-url="@Url.Content("~/api/internal/agent/chat")"
+	 data-request-verification-token="@antiforgeryToken">
+	<header class="page-header">
+		<div>
+			<h1 class="page-header__title">智能分析</h1>
+			<p class="page-header__subtitle">使用当前账号可见范围内的设备与日志数据进行只读诊断。</p>
+		</div>
+	</header>
+
+	<section class="agent-layout">
+		<aside class="panel agent-sidebar">
+			<div class="agent-sidebar__section">
+				<div class="panel__header">
+					<h2 class="panel__title">会话</h2>
+					<button type="button" class="button button--secondary" data-agent-new-session>新建</button>
+				</div>
+				<div class="agent-session-list" data-agent-session-list></div>
+			</div>
+
+			<form class="agent-provider-form" data-agent-provider-form>
+				<div class="field">
+					<label for="agent-endpoint" class="field__label">接口终结点</label>
+					<input id="agent-endpoint"
+						   name="endpoint"
+						   class="field__input"
+						   placeholder="https://api.deepseek.com"
+						   autocomplete="off"
+						   required />
+				</div>
+				<div class="field">
+					<label for="agent-model" class="field__label">模型名称</label>
+					<input id="agent-model"
+						   name="model"
+						   class="field__input"
+						   placeholder="deepseek-chat"
+						   autocomplete="off"
+						   required />
+				</div>
+				<div class="field">
+					<label for="agent-api-key" class="field__label">API Key</label>
+					<input id="agent-api-key"
+						   name="apiKey"
+						   type="password"
+						   class="field__input"
+						   autocomplete="off"
+						   required />
+				</div>
+			</form>
+		</aside>
+
+		<section class="panel agent-chat-panel">
+			<div class="agent-chat" data-agent-chat></div>
+			<form class="agent-composer" data-agent-composer>
+				<label for="agent-message" class="field__label">消息</label>
+				<textarea id="agent-message"
+						  name="message"
+						  class="field__input agent-composer__input"
+						  rows="4"
+						  maxlength="2000"
+						  placeholder="例如：分析一下当前系统运行状况。"
+						  required></textarea>
+				<div class="agent-composer__actions">
+					<div class="subtext" data-agent-status></div>
+					<button type="submit" class="button button--primary" data-agent-submit>发送</button>
+				</div>
+			</form>
+		</section>
+	</section>
+</div>

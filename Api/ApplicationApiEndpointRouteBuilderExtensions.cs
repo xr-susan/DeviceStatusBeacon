@@ -17,6 +17,7 @@ public static class ApplicationApiEndpointRouteBuilderExtensions {
 			endpoints.MapDashboardApiEndpoints();
 			endpoints.MapDeviceApiEndpoints();
 			endpoints.MapLogInternalApiEndpoints();
+			endpoints.MapAgentInternalApiEndpoints();
 			return endpoints;
 		}
 	}

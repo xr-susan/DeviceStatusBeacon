@@ -15,7 +15,7 @@ public static class CustomServiceCollectionExtensions {
 		/// 注册本项目中自定义的服务到 <see cref="IServiceCollection"/> 中
 		/// </summary>
 		/// <returns>当前的 <see cref="IServiceCollection"/>，用于链式调用</returns>
-		public IServiceCollection AddCustomServices() =>
+		public IServiceCollection AddCustomServices() {
 			services.AddHostedService<AuthenticationMaintenanceService>()
 				.AddSingleton<IDataProtectorV1, DataProtectorV1>()
 				.AddSingleton<INonceReplayProtectionService, NonceReplayProtectionService>()
@@ -26,6 +26,9 @@ public static class CustomServiceCollectionExtensions {
 				.AddScoped<IAccessAdministrationQueryService, AccessAdministrationQueryService>()
 				.AddScoped<IAccountSettingsService, AccountSettingsService>()
 				.AddScoped<IOnlineLogManagementService, OnlineLogManagementService>();
+			services.AddHttpClient<IAgentChatService, AgentChatService>(client => client.Timeout = TimeSpan.FromSeconds(120));
+			return services;
+		}
 
 		/// <summary>
 		/// 依据配置注册数据库上下文 <see cref="DeviceStatusBeaconContext"/> 到 <see cref="IServiceCollection"/> 中

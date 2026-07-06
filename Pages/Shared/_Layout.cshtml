@@ -6,12 +6,14 @@
 	var dashboardHref = Url.Page("/Dashboard") ?? "/dashboard";
 	var devicesHref = Url.Page("/Devices/Index") ?? "/devices";
 	var logsHref = Url.Page("/Logs") ?? "/logs";
+	var agentHref = Url.Page("/Agent") ?? "/agent";
 	var adminHref = Url.Page("/Admin/Index") ?? "/admin";
 	var accountSettingsHref = Url.Page("/Account/Settings") ?? "/account/settings";
 	var loginHref = Url.Page("/Account/Login") ?? "/login";
 	var homeHref = hasInteractiveSession ? dashboardHref : publicHomeHref;
 	var devicesIsActive = currentPath.StartsWithSegments("/devices");
 	var logsIsActive = currentPath.StartsWithSegments("/logs");
+	var agentIsActive = currentPath.StartsWithSegments("/agent");
 	var adminIsActive = currentPath.StartsWithSegments("/admin");
 	var (_, _, currentRole) = User.GetAuthenticatedPrincipalInfo();
 }
@@ -43,6 +45,9 @@
 					@if (hasInteractiveSession) {
 						<a href="@devicesHref" class="app-nav__link @(devicesIsActive ? "app-nav__link--active" : null)">设备</a>
 						<a href="@logsHref" class="app-nav__link @(logsIsActive ? "app-nav__link--active" : null)">日志</a>
+						@if (currentRole.CanManageDevices()) {
+							<a href="@agentHref" class="app-nav__link @(agentIsActive ? "app-nav__link--active" : null)">分析</a>
+						}
 						@if (currentRole.IsAdministrator()) {
 							<a href="@adminHref" class="app-nav__link @(adminIsActive ? "app-nav__link--active" : null)">管理</a>
 						}
