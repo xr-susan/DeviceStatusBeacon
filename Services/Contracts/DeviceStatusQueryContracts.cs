@@ -261,7 +261,35 @@ public sealed record OnlineLogSummary(
 	string DeviceName,
 	string? DeviceDisplayName,
 	DateTime LogTime,
-	IReadOnlyCollection<IPAddress>? ReportedAddresses,
+	IReadOnlyCollection<IPAddress> ReportedAddresses,
 	IPAddress? ReporterRemoteAddress,
+	string? Message
+);
+
+/// <summary>
+/// 在线日志详细信息。
+/// </summary>
+/// <param name="OnlineLogId">日志 ID</param>
+/// <param name="DeviceId">设备 ID</param>
+/// <param name="DeviceName">设备名称</param>
+/// <param name="DeviceDisplayName">设备显示名称</param>
+/// <param name="LogTime">日志时间</param>
+/// <param name="ReportedAddresses">上报地址</param>
+/// <param name="ReporterRemoteAddress">上报来源地址</param>
+/// <param name="SubmittedByUserId">代提交用户 ID；如果由设备自身提交，则为 null</param>
+/// <param name="SubmittedByUserName">代提交用户名；如果由设备自身提交或用户已删除，则为 null</param>
+/// <param name="SubmittedByUserDisplayName">代提交用户显示名称；如果由设备自身提交、用户已删除或未设置显示名称，则为 null</param>
+/// <param name="Message">附加消息</param>
+public sealed record OnlineLogDetails(
+	long OnlineLogId,
+	Guid DeviceId,
+	string DeviceName,
+	string? DeviceDisplayName,
+	DateTime LogTime,
+	IReadOnlyCollection<IPAddress> ReportedAddresses,
+	IPAddress? ReporterRemoteAddress,
+	Guid? SubmittedByUserId,
+	string? SubmittedByUserName,
+	string? SubmittedByUserDisplayName,
 	string? Message
 );

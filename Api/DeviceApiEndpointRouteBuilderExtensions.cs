@@ -17,16 +17,20 @@ public static class DeviceApiEndpointRouteBuilderExtensions {
 			var group = endpoints.MapGroup("/api/devices")
 				.WithTags("Devices");
 
+			/*
 			// 创建设备端点，要求用户或 API 凭据具有设备管理权限
+			// 交互式管理 API 后续需要补 CSRF 防护，暂时不发布
 			group.MapPost("", DeviceApiHandlers.CreateDeviceAsync)
 				.RequireAuthorization(AuthorizationPolicyNames.UserOrApiCredentialDeviceManagement)
 				.WithName("CreateDevice");
+			*/
 
 			// 设备日志端点，要求用户或 API 凭据具有日志提交权限
 			group.MapPost("/{deviceId:guid}/logs", DeviceApiHandlers.CreateOnlineLogAsync)
 				.RequireAuthorization(AuthorizationPolicyNames.LogSubmission)
 				.WithName("CreateDeviceOnlineLog");
 
+			/*
 			// 设备查询相关端点组，要求用户或 API 凭据具有查询访问权限
 			var queryGroup = group.MapGroup("")
 				.RequireAuthorization(AuthorizationPolicyNames.UserOrApiCredentialQueryAccess);
@@ -58,6 +62,7 @@ public static class DeviceApiEndpointRouteBuilderExtensions {
 
 			managedDeviceGroup.MapDelete("", DeviceApiHandlers.DeleteDeviceAsync)
 				.WithName("DeleteDevice");
+			*/
 
 			return endpoints;
 		}

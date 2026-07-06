@@ -36,6 +36,28 @@ public sealed partial class DeviceStatusQueryService {
 	}
 
 	/// <inheritdoc/>
+	public async Task<OnlineLogDetails?> GetOnlineLogDetailsAsync(ClaimsPrincipal principal, long onlineLogId, CancellationToken cancellationToken = default) =>
+		await GetOnlineLogDetailsAsync(CreateQuerySessionAsync(principal), onlineLogId, cancellationToken);
+
+	/// <inheritdoc/>
+	public async Task<OnlineLogDetails?> GetOnlineLogDetailsAsync(DeviceStatusQuerySession session, long onlineLogId, CancellationToken cancellationToken = default) =>
+		await BuildAccessibleLogQuery(session)
+			.Where(log => log.OnlineLogId == onlineLogId)
+			.Select(log => new OnlineLogDetails(
+				log.OnlineLogId,
+				log.DeviceId,
+				log.Device.DeviceName,
+				log.Device.DisplayName,
+				log.LogTime,
+				log.ReportedAddresses,
+				log.ReporterRemoteAddress,
+				log.SubmittedByUserId,
+				log.SubmittedByUser == null ? null : log.SubmittedByUser.UserName,
+				log.SubmittedByUser == null ? null : log.SubmittedByUser.DisplayName,
+				log.Message))
+			.SingleOrDefaultAsync(cancellationToken);
+
+	/// <inheritdoc/>
 	public Task<IReadOnlyCollection<OnlineLogSummary>> GetLogsByDeviceNameAsync(DeviceStatusQuerySession session, string deviceName, int take, CancellationToken cancellationToken = default) {
 		var deviceNameLookup = IdentityNameLookup.TryCreate(deviceName, lookupNormalizer);
 		if (deviceNameLookup is null) {

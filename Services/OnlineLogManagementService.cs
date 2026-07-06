@@ -60,4 +60,40 @@ public sealed class OnlineLogManagementService(DeviceStatusBeaconContext dbConte
 			newLog.DeviceId,
 			newLog.LogTime);
 	}
+
+	/// <inheritdoc/>
+	public async Task UpdateMessageAsync(long onlineLogId, UpdateOnlineLogMessageCommand command, CancellationToken cancellationToken = default) {
+		ArgumentNullException.ThrowIfNull(command);
+		CommandValidation.EnsureValid(
+			command,
+			message => new OnlineLogManagementException(StatusCodes.Status422UnprocessableEntity, message));
+
+		var updatedCount = await dbContext.OnlineLogs
+			.Where(log => log.OnlineLogId == onlineLogId)
+			.ExecuteUpdateAsync(
+				log => log.SetProperty(entity => entity.Message, command.Message?.Trim()),
+				cancellationToken);
+
+		EnsureOnlineLogFound(updatedCount);
+	}
+
+	/// <inheritdoc/>
+	public async Task DeleteAsync(long onlineLogId, CancellationToken cancellationToken = default) {
+		var deletedCount = await dbContext.OnlineLogs
+			.Where(log => log.OnlineLogId == onlineLogId)
+			.ExecuteDeleteAsync(cancellationToken);
+
+		EnsureOnlineLogFound(deletedCount);
+	}
+
+	/// <summary>
+	/// 确保在线日志存在。
+	/// </summary>
+	/// <param name="affectedCount">受影响的行数</param>
+	/// <exception cref="OnlineLogManagementException">未找到在线日志</exception>
+	private static void EnsureOnlineLogFound(int affectedCount) {
+		if (affectedCount == 0) {
+			throw new OnlineLogManagementException(StatusCodes.Status404NotFound, "未找到指定的日志。");
+		}
+	}
 }

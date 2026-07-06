@@ -1,9 +1,13 @@
 ﻿@page "/logs"
 @model DeviceStatusBeacon.Pages.LogsModel
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 @{
 	ViewData["Title"] = "日志查询";
 	var session = Model.PageData.Session;
 	var pagination = Model.Pagination;
+	var canManageLogs = session.Role.CanManageDevices();
+	var canViewUsers = session.Role.IsAdministrator();
+	var antiforgeryToken = Antiforgery.GetAndStoreTokens(HttpContext).RequestToken;
 
 	// 设置空状态提示信息，仅在当前没查到日志时才显示
 	var emptyStateMessage = "没有找到符合条件的日志。";
@@ -16,7 +20,18 @@
 	<link rel="stylesheet" href="~/css/pages/logs.css" asp-append-version="true" />
 }
 
-<div class="page">
+@section HeadModules {
+	<script type="module" src="~/js/pages/logs.js" asp-append-version="true"></script>
+}
+
+<div class="page"
+	 data-log-details-root
+	 data-log-api-base="@Url.Content("~/api/internal/logs")"
+	 data-device-details-url-template="@Url.Page("/Devices/Details", new { deviceName = "DeviceNamePlaceholder" })"
+	 data-user-details-url-template="@(canViewUsers ? Url.Page("/Admin/Users/Settings", new { userName = "UserNamePlaceholder" }) : null)"
+	 data-request-verification-token="@antiforgeryToken"
+	 data-can-manage-logs="@canManageLogs.ToString().ToLowerInvariant()"
+	 data-can-view-users="@canViewUsers.ToString().ToLowerInvariant()">
 	<header class="page-header">
 		<div>
 			<h1 class="page-header__title">日志查询</h1>
@@ -99,14 +114,17 @@
 		} else {
 			<div class="log-list">
 				@foreach (var log in Model.PageData.Logs) {
-					var reportedAddresses = log.ReportedAddresses?.Count > 0 ? string.Join(", ", log.ReportedAddresses) : "暂无地址";
+					var reportedAddresses = string.Join(", ", log.ReportedAddresses);
 					var message = string.IsNullOrWhiteSpace(log.Message) ? "暂无消息" : log.Message;
 					var reporterRemoteAddress = log.ReporterRemoteAddress?.ToString() ?? "未知";
 
-					<article class="log-item">
+					<article class="log-item" data-log-item="@log.OnlineLogId">
 						<div class="log-item__row">
 							<div class="log-item__identity">
-								<button type="button" class="log-item__details-button" data-log-id="@log.OnlineLogId">详情</button>
+								<button type="button"
+										class="log-item__details-button"
+										data-log-id="@log.OnlineLogId"
+										aria-label="查看日志 @log.OnlineLogId 的详情">详情</button>
 								<div class="entity-identity">
 									<a asp-page="/Devices/Details"
 									   asp-route-deviceName="@log.DeviceName"
@@ -129,7 +147,7 @@
 							</div>
 							<div class="log-item__detail log-item__detail--message">
 								<dt class="detail-label">消息</dt>
-								<dd class="log-item__scroll-value">@message</dd>
+								<dd class="log-item__scroll-value" data-log-message-value>@message</dd>
 							</div>
 						</dl>
 					</article>

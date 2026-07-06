@@ -28,7 +28,8 @@ public sealed class OnlineLogManagementException(int statusCode, string message)
 	private static string GetProblemTitle(int statusCode) => statusCode switch {
 		StatusCodes.Status400BadRequest => "设备日志请求无效",
 		StatusCodes.Status403Forbidden => "不允许操作日志",
-		StatusCodes.Status404NotFound => "目标设备不存在",
+		StatusCodes.Status404NotFound => "目标日志或设备不存在",
+		StatusCodes.Status422UnprocessableEntity => "日志管理请求语义无效",
 		_ => "日志管理失败"
 	};
 }

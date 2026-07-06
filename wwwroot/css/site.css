@@ -612,6 +612,77 @@ code {
     background: var(--color-canvas-inset);
 }
 
+.modal-dialog {
+    width: min(34rem, calc(100vw - var(--container-gutter) - var(--container-gutter)));
+    max-height: calc(100vh - var(--container-gutter) - var(--container-gutter));
+    padding: 0;
+    border: var(--border-width) solid var(--color-border-default);
+    border-radius: var(--radius-medium);
+    background: var(--color-canvas-subtle);
+    color: var(--color-fg-default);
+    box-shadow: 0 1rem 3rem rgba(31, 35, 40, 0.24);
+}
+
+.modal-dialog--wide {
+    width: min(44rem, calc(100vw - var(--container-gutter) - var(--container-gutter)));
+}
+
+.modal-dialog::backdrop {
+    background: rgba(31, 35, 40, 0.46);
+}
+
+.modal-dialog__body {
+    display: grid;
+    gap: var(--space-xl);
+    max-height: calc(100vh - 8rem);
+    padding: var(--space-xl);
+    overflow: auto;
+    scrollbar-color: var(--color-border-default) transparent;
+    scrollbar-width: thin;
+}
+
+.modal-dialog__body::-webkit-scrollbar {
+    width: 0.5rem;
+    height: 0.5rem;
+}
+
+.modal-dialog__body::-webkit-scrollbar-track {
+    border-radius: 999px;
+    background: var(--color-canvas-default);
+}
+
+.modal-dialog__body::-webkit-scrollbar-thumb {
+    border: 0.125rem solid var(--color-canvas-default);
+    border-radius: 999px;
+    background: var(--color-border-default);
+}
+
+.modal-dialog__title {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.35;
+}
+
+.modal-dialog__content {
+    min-width: 0;
+}
+
+.modal-dialog__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-md);
+    padding: var(--space-lg) var(--space-xl);
+    border-top: var(--border-width) solid var(--color-border-muted);
+    background: var(--color-canvas-inset);
+}
+
+.modal-dialog__button-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
 @media (max-width: 45em) {
     :root {
         --container-gutter: clamp(0.75rem, 5vw, 1.25rem);

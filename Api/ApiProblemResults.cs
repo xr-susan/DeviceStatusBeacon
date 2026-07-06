@@ -24,6 +24,22 @@ internal static class ApiProblemResults {
 		CreateProblem(context, StatusCodes.Status404NotFound, "目标设备不存在", "未找到指定的设备。");
 
 	/// <summary>
+	/// 创建在线日志不存在的统一错误响应。
+	/// </summary>
+	/// <param name="context">当前 HTTP 上下文</param>
+	/// <returns>ProblemDetails JSON 响应</returns>
+	public static IResult OnlineLogNotFound(HttpContext context) =>
+		CreateProblem(context, StatusCodes.Status404NotFound, "目标日志不存在", "未找到指定的日志。");
+
+	/// <summary>
+	/// 创建防伪令牌无效的统一错误响应。
+	/// </summary>
+	/// <param name="context">当前 HTTP 上下文</param>
+	/// <returns>ProblemDetails JSON 响应</returns>
+	public static IResult InvalidAntiforgeryToken(HttpContext context) =>
+		CreateProblem(context, StatusCodes.Status400BadRequest, "请求令牌无效", "请求缺少有效的防伪令牌。");
+
+	/// <summary>
 	/// 创建统一 ProblemDetails JSON 响应。
 	/// </summary>
 	/// <param name="context">当前 HTTP 上下文</param>

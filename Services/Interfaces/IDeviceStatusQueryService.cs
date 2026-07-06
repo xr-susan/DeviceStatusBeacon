@@ -102,6 +102,24 @@ public interface IDeviceStatusQueryService {
 	Task<LogListData> GetLogsAsync(DeviceStatusQuerySession session, string? deviceKeyword, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
 
 	/// <summary>
+	/// 获取单条在线日志详细信息。
+	/// </summary>
+	/// <param name="principal">当前登录主体</param>
+	/// <param name="onlineLogId">在线日志 ID</param>
+	/// <param name="cancellationToken">取消令牌</param>
+	/// <returns>一个表示异步操作的任务，任务结果为在线日志详细信息；如果未找到或无权读取，则返回 null</returns>
+	Task<OnlineLogDetails?> GetOnlineLogDetailsAsync(ClaimsPrincipal principal, long onlineLogId, CancellationToken cancellationToken = default);
+
+	/// <summary>
+	/// 获取单条在线日志详细信息。
+	/// </summary>
+	/// <param name="session">查询会话</param>
+	/// <param name="onlineLogId">在线日志 ID</param>
+	/// <param name="cancellationToken">取消令牌</param>
+	/// <returns>一个表示异步操作的任务，任务结果为在线日志详细信息；如果未找到或无权读取，则返回 null</returns>
+	Task<OnlineLogDetails?> GetOnlineLogDetailsAsync(DeviceStatusQuerySession session, long onlineLogId, CancellationToken cancellationToken = default);
+
+	/// <summary>
 	/// 查询设备列表片段。
 	/// </summary>
 	/// <param name="session">查询会话</param>

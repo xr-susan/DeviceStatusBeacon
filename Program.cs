@@ -41,6 +41,7 @@ builder.Services.Configure<RouteOptions>(options =>
 // 注册 Razor Pages、认证与授权、验证器、JSON 序列化器和问题详情处理
 builder.Services.AddRazorPages(options => options.Conventions.AuthorizeFolder("/", AuthorizationPolicyNames.InteractiveUser));
 builder.Services.AddApplicationAuthenticationAndAuthorization();
+builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
 builder.Services.AddValidation();
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new IPAddressJsonConverter()));
 builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
