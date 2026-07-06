@@ -39,7 +39,7 @@
     vertical-align: middle;
 }
 
-.devices-table .device-identity {
+.devices-table .entity-identity {
     margin-bottom: 0;
 }
 
@@ -78,24 +78,6 @@
 .device-detail__summary {
     display: grid;
     gap: var(--space-lg);
-}
-
-.device-identity--detail {
-    display: grid;
-    gap: var(--space-xs);
-    margin-bottom: 0;
-}
-
-.device-identity--detail .device-identity__display {
-    font-size: 1.25rem;
-    font-weight: 650;
-}
-
-.device-identity--detail .device-identity__id {
-    color: var(--color-fg-muted);
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    overflow-wrap: anywhere;
 }
 
 .device-detail__info {

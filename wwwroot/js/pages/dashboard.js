@@ -192,16 +192,16 @@ function createLabeledDetail(label, value, { valueClassName, overflowText } = {}
 // 创建 Dashboard 和列表页共用的设备身份结构
 function createDeviceIdentity(deviceName, displayName) {
     return createElement("div", {
-        className: "device-identity",
+        className: "entity-identity",
         children: [
             displayName
                 ? createElement("span", {
-                    className: "device-identity__display",
+                    className: "entity-identity__display",
                     text: displayName
                 })
                 : null,
             createElement("span", {
-                className: "device-identity__name",
+                className: "entity-identity__name",
                 text: deviceName
             })
         ]

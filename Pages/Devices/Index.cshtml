@@ -40,7 +40,7 @@
 		<form method="get" class="filter-toolbar">
 			<input type="hidden" name="page" value="1" />
 			<div class="field field--grow">
-				<label for="device-filter" class="field__label">设备名称</label>
+				<label for="device-filter" class="field__label">设备筛选</label>
 				<input id="device-filter"
 					   name="q"
 					   value="@Model.SearchTerm"
@@ -134,13 +134,13 @@
 
 							<tr>
 								<td>
-									<div class="device-identity">
+									<div class="entity-identity">
 										@if (!string.IsNullOrWhiteSpace(device.DisplayName)) {
-											<span class="device-identity__display">@device.DisplayName</span>
+											<span class="entity-identity__display">@device.DisplayName</span>
 										}
 										<a asp-page="/Devices/Details"
 										   asp-route-deviceName="@device.DeviceName"
-										   class="device-identity__name device-identity__link">@device.DeviceName</a>
+										   class="entity-identity__name entity-identity__link">@device.DeviceName</a>
 									</div>
 								</td>
 								<td>

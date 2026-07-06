@@ -43,7 +43,7 @@
     grid-column: 1 / 3;
 }
 
-.log-item .device-identity {
+.log-item .entity-identity {
     grid-column: 2;
     margin-bottom: 0;
     line-height: 1.45;
@@ -247,7 +247,7 @@
     .log-item__meta time,
     .log-item__meta-label,
     .log-item__meta-value,
-    .log-item .device-identity,
+    .log-item .entity-identity,
     .log-item__details-button,
     .log-item__detail--addresses .detail-label,
     .log-item__detail--addresses .log-item__scroll-value,

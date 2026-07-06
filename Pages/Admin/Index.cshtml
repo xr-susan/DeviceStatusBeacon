@@ -1,0 +1,29 @@
+﻿@page "/admin"
+@model DeviceStatusBeacon.Pages.Admin.IndexModel
+@{
+	ViewData["Title"] = "管理后台";
+}
+
+@section HeadStyles {
+	<link rel="stylesheet" href="~/css/pages/admin.css" asp-append-version="true" />
+}
+
+<div class="page">
+	<header class="page-header">
+		<div>
+			<h1 class="page-header__title">管理后台</h1>
+			<p class="page-header__subtitle">管理交互式用户、访问凭据和系统级配置。</p>
+		</div>
+	</header>
+
+	<section class="admin-entry-grid" aria-label="管理后台入口">
+		<a asp-page="/Admin/Users/Index" class="admin-entry">
+			<span class="admin-entry__title">用户查询</span>
+			<span class="admin-entry__text">查看用户列表，并进入单个用户维护角色、授权范围。</span>
+		</a>
+		<div class="admin-entry admin-entry--disabled" aria-disabled="true">
+			<span class="admin-entry__title">系统设置</span>
+			<span class="admin-entry__text">预留系统级配置入口。</span>
+		</div>
+	</section>
+</div>

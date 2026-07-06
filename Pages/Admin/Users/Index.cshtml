@@ -1,0 +1,149 @@
+﻿@page "/admin/users"
+@model DeviceStatusBeacon.Pages.Admin.Users.IndexModel
+@{
+	ViewData["Title"] = "用户查询";
+	var pagination = Model.PageData.Pagination;
+
+	var emptyStateMessage = "没有找到符合条件的用户。";
+	if (string.IsNullOrWhiteSpace(Model.SearchTerm)) {
+		emptyStateMessage = "系统中当前暂无任何用户。";
+	}
+}
+
+@section HeadStyles {
+	<link rel="stylesheet" href="~/css/pages/admin.css" asp-append-version="true" />
+}
+
+<div class="page">
+	<header class="page-header">
+		<div>
+			<h1 class="page-header__title">用户查询</h1>
+			<p class="page-header__subtitle">筛选并查看系统中的交互式用户。</p>
+		</div>
+		<div class="button-row">
+			<a asp-page="/Admin/Users/Create" class="button button--primary">创建用户</a>
+			<a asp-page="/Admin/Index" class="button button--secondary">返回管理后台</a>
+		</div>
+	</header>
+
+	@if (!string.IsNullOrWhiteSpace(Model.StatusMessage)) {
+		<div class="notice notice--success">@Model.StatusMessage</div>
+	}
+	@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage)) {
+		<div class="notice notice--danger">@Model.ErrorMessage</div>
+	}
+
+	<section class="panel panel--form">
+		<form method="get" class="filter-toolbar">
+			<input type="hidden" name="page" value="1" />
+			<div class="field field--grow">
+				<label for="user-filter" class="field__label">用户筛选</label>
+				<input id="user-filter"
+					   name="q"
+					   value="@Model.SearchTerm"
+					   class="field__input"
+					   placeholder="用户名或显示名称"
+					   data-select-on-focus />
+			</div>
+			<div class="field">
+				<label for="user-page-size" class="field__label">每页数量</label>
+				<select id="user-page-size" name="pageSize" class="field__input">
+					@foreach (var option in new[] { 10, 20, 50 }) {
+						<option value="@option" selected="@(Model.PageSize == option ? "selected" : null)">@option</option>
+					}
+				</select>
+			</div>
+			<div class="filter-toolbar__actions">
+				<button type="submit" class="button button--primary">筛选</button>
+				<a asp-page="/Admin/Users/Index" class="button button--secondary">清空</a>
+			</div>
+		</form>
+
+		<div class="meta-row">
+			<span class="meta-pill">匹配 @pagination.TotalCount</span>
+			<span class="meta-pill">第 @pagination.PageNumber / @pagination.TotalPages 页</span>
+			<span class="meta-pill">每页 @pagination.PageSize</span>
+			@if (Model.PageData.Users.Count != pagination.TotalCount) {
+				<span class="meta-pill">当前展示 @Model.PageData.Users.Count</span>
+			}
+			@if (!string.IsNullOrWhiteSpace(Model.SearchTerm)) {
+				<span class="meta-pill">筛选 @Model.SearchTerm</span>
+			}
+		</div>
+	</section>
+
+	<section class="panel">
+		<div class="panel__header">
+			<h2 class="panel__title">用户列表</h2>
+			<nav class="pager pager--inline" aria-label="用户分页">
+				@if (pagination.HasPreviousPage) {
+					<a asp-page="/Admin/Users/Index"
+					   asp-route-q="@Model.SearchTerm"
+					   asp-route-page="@(pagination.PageNumber - 1)"
+					   asp-route-pageSize="@pagination.PageSize"
+					   class="button button--secondary">上一页</a>
+				} else {
+					<span class="button button--secondary button--disabled" aria-disabled="true">上一页</span>
+				}
+
+				<span class="pager__summary">第 @pagination.PageNumber / @pagination.TotalPages 页</span>
+
+				@if (pagination.HasNextPage) {
+					<a asp-page="/Admin/Users/Index"
+					   asp-route-q="@Model.SearchTerm"
+					   asp-route-page="@(pagination.PageNumber + 1)"
+					   asp-route-pageSize="@pagination.PageSize"
+					   class="button button--secondary">下一页</a>
+				} else {
+					<span class="button button--secondary button--disabled" aria-disabled="true">下一页</span>
+				}
+			</nav>
+		</div>
+
+		@if (Model.PageData.Users.Count == 0) {
+			<div class="empty-state">@emptyStateMessage</div>
+		} else {
+			<div class="table-wrap">
+				<table class="table admin-users-table admin-users-table--summary">
+					<colgroup>
+						<col class="admin-users-table__user" />
+						<col class="admin-users-table__role" />
+						<col class="admin-users-table__count" />
+						<col class="admin-users-table__count" />
+					</colgroup>
+					<thead>
+						<tr>
+							<th>用户</th>
+							<th>角色</th>
+							<th>授权设备</th>
+							<th>API 凭据</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var user in Model.PageData.Users) {
+							<tr>
+								<td>
+									<div class="entity-identity">
+										@if (!string.IsNullOrWhiteSpace(user.DisplayName)) {
+											<span class="entity-identity__display">@user.DisplayName</span>
+										}
+										<a asp-page="/Admin/Users/Settings"
+										   asp-route-userName="@user.UserName"
+										   class="entity-identity__name entity-identity__link">@user.UserName</a>
+									</div>
+								</td>
+								<td>@(user.Role?.ToString() ?? "未设置")</td>
+								<td>
+									<span class="meta-pill">授权设备 @user.AuthorizedDeviceCount</span>
+								</td>
+								<td>
+									<span class="meta-pill">API 凭据 @user.ApiCredentialCount</span>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+	</section>
+</div>

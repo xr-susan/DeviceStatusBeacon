@@ -1,0 +1,79 @@
+﻿@page "/admin/users/create"
+@model DeviceStatusBeacon.Pages.Admin.Users.CreateModel
+@{
+	ViewData["Title"] = "创建用户";
+	var roleOptions = new[] {
+		PrincipalRole.LimitedQuery,
+		PrincipalRole.FullQuery,
+		PrincipalRole.DeviceManager,
+		PrincipalRole.Administrator
+	};
+}
+
+@section HeadStyles {
+	<link rel="stylesheet" href="~/css/pages/admin.css" asp-append-version="true" />
+}
+
+<div class="page">
+	<header class="page-header">
+		<div>
+			<h1 class="page-header__title">创建用户</h1>
+			<p class="page-header__subtitle">新增交互式后台用户并设置初始角色。</p>
+		</div>
+		<div class="button-row">
+			<a asp-page="/Admin/Users/Index" class="button button--secondary">返回用户查询</a>
+		</div>
+	</header>
+
+	@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage)) {
+		<div class="notice notice--danger">@Model.ErrorMessage</div>
+	}
+
+	<section class="panel">
+		<div class="panel__header">
+			<h2 class="panel__title">用户信息</h2>
+		</div>
+
+		<form method="post" class="admin-settings-grid">
+			<div class="field">
+				<label asp-for="UserName" class="field__label">用户名</label>
+				<input asp-for="UserName"
+					   class="field__input"
+					   minlength="@DeviceStatusBeacon.IdentityNameRules.MinimumLength"
+					   maxlength="@DeviceStatusBeacon.IdentityNameRules.MaximumLength"
+					   pattern="[A-Za-z\d][A-Za-z\d_\-]{2,62}[A-Za-z\d]"
+					   title="用户名长度为 4 到 64 个字符，只能包含字母、数字、下划线和连字符，且首尾必须是字母或数字。"
+					   autocomplete="off"
+					   required
+					   data-select-on-focus />
+			</div>
+			<div class="field">
+				<label asp-for="DisplayName" class="field__label">显示名称</label>
+				<input asp-for="DisplayName"
+					   class="field__input"
+					   maxlength="@CommandValidation.DisplayNameMaximumLength"
+					   autocomplete="off"
+					   data-select-on-focus />
+			</div>
+			<div class="field">
+				<label asp-for="Password" class="field__label">初始密码</label>
+				<input asp-for="Password"
+					   type="password"
+					   class="field__input"
+					   autocomplete="new-password"
+					   required />
+			</div>
+			<div class="field">
+				<label asp-for="Role" class="field__label">角色</label>
+				<select asp-for="Role" class="field__input">
+					@foreach (var role in roleOptions) {
+						<option value="@role">@role</option>
+					}
+				</select>
+			</div>
+			<div class="button-row">
+				<button type="submit" class="button button--primary">创建用户</button>
+			</div>
+		</form>
+	</section>
+</div>

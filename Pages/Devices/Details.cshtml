@@ -30,12 +30,12 @@
 	<section class="panel">
 		<div class="device-detail">
 			<div class="device-detail__summary">
-				<div class="device-identity device-identity--detail">
-					<span class="device-identity__id">@device.DeviceId</span>
+				<div class="entity-identity entity-identity--detail">
+					<span class="entity-identity__id">@device.DeviceId</span>
 					@if (!string.IsNullOrWhiteSpace(device.DisplayName)) {
-						<span class="device-identity__display">@device.DisplayName</span>
+						<span class="entity-identity__display">@device.DisplayName</span>
 					}
-					<span class="device-identity__name">@device.DeviceName</span>
+					<span class="entity-identity__name">@device.DeviceName</span>
 				</div>
 				<div class="meta-row">
 					<span class="status-pill @(device.Enabled ? "status-pill--success" : "status-pill--muted")">@(device.Enabled ? "启用" : "停用")</span>

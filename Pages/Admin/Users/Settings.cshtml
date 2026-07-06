@@ -1,0 +1,204 @@
+﻿@page "/admin/users/by-name/{userName:identityName}/settings"
+@model DeviceStatusBeacon.Pages.Admin.Users.SettingsModel
+@{
+	ViewData["Title"] = "用户管理";
+	var user = Model.UserSummary;
+	var isCurrentUser = user.UserId == Model.CurrentUserId;
+	var userRoleOptions = new[] {
+		PrincipalRole.LimitedQuery,
+		PrincipalRole.FullQuery,
+		PrincipalRole.DeviceManager,
+		PrincipalRole.Administrator
+	};
+}
+
+@section HeadStyles {
+	<link rel="stylesheet" href="~/css/pages/admin.css" asp-append-version="true" />
+}
+
+@section HeadModulePreloads {
+	<link rel="modulepreload" href="~/js/components/confirm-dialog.js" asp-append-version="true" />
+}
+
+@section HeadModules {
+	<script type="module" src="~/js/pages/admin.js" asp-append-version="true"></script>
+}
+
+<div class="page">
+	<header class="page-header">
+		<div>
+			<h1 class="page-header__title">用户管理</h1>
+			<p class="page-header__subtitle">更新用户名称、显示名称、角色、密码和 API 凭据。</p>
+		</div>
+		<div class="button-row">
+			<a asp-page="/Admin/Users/Index" class="button button--secondary">返回用户列表</a>
+		</div>
+	</header>
+
+	@if (!string.IsNullOrWhiteSpace(Model.StatusMessage)) {
+		<div class="notice notice--success">@Model.StatusMessage</div>
+	}
+	@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage)) {
+		<div class="notice notice--danger">@Model.ErrorMessage</div>
+	}
+
+	<section class="panel">
+		<div class="admin-detail">
+			<div class="admin-detail__summary">
+				<div class="entity-identity entity-identity--detail">
+					<span class="entity-identity__id">@user.UserId</span>
+					@if (!string.IsNullOrWhiteSpace(user.DisplayName)) {
+						<span class="entity-identity__display">@user.DisplayName</span>
+					}
+					<span class="entity-identity__name">@user.UserName</span>
+				</div>
+			</div>
+			<dl class="info-list admin-detail__info">
+				<div class="info-list__row">
+					<dt>角色</dt>
+					<dd>@(user.Role?.ToString() ?? "未设置")</dd>
+				</div>
+				<div class="info-list__row">
+					<dt>授权设备</dt>
+					<dd>@user.AuthorizedDeviceCount</dd>
+				</div>
+				<div class="info-list__row">
+					<dt>API 凭据</dt>
+					<dd>@user.ApiCredentialCount</dd>
+				</div>
+			</dl>
+		</div>
+	</section>
+
+	<section class="panel">
+		<div class="panel__header">
+			<h2 class="panel__title">基础设置</h2>
+		</div>
+
+		<div class="admin-settings-grid">
+			<form method="post"
+				  asp-page-handler="Rename"
+				  class="settings-inline-form"
+				  data-confirm-form
+				  data-confirm-title="确认重命名用户"
+				  data-confirm-message="用户名变更会影响该用户后续登录时使用的标识，确认要重命名该用户吗？"
+				  data-confirm-button-text="确认重命名">
+				<div class="field field--grow">
+					<label for="new-user-name" class="field__label">用户名</label>
+					<input id="new-user-name"
+						   name="NewUserName"
+						   class="field__input"
+						   minlength="@DeviceStatusBeacon.IdentityNameRules.MinimumLength"
+						   maxlength="@DeviceStatusBeacon.IdentityNameRules.MaximumLength"
+						   pattern="[A-Za-z\d][A-Za-z\d_\-]{2,62}[A-Za-z\d]"
+						   placeholder="@user.UserName"
+						   title="用户名长度为 4 到 64 个字符，只能包含字母、数字、下划线和连字符，且首尾必须是字母或数字。"
+						   autocomplete="off"
+						   required
+						   data-select-on-focus />
+				</div>
+				<button type="submit" class="button button--primary">确认</button>
+			</form>
+
+			<form method="post"
+				  asp-page-handler="SetDisplayName"
+				  class="settings-inline-form"
+				  data-confirm-form
+				  data-confirm-title="确认更新显示名称"
+				  data-confirm-message="显示名称只影响后台展示，确认要更新该用户的显示名称吗？"
+				  data-confirm-button-text="确认更新">
+				<div class="field field--grow">
+					<label for="user-display-name" class="field__label">显示名称</label>
+					<input id="user-display-name"
+						   name="DisplayName"
+						   class="field__input"
+						   maxlength="@CommandValidation.DisplayNameMaximumLength"
+						   placeholder="@(user.DisplayName ?? "未设置")"
+						   autocomplete="off"
+						   data-select-on-focus />
+				</div>
+				<button type="submit" class="button button--primary">确认</button>
+			</form>
+
+			@if (!isCurrentUser) {
+				<form method="post"
+					  asp-page-handler="SetRole"
+					  class="settings-inline-form"
+					  data-confirm-form
+					  data-confirm-title="确认更新用户角色"
+					  data-confirm-message="角色变更会影响该用户和其 API 凭据的权限范围，确认要更新该用户角色吗？"
+					  data-confirm-button-text="确认更新">
+					<div class="field field--grow">
+						<label for="user-role" class="field__label">角色</label>
+						<select id="user-role" name="Role" class="field__input">
+							@foreach (var role in userRoleOptions) {
+								<option value="@role" selected="@(user.Role == role ? "selected" : null)">@role</option>
+							}
+						</select>
+					</div>
+					<button type="submit" class="button button--primary">确认</button>
+				</form>
+			}
+
+			<form method="post"
+				  asp-page-handler="ResetPassword"
+				  class="settings-inline-form"
+				  data-confirm-form
+				  data-confirm-title="确认重置密码"
+				  data-confirm-message="重置后该用户需要使用新密码登录，确认要重置该用户密码吗？"
+				  data-confirm-button-text="确认重置">
+				<div class="field field--grow">
+					<label for="new-password" class="field__label">新密码</label>
+					<input id="new-password"
+						   name="NewPassword"
+						   type="password"
+						   class="field__input"
+						   autocomplete="new-password"
+						   required />
+				</div>
+				<button type="submit" class="button button--primary">确认</button>
+			</form>
+		</div>
+	</section>
+
+	<section class="panel">
+		<div class="panel__header">
+			<h2 class="panel__title">授权设备范围</h2>
+		</div>
+		<div class="empty-state empty-state--left">
+			用户授权设备范围的写入服务已经存在，但当前缺少专门的用户授权设备读取与选择接口。这里暂时只展示授权数量，不提供编辑器；后续应补齐按用户读取授权设备、候选设备筛选和 LimitedQuery 范围编辑能力。
+		</div>
+	</section>
+
+	<section class="panel panel--danger">
+		<div class="panel__header">
+			<h2 class="panel__title">危险操作</h2>
+		</div>
+		<form method="post"
+			  asp-page-handler="Delete"
+			  class="settings-action-row"
+			  data-confirm-form
+			  data-delete-user-form
+			  data-user-name="@user.UserName"
+			  data-confirm-title="确认删除用户"
+			  data-confirm-message="删除用户会同时移除其登录账户和关联数据，该操作无法撤销。"
+			  data-confirm-button-text="继续删除"
+			  data-confirm-variant="danger">
+			<div>
+				<div class="settings-action-row__title">删除用户</div>
+				<div class="settings-action-row__text">
+					@if (isCurrentUser) {
+						<span>不能在当前管理会话中删除自己。</span>
+					} else {
+						<span>删除用户会同时移除其登录账户和关联数据，该操作无法撤销。</span>
+					}
+				</div>
+			</div>
+			<input type="hidden" name="DeleteConfirmationUserName" data-delete-confirmation-input />
+			<button type="submit"
+					class="button button--danger"
+					disabled="@isCurrentUser"
+					aria-disabled="@isCurrentUser.ToString(System.Globalization.CultureInfo.InvariantCulture).ToLowerInvariant()">删除用户</button>
+		</form>
+	</section>
+</div>
