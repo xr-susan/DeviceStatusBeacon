@@ -162,6 +162,7 @@ code {
 }
 
 .app-nav__link,
+.header-user,
 .button,
 .meta-pill,
 .status-pill {
@@ -266,9 +267,15 @@ code {
 
 .button:focus-visible,
 .app-nav__link:focus-visible,
+.header-user:focus-visible,
 .field__input:focus-visible {
     outline: var(--focus-width) solid var(--color-accent-emphasis);
     outline-offset: var(--focus-width);
+}
+
+.header-user:hover {
+    color: var(--color-header-fg);
+    background: rgba(240, 246, 252, 0.06);
 }
 
 .app-shell {

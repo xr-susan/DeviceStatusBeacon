@@ -7,6 +7,7 @@
 	var devicesHref = Url.Page("/Devices/Index") ?? "/devices";
 	var logsHref = Url.Page("/Logs") ?? "/logs";
 	var adminHref = Url.Page("/Admin/Index") ?? "/admin";
+	var accountSettingsHref = Url.Page("/Account/Settings") ?? "/account/settings";
 	var loginHref = Url.Page("/Account/Login") ?? "/login";
 	var homeHref = hasInteractiveSession ? dashboardHref : publicHomeHref;
 	var devicesIsActive = currentPath.StartsWithSegments("/devices");
@@ -54,7 +55,7 @@
 				@if (IsSectionDefined("HeaderActions")) {
 					@RenderSection("HeaderActions")
 				} else if (hasInteractiveSession) {
-					<div class="header-user">@User.Identity?.Name</div>
+					<a href="@accountSettingsHref" class="header-user">@User.Identity?.Name</a>
 					<form method="post" asp-page="/Account/Logout" class="button-form">
 						<button type="submit" class="button button--header">退出登录</button>
 					</form>

@@ -1,0 +1,96 @@
+﻿@page "/account/settings"
+@model DeviceStatusBeacon.Pages.Account.SettingsModel
+@{
+	ViewData["Title"] = "账号设置";
+	var session = Model.Session;
+}
+
+<div class="page">
+	<header class="page-header">
+		<div>
+			<h1 class="page-header__title">账号设置</h1>
+			<p class="page-header__subtitle">更新当前账号的显示名称和登录密码。</p>
+		</div>
+	</header>
+
+	@if (!string.IsNullOrWhiteSpace(Model.StatusMessage)) {
+		<div class="notice notice--success">@Model.StatusMessage</div>
+	}
+	@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage)) {
+		<div class="notice notice--danger">@Model.ErrorMessage</div>
+	}
+
+	<section class="panel">
+		<div class="panel__header">
+			<h2 class="panel__title">当前账号</h2>
+		</div>
+		<dl class="info-list">
+			<div class="info-list__row">
+				<dt>用户名</dt>
+				<dd>@session.UserName</dd>
+			</div>
+			<div class="info-list__row">
+				<dt>显示名称</dt>
+				<dd>@(string.IsNullOrWhiteSpace(session.DisplayName) ? "未设置" : session.DisplayName)</dd>
+			</div>
+			<div class="info-list__row">
+				<dt>角色</dt>
+				<dd>@(session.Role?.ToString() ?? "未绑定角色")</dd>
+			</div>
+		</dl>
+	</section>
+
+	<form method="post" asp-page-handler="SetDisplayName" class="panel panel--form">
+		<div class="panel__header">
+			<h2 class="panel__title">显示名称</h2>
+		</div>
+		<div class="field">
+			<label for="display-name" class="field__label">显示名称</label>
+			<input id="display-name"
+				   name="DisplayName"
+				   class="field__input"
+				   maxlength="@CommandValidation.DisplayNameMaximumLength"
+				   placeholder="@(session.DisplayName ?? "未设置")"
+				   autocomplete="name" />
+		</div>
+		<div class="button-row">
+			<button type="submit" class="button button--primary">保存显示名称</button>
+		</div>
+	</form>
+
+	<form method="post" asp-page-handler="ChangePassword" class="panel panel--form">
+		<div class="panel__header">
+			<h2 class="panel__title">登录密码</h2>
+		</div>
+		<div class="field">
+			<label for="current-password" class="field__label">当前密码</label>
+			<input id="current-password"
+				   name="CurrentPassword"
+				   type="password"
+				   class="field__input"
+				   autocomplete="current-password"
+				   required />
+		</div>
+		<div class="field">
+			<label for="new-password" class="field__label">新密码</label>
+			<input id="new-password"
+				   name="NewPassword"
+				   type="password"
+				   class="field__input"
+				   autocomplete="new-password"
+				   required />
+		</div>
+		<div class="field">
+			<label for="confirm-password" class="field__label">确认新密码</label>
+			<input id="confirm-password"
+				   name="ConfirmPassword"
+				   type="password"
+				   class="field__input"
+				   autocomplete="new-password"
+				   required />
+		</div>
+		<div class="button-row">
+			<button type="submit" class="button button--primary">修改密码</button>
+		</div>
+	</form>
+</div>
