@@ -3,6 +3,7 @@ using DeviceStatusBeacon.Json;
 using DeviceStatusBeacon.Routing;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.ConfigureConsoleCommandStartup(args);
 
 // 传递 HTTPS 默认证书配置
 builder.Configuration["Kestrel:Certificates:Default:Path"] ??= builder.Configuration["Https:DefaultCertificate:Path"];

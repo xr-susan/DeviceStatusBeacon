@@ -11,6 +11,32 @@ public static partial class ConsoleDispatcher {
 	internal static readonly HashSet<string> ValidVerbs = ["api-credential", "device", "user", "help", "exit"];
 	private const int MaxDisplayCount = AccessAdministrationQueryService.MaxAccessQueryCount;
 
+	private sealed record ConsoleCommandMatch(string Verb);
+
+	/// <summary>
+	/// 在应用启动早期识别控制台命令，并在控制台命令模式下禁用日志提供程序。
+	/// </summary>
+	/// <param name="builder">应用构建器</param>
+	extension(WebApplicationBuilder builder) {
+		/// <summary>
+		/// 根据命令行参数配置控制台命令启动模式。
+		/// </summary>
+		/// <param name="args">应用程序的命令行参数</param>
+		public void ConfigureConsoleCommandStartup(string[] args) {
+			// 提取首个动词参数
+			var verb = args.FirstOrDefault(arg => arg.Length >= 2 && arg[0] is not ('-' or '/'))?.ToLowerInvariant();
+
+			// 验证动词参数是否有效，如果无效则退出，执行后续 Web 服务启动逻辑
+			if (verb is null || !ValidVerbs.Contains(verb)) {
+				return;
+			}
+
+			// 注册动词参数到服务容器中，并禁用日志提供程序
+			builder.Services.AddSingleton(new ConsoleCommandMatch(verb));
+			builder.Logging.ClearProviders();
+		}
+	}
+
 	/// <summary>
 	/// 根据命令行参数选择性地分发命令到控制台命令处理程序
 	/// </summary>
@@ -18,11 +44,9 @@ public static partial class ConsoleDispatcher {
 	/// <param name="services">服务提供者</param>
 	/// <returns>一个表示异步操作的任务。任务结果如果为 <c>(true, exitCode)</c>，应当以对应退出代码结束进程；如果为 <c>(false, 0)</c>，说明当前参数不构成受支持的控制台命令，应继续启动 Web 服务</returns>
 	public static async Task<(bool, int)> DispatchAsync(string[] args, IServiceProvider services) {
-		// 提取首个动词参数
-		var verb = args.FirstOrDefault(arg => arg.Length >= 2 && arg[0] is not ('-' or '/'))?.ToLowerInvariant();
-
-		// 验证动词参数是否有效，如果无效则返回 false，以正常启动 web server
-		if (verb is null || !ValidVerbs.Contains(verb)) {
+		// 提取动词参数，如果不存在则说明当前参数不构成受支持的控制台命令，应继续启动 Web 服务
+		var verb = services.GetService<ConsoleCommandMatch>()?.Verb;
+		if (verb is null) {
 			return (false, 0);
 		}
 
